@@ -1,0 +1,2 @@
+/Users/zeeshan/Desktop/urban_culture-main/android/app/.cxx/Debug/3s4yv5r5/x86_64/CMakeFiles/edit_cache.dir
+/Users/zeeshan/Desktop/urban_culture-main/android/app/.cxx/Debug/3s4yv5r5/x86_64/CMakeFiles/rebuild_cache.dir

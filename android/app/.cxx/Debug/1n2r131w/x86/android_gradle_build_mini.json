@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/zeeshan/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/zeeshan/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/zeeshan/Desktop/SkinSync-main/android/app/.cxx/Debug/1n2r131w/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/zeeshan/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/zeeshan/Desktop/SkinSync-main/android/app/.cxx/Debug/1n2r131w/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}
