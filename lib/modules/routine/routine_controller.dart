@@ -1,11 +1,12 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:skin_sync/model/routine.dart';
 import 'package:skin_sync/utils/app_utils.dart';
 import 'package:skin_sync/utils/storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RoutineController extends GetxController {
   final RxBool _isLoading = RxBool(false);
@@ -14,6 +15,7 @@ class RoutineController extends GetxController {
   bool get isLoading => _isLoading.value;
   List get routineData => _routineData;
   bool get isFetchingImage => _isFetchingImage.value;
+  final RxList<RoutineItem> userRoutines = <RoutineItem>[].obs;
 
   @override
   void onInit() {
@@ -35,28 +37,13 @@ class RoutineController extends GetxController {
       File image, String userId, String routineId) async {
     try {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('users') // Changed from 'images' to 'users'
-          .child(userId)
-          .child('routines')
-          .child(routineId)
-          .child(fileName);
+      final filePath = 'users/$userId/images/$routineId/$fileName';
+      final supabase = Supabase.instance.client;
 
-      // Add metadata with content type
-      SettableMetadata metadata = SettableMetadata(
-        contentType: 'image/jpeg',
-      );
+      await supabase.storage.from('images').upload(filePath, image,
+          fileOptions: const FileOptions(contentType: 'image/jpeg'));
 
-      // Show upload progress
-      TaskSnapshot snapshot =
-          await ref.putFile(image, metadata).whenComplete(() {});
-
-      if (snapshot.state == TaskState.success) {
-        return await ref.getDownloadURL();
-      } else {
-        throw Exception('Upload failed with state: ${snapshot.state}');
-      }
+      return supabase.storage.from('images').getPublicUrl(filePath);
     } catch (e) {
       Get.snackbar('Upload Error', 'Failed to upload image: ${e.toString()}');
       rethrow;

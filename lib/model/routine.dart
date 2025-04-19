@@ -5,7 +5,7 @@ class Routine {
   final List<RoutineItem> allRoutines;
   final Map completedRoutines;
 
-  Routine( {
+  Routine({
     required this.userId,
     required this.streakCount,
     required this.lastUpdatedDay,
@@ -35,7 +35,12 @@ class Routine {
         'completedRoutines': completedRoutines,
       };
 
-  factory Routine.createNew({required String userId, required int streakCount, required lastUpdatedDay,required completedRoutines, required List<RoutineItem> allRoutines}) {
+  factory Routine.createNew(
+      {required String userId,
+      required int streakCount,
+      required lastUpdatedDay,
+      required completedRoutines,
+      required List<RoutineItem> allRoutines}) {
     return Routine(
       userId: userId,
       streakCount: streakCount,
@@ -73,7 +78,11 @@ class RoutineItem {
         'imagePath': imagePath,
       };
 
-  factory RoutineItem.createNew({required String routineId, required String completedDate, required bool isRoutineDone, required String imagePath}) {
+  factory RoutineItem.createNew(
+      {required String routineId,
+      required String completedDate,
+      required bool isRoutineDone,
+      required String imagePath}) {
     return RoutineItem(
       routineId: routineId,
       completedDate: completedDate,
@@ -83,13 +92,9 @@ class RoutineItem {
   }
 }
 
-  class RoutineStaticData{
-    String name = "";
-    String desc = "";
+class RoutineStaticData {
+  String name = "";
+  String desc = "";
 
-    RoutineStaticData({
-      required this.name, required this.desc
-    });
-  }
-
-  
+  RoutineStaticData({required this.name, required this.desc});
+}
