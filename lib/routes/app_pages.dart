@@ -3,6 +3,7 @@ import 'package:skin_sync/modules/auth/auth_binding.dart';
 import 'package:skin_sync/modules/auth/auth_screen.dart';
 import 'package:skin_sync/modules/layout/layout_binding.dart';
 import 'package:skin_sync/modules/layout/layout_screen.dart';
+import 'package:skin_sync/modules/routine/custom_routine_screen.dart';
 import 'package:skin_sync/modules/routine/routine_binding.dart';
 import 'package:skin_sync/modules/routine/routine_screen.dart';
 import 'package:skin_sync/modules/streaks/streaks_binding.dart';
@@ -31,5 +32,14 @@ class AppPages {
           RoutineBinding(),
           StreaksBinding(),
         ]),
+    GetPage(
+      name: AppRoutes.createRoutineRoute,
+      page: () => CreateRoutineScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.createRoutineRoute,
+      page: () => CreateRoutineScreen(),
+      binding: RoutineBinding(), // Add this line
+    ),
   ];
 }

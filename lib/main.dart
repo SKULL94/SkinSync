@@ -16,7 +16,7 @@ void main() async {
 
   // Initialize notifications
   await NotificationService().initialize();
-  await NotificationService().scheduleDailyRoutineReminders();
+  await NotificationService().scheduleCustomRoutines();
 
   runApp(const MyApp());
 }

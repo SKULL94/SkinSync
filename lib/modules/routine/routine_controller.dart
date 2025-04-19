@@ -1,36 +1,21 @@
 import 'dart:io';
-import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
-import 'package:skin_sync/model/routine.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:skin_sync/model/custom_routine.dart';
 import 'package:skin_sync/utils/app_utils.dart';
 import 'package:skin_sync/utils/storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RoutineController extends GetxController {
-  final RxBool _isLoading = RxBool(false);
-  final RxList _routineData = RxList([]);
-  final RxBool _isFetchingImage = RxBool(false);
-  bool get isLoading => _isLoading.value;
-  List get routineData => _routineData;
-  bool get isFetchingImage => _isFetchingImage.value;
-  final RxList<RoutineItem> userRoutines = <RoutineItem>[].obs;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final RxList<CustomRoutine> routines = <CustomRoutine>[].obs;
+  final RxBool isLoading = false.obs;
 
   @override
   void onInit() {
-    fetchDataAndUpdateIfNeeded(StorageService.instance.fetch(AppUtils.userId));
+    fetchRoutines();
     super.onInit();
-  }
-
-  updateIsLoading(bool value) {
-    _isLoading.value = value;
-    update();
-  }
-
-  updateIsFetchingImage(bool value) {
-    _isFetchingImage.value = value;
-    update();
   }
 
   Future<String> uploadImage(
@@ -50,107 +35,99 @@ class RoutineController extends GetxController {
     }
   }
 
-  Future<void> fetchDataAndUpdateIfNeeded(String userId) async {
-    updateIsLoading(true);
+  Future<void> updateRoutineImage(String routineId, File image) async {
     try {
-      String today = DateTime.now().toString().split(' ')[0];
-      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+      final userId = StorageService.instance.fetch(AppUtils.userId);
+      final imageUrl = await uploadImage(image, userId, routineId);
+
+      await _firestore
           .collection('users')
           .doc(userId)
-          .get();
-      Map<String, dynamic> userData =
-          userSnapshot.data() as Map<String, dynamic>;
-      List allRoutines = userData['allRoutines'];
+          .collection('routines')
+          .doc(routineId)
+          .update({'imagePath': imageUrl});
 
-      if (userData['lastUpdatedDay'] != today) {
-        List updatedRoutines = allRoutines.map((routine) {
-          return {
-            'routineId': routine['routineId'],
-            'completedDate': '',
-            'isRoutineDone': false,
-            'imagePath': '',
-          };
-        }).toList();
-        _routineData.assignAll(updatedRoutines);
-        userSnapshot.reference.update({
-          'allRoutines': updatedRoutines,
-          'lastUpdatedDay': today,
-        });
-      } else {
-        _routineData.assignAll(allRoutines);
+      final index = routines.indexWhere((r) => r.id == routineId);
+      if (index != -1) {
+        routines[index] = routines[index].copyWith(imagePath: imageUrl);
       }
     } catch (e) {
-      updateIsLoading(false);
-      Get.snackbar("Error", "Something went wrong.");
+      Get.snackbar('Error', 'Failed to update image: ${e.toString()}');
+    }
+  }
+
+  Future<void> fetchRoutines() async {
+    try {
+      isLoading(true);
+      final userId = StorageService.instance.fetch(AppUtils.userId);
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('routines')
+          .orderBy('createdDate')
+          .get();
+
+      routines.assignAll(
+        snapshot.docs.map((doc) => CustomRoutine.fromMap(doc.data())).toList(),
+      );
     } finally {
-      updateIsLoading(false);
+      isLoading(false);
     }
   }
 
-  Future<void> uploadImageAndSaveRoutine(
-      String userId, String routineId) async {
+  Future<void> addCustomRoutine({
+    required String name,
+    required String description,
+    required TimeOfDay time,
+    String imagePath = '',
+    String localIconPath = '',
+  }) async {
     try {
-      updateIsFetchingImage(true);
-      final pickedFile = await ImagePicker()
-          .pickImage(source: ImageSource.camera, imageQuality: 0);
-      if (pickedFile == null) {
-        updateIsFetchingImage(false);
-        return;
-      }
-
-      final imageFile = File(pickedFile.path);
-      final imagePath = await uploadImage(imageFile, userId, routineId);
-
-      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+      final userId = StorageService.instance.fetch(AppUtils.userId);
+      final docRef = _firestore
           .collection('users')
           .doc(userId)
-          .get();
-      Map<String, dynamic> userData =
-          userSnapshot.data() as Map<String, dynamic>;
-      List<dynamic> allRoutines = userData['allRoutines'];
-      Map<String, dynamic> completedRoutines = userData['completedRoutines'];
+          .collection('routines')
+          .doc();
 
-      List routineIdsForToday = completedRoutines[
-              DateFormat('yyyy-MM-dd').format(DateTime.now()).toString()] ??
-          [];
-      routineIdsForToday.add(routineId);
-      completedRoutines[DateFormat('yyyy-MM-dd')
-          .format(DateTime.now())
-          .toString()] = routineIdsForToday;
+      final newRoutine = CustomRoutine(
+          id: docRef.id,
+          name: name,
+          description: description,
+          time: time,
+          userId: userId,
+          createdDate: DateTime.now(),
+          imagePath: imagePath,
+          localIconPath: localIconPath);
 
-      List<dynamic> updatedRoutines = allRoutines.map((routine) {
-        if (routine['routineId'] == routineId) {
-          return {
-            'routineId': routine['routineId'],
-            'completedDate': DateTime.now().toString(),
-            'isRoutineDone': true,
-            'imagePath': imagePath,
-          };
-        } else {
-          return routine;
-        }
-      }).toList();
-
-      userSnapshot.reference.update({
-        'completedRoutines': completedRoutines,
-        'allRoutines': updatedRoutines,
-        'lastUpdatedDay': DateTime.now().toString().split(' ')[0],
-      });
-
-      _routineData.assignAll(updatedRoutines);
-      updateIsFetchingImage(false);
-      onInit();
+      await docRef.set(newRoutine.toMap());
+      routines.add(newRoutine);
     } catch (e) {
-      updateIsFetchingImage(false);
-      Get.snackbar("Error", "Failed to save changes. Please try again.");
+      Get.snackbar('Error', 'Failed to save routine: ${e.toString()}');
     }
   }
 
-  String convertTime(String date) {
-    DateTime time = DateTime.parse(date);
-    String period = (time.hour < 12) ? 'AM' : 'PM';
-    int hour = (time.hour > 12) ? time.hour - 12 : time.hour;
-    String minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute $period';
+  Future<void> deleteRoutine(String id) async {
+    try {
+      // Delete local icon
+      final routine = routines.firstWhere((r) => r.id == id);
+      if (routine.localIconPath.isNotEmpty) {
+        final file = File(routine.localIconPath);
+        if (await file.exists()) await file.delete();
+      }
+
+      // Delete from Firestore
+      final userId = StorageService.instance.fetch(AppUtils.userId);
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('routines')
+          .doc(id)
+          .delete();
+
+      routines.removeWhere((routine) => routine.id == id);
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to delete routine: ${e.toString()}');
+    }
   }
 }

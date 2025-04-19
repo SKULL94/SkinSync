@@ -1,4 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
+import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -20,38 +22,68 @@ class NotificationService {
     tz.initializeTimeZones();
   }
 
-  Future<void> scheduleDailyRoutineReminders() async {
-    const androidDetails = AndroidNotificationDetails(
-      'routine_channel',
-      'Routine Reminders',
-      importance: Importance.high,
-      priority: Priority.high,
-      enableVibration: true,
-    );
+// notification_service.dart
+  Future<void> scheduleCustomRoutines() async {
+    try {
+      if (Get.isRegistered<RoutineController>()) {
+        final controller = Get.find<RoutineController>();
+        final routines = controller.routines;
 
-    const platformDetails = NotificationDetails(android: androidDetails);
+        const androidDetails = AndroidNotificationDetails(
+          'routine_channel',
+          'Routine Reminders',
+          importance: Importance.high,
+          priority: Priority.high,
+          enableVibration: true,
+        );
 
-    // Morning Routine
-    await _scheduleDaily(
-      hour: 8,
-      minutes: 0,
-      id: 1,
-      title: '🌞 Morning Cleanser Time!',
-      body: 'Start your day with Cetaphil Gentle Skin Cleanser',
-      platformDetails: platformDetails,
-    );
+        const platformDetails = NotificationDetails(android: androidDetails);
 
-    await _scheduleDaily(
-      hour: 8,
-      minutes: 15,
-      id: 2,
-      title: '🧴 Apply Toner',
-      body: 'Use Thayers Witch Hazel Toner',
-      platformDetails: platformDetails,
-    );
-
-    // Add more routines...
+        for (final routine in routines) {
+          await _scheduleDaily(
+            hour: routine.time.hour,
+            minutes: routine.time.minute,
+            id: routine.id.hashCode,
+            title: '⏰ ${routine.name} Time!',
+            body: routine.description,
+            platformDetails: platformDetails,
+          );
+        }
+      }
+    } catch (e) {
+      print("Error scheduling routines: $e");
+    }
   }
+  // Future<void> scheduleDailyRoutineReminders() async {
+  //   const androidDetails = AndroidNotificationDetails(
+  //     'routine_channel',
+  //     'Routine Reminders',
+  //     importance: Importance.high,
+  //     priority: Priority.high,
+  //     enableVibration: true,
+  //   );
+
+  //   const platformDetails = NotificationDetails(android: androidDetails);
+
+  //   // Morning Routine
+  //   await _scheduleDaily(
+  //     hour: 8,
+  //     minutes: 0,
+  //     id: 1,
+  //     title: '🌞 Morning Cleanser Time!',
+  //     body: 'Start your day with Cetaphil Gentle Skin Cleanser',
+  //     platformDetails: platformDetails,
+  //   );
+
+  //   await _scheduleDaily(
+  //     hour: 8,
+  //     minutes: 15,
+  //     id: 2,
+  //     title: '🧴 Apply Toner',
+  //     body: 'Use Thayers Witch Hazel Toner',
+  //     platformDetails: platformDetails,
+  //   );
+  // }
 
   Future<void> _scheduleDaily({
     required int hour,
