@@ -18,11 +18,11 @@ class AppPages {
         binding: AuthBinding()),
     GetPage(
         name: AppRoutes.streaksRoute,
-        page: () => const StreaksScreen(),
+        page: () => StreaksScreen(),
         binding: StreaksBinding()),
     GetPage(
         name: AppRoutes.routineRoute,
-        page: () => const RoutineScreen(),
+        page: () => RoutineScreen(),
         binding: RoutineBinding()),
     GetPage(
         name: AppRoutes.layoutRoute,
@@ -34,12 +34,8 @@ class AppPages {
         ]),
     GetPage(
       name: AppRoutes.createRoutineRoute,
-      page: () => CreateRoutineScreen(),
-    ),
-    GetPage(
-      name: AppRoutes.createRoutineRoute,
-      page: () => CreateRoutineScreen(),
-      binding: RoutineBinding(), // Add this line
+      page: () => const CreateRoutineScreen(),
+      binding: RoutineBinding(),
     ),
   ];
 }

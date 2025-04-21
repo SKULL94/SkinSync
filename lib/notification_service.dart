@@ -22,7 +22,6 @@ class NotificationService {
     tz.initializeTimeZones();
   }
 
-// notification_service.dart
   Future<void> scheduleCustomRoutines() async {
     try {
       if (Get.isRegistered<RoutineController>()) {

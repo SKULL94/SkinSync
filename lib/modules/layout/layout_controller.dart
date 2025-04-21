@@ -5,7 +5,7 @@ import 'package:skin_sync/modules/streaks/streaks_controller.dart';
 import 'package:skin_sync/modules/streaks/streaks_screen.dart';
 
 class LayoutController extends GetxController {
-  final bodyPages = [const RoutineScreen(), const StreaksScreen()];
+  final bodyPages = [RoutineScreen(), StreaksScreen()];
   final RxInt _currentIndex = RxInt(0);
 
   int get currentIndex => _currentIndex.value;

@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/streaks/streaks_controller.dart';
 import 'package:skin_sync/routes/app_routes.dart';
-import 'package:skin_sync/utils/storage.dart';
 
 class StreaksScreen extends StatelessWidget {
-  const StreaksScreen({super.key});
+  StreaksScreen({super.key});
+
+  final StreaksController controller = Get.put(StreaksController());
 
   @override
   Widget build(BuildContext context) {
-    final StreaksController streaksController = Get.put(StreaksController());
-    final Size size = MediaQuery.of(context).size;
+    final size = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: const Color(0xffFCF7FA),
@@ -20,238 +21,190 @@ class StreaksScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () async {
-              StorageService.instance.clearAll();
-              Get.offAllNamed(AppRoutes.authRoute);
-            },
+            onPressed: () => Get.offAllNamed(AppRoutes.authRoute),
             icon: const Icon(Icons.logout),
           )
         ],
       ),
-      body: SafeArea(
-        top: true,
-        bottom: true,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Obx(
-            () => streaksController.isFetchingStreaksData
-                ? SizedBox(
-                    height: size.height,
-                    width: size.width,
-                    child: const Center(child: CircularProgressIndicator()),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                          text: TextSpan(
-                        text: streaksController.streaks + 1 == 1
-                            ? "Today's Goal: ${streaksController.streaks + 1} streak day"
-                            : "Today's Goal: ${streaksController.streaks + 1} streak days",
-                        style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      )),
-                      const SizedBox(height: 20),
-                      Container(
-                          // height: size.height * 0.2,
-                          width: size.width,
-                          decoration: BoxDecoration(
-                            color: const Color(0xffF2E8EB),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Streak Days",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  streaksController.streaks.toString(),
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          )),
-                      const SizedBox(height: 30),
-                      const Text(
-                        "Daily Streak",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        streaksController.streaks.toString(),
-                        style: const TextStyle(
-                            fontSize: 26, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      RichText(
-                        text: const TextSpan(
-                            text: "Last 30 Days ",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xff964F66),
-                            ),
-                            children: [
-                              TextSpan(
-                                  text: "+100%",
-                                  style: TextStyle(
-                                      fontSize: 14, color: Colors.green))
-                            ]),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                          height: size.height * 0.32,
-                          width: size.width,
-                          child: Column(
-                            children: [
-                              AspectRatio(
-                                aspectRatio: 1.70,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    right: 18,
-                                    left: 12,
-                                    top: 24,
-                                    bottom: 12,
-                                  ),
-                                  child: LineChart(
-                                    streaksChartData(),
-                                  ),
-                                ),
-                              ),
-                              const Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("1D",
-                                      style: TextStyle(
-                                          color: Color(0xFF964F44),
-                                          fontWeight: FontWeight.w600)),
-                                  Text("1W",
-                                      style: TextStyle(
-                                          color: Color(0xFF964F44),
-                                          fontWeight: FontWeight.w600)),
-                                  Text("1M",
-                                      style: TextStyle(
-                                          color: Color(0xFF964F44),
-                                          fontWeight: FontWeight.w600)),
-                                  Text("3M",
-                                      style: TextStyle(
-                                          color: Color(0xFF964F44),
-                                          fontWeight: FontWeight.w600)),
-                                  Text("1Y",
-                                      style: TextStyle(
-                                          color: Color(0xFF964F44),
-                                          fontWeight: FontWeight.w600)),
-                                ],
-                              )
-                            ],
-                          )),
+      body: Obx(() {
+        if (controller.isFetchingStreaksData) {
+          return Center(
+              child: CircularProgressIndicator(color: theme.primaryColor));
+        }
 
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Keep it up! You're on a roll.",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 10),
-                      // elevated button
-                      SizedBox(
-                        width: size.width,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xffF2E8EB),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text(
-                            'Get Started',
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(controller),
+              const SizedBox(height: 20),
+              _buildStreakCard(controller, size),
+              const SizedBox(height: 30),
+              _buildChartSection(controller, size),
+              const SizedBox(height: 20),
+              _buildMotivationSection(),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildHeader(StreaksController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Current Streak',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
           ),
         ),
+        const SizedBox(height: 8),
+        Text(
+          '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
+          style: const TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w900,
+            color: Color(0xff964F66),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStreakCard(StreaksController controller, Size size) {
+    return Container(
+      width: size.width,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xffF2E8EB),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            '🔥 Active Streak',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xff964F66),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: controller.streaks / 30,
+            backgroundColor: Colors.grey[200],
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff964F66)),
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
       ),
     );
   }
-}
 
-LineChartData streaksChartData() {
-  return LineChartData(
-    gridData: const FlGridData(
-        horizontalInterval: 2, verticalInterval: 1, show: false),
-    titlesData: const FlTitlesData(
-      show: true,
-      rightTitles: AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
+  Widget _buildChartSection(StreaksController controller, Size size) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Monthly Progress',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 200,
+          child: LineChart(
+            LineChartData(
+              gridData: const FlGridData(show: false),
+              titlesData: const FlTitlesData(show: false),
+              borderData: FlBorderData(show: false),
+              minX: 0,
+              maxX: 29,
+              minY: 0,
+              maxY: controller.streaks.toDouble() + 2,
+              lineBarsData: [
+                LineChartBarData(
+                  spots: controller.getStreakChartData(),
+                  isCurved: true,
+                  color: const Color(0xff964F66),
+                  barWidth: 3,
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: const Color(0xff964F66).withValues(alpha: 0.1),
+                  ),
+                  dotData: const FlDotData(show: false),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMotivationSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xffF2E8EB),
+        borderRadius: BorderRadius.circular(16),
       ),
-      topTitles: AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      leftTitles: AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      bottomTitles: AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      // AxisTitles(
-      //   sideTitles: SideTitles(
-      //     showTitles: true,
-      //     reservedSize: 30,
-      //     interval: 1,
-      //     getTitlesWidget: bottomTitleWidgets,
-      //   ),
-      // ),
-    ),
-    borderData: FlBorderData(
-      show: false,
-    ),
-    minX: 0,
-    maxX: 11,
-    minY: 0,
-    maxY: 6,
-    lineBarsData: [
-      LineChartBarData(
-        spots: const [
-          FlSpot(0, 3),
-          FlSpot(1, 6),
-          FlSpot(2.6, 2),
-          FlSpot(4.9, 5),
-          FlSpot(6.8, 3.1),
-          FlSpot(8, 4),
-          FlSpot(9.5, 3),
-          FlSpot(11, 4),
+      child: Column(
+        children: [
+          const Text(
+            'Keep the streak alive!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xff964F66),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Complete your routines daily to maintain your streak',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => Get.back(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xff964F66),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text(
+              'View Routines',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
-        isCurved: true,
-        barWidth: 3,
-        color: const Color(0xff964F66),
-        isStrokeCapRound: false,
-        dotData: const FlDotData(
-          show: false,
-        ),
-        belowBarData: BarAreaData(
-          show: false,
-        ),
       ),
-    ],
-  );
+    );
+  }
 }

@@ -1,4 +1,6 @@
+// streaks_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/utils/app_utils.dart';
@@ -7,51 +9,76 @@ import 'package:skin_sync/utils/storage.dart';
 class StreaksController extends GetxController {
   final RxBool _isFetchingStreaksData = RxBool(false);
   final RxInt _streaks = RxInt(0);
+  final RxList<String> completedDays = <String>[].obs;
+
   int get streaks => _streaks.value;
   bool get isFetchingStreaksData => _isFetchingStreaksData.value;
 
   @override
   void onInit() {
-    fetchCompletedRoutines(StorageService.instance.fetch(AppUtils.userId));
+    fetchCompletedDays(StorageService.instance.fetch(AppUtils.userId));
     super.onInit();
   }
 
-  updateisFetchingStreaksData(bool value) {
-    _isFetchingStreaksData.value = value;
-    update();
-  }
-
-  fetchCompletedRoutines(String userId) async {
-    updateisFetchingStreaksData(true);
+  Future<void> fetchCompletedDays(String userId) async {
+    _isFetchingStreaksData.value = true;
     try {
       DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .get();
 
-      Map<String, dynamic> userData =
-          userSnapshot.data() as Map<String, dynamic>;
-      _streaks.value = calculateStreak(userData['completedRoutines']);
-      updateisFetchingStreaksData(false);
-    } catch (e) {
-      updateisFetchingStreaksData(false);
+      List<String> days = List.from(userSnapshot['completedDays'] ?? []);
+      completedDays.value = days;
+      _streaks.value = calculateStreak(days);
+    } finally {
+      _isFetchingStreaksData.value = false;
     }
   }
 
-  int calculateStreak(Map<String, dynamic> completedRoutines) {
+  int calculateStreak(List<String> completedDays) {
+    final formatter = DateFormat('yyyy-MM-dd');
+    final now = DateTime.now();
+    DateTime currentDate = DateTime(now.year, now.month, now.day);
     int streak = 0;
-    DateTime currentDate = DateTime.now();
-    DateFormat formatter = DateFormat('yyyy-MM-dd');
-    while (completedRoutines.containsKey(formatter.format(currentDate)) &&
-        hasCompletedFiveRoutines(completedRoutines, currentDate, formatter)) {
+
+    while (completedDays.contains(formatter.format(currentDate))) {
       streak++;
       currentDate = currentDate.subtract(const Duration(days: 1));
     }
+
     return streak;
   }
 
-  bool hasCompletedFiveRoutines(Map<String, dynamic> completedRoutines,
-      DateTime date, DateFormat formatter) {
-    return completedRoutines[formatter.format(date)]?.length == 5;
+  List<FlSpot> getStreakChartData() {
+    final formatter = DateFormat('yyyy-MM-dd');
+    final now = DateTime.now();
+    final List<FlSpot> spots = [];
+    final Map<String, int> dailyStreaks = {};
+
+    for (int i = 29; i >= 0; i--) {
+      DateTime date = now.subtract(Duration(days: i));
+      dailyStreaks[formatter.format(date)] = 0;
+    }
+
+    int currentStreak = 0;
+    DateTime currentDate = now;
+    while (currentDate.isAfter(now.subtract(const Duration(days: 30)))) {
+      String dateKey = formatter.format(currentDate);
+      if (completedDays.contains(dateKey)) {
+        currentStreak++;
+      } else {
+        currentStreak = 0;
+      }
+      dailyStreaks[dateKey] = currentStreak;
+      currentDate = currentDate.subtract(const Duration(days: 1));
+    }
+    int index = 0;
+    dailyStreaks.forEach((date, streak) {
+      spots.add(FlSpot(index.toDouble(), streak.toDouble()));
+      index++;
+    });
+
+    return spots;
   }
 }
