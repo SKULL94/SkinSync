@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
@@ -50,7 +51,9 @@ class NotificationService {
         }
       }
     } catch (e) {
-      print("Error scheduling routines: $e");
+      if (kDebugMode) {
+        debugPrint("Error scheduling routines: $e");
+      }
     }
   }
   // Future<void> scheduleDailyRoutineReminders() async {
