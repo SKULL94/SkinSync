@@ -1,4 +1,3 @@
-// streaks_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -166,8 +165,8 @@ class StreaksController extends GetxController {
   }
 
   bool _isDateInRange(DateTime date, DateTime start, DateTime? end) {
-    return date.isAfter(start.subtract(Duration(days: 1))) &&
-        (end == null || date.isBefore(end.add(Duration(days: 1))));
+    return date.isAfter(start.subtract(const Duration(days: 1))) &&
+        (end == null || date.isBefore(end.add(const Duration(days: 1))));
   }
 
   List<FlSpot> getDailyChartData() {
