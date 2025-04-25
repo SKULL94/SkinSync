@@ -75,12 +75,12 @@ class StreaksController extends GetxController {
   }
 
   int calculateStreak(List<String> completedDays) {
-    final formatter = DateFormat('yyyy-MM-dd');
+    // final formatter = DateFormat('yyyy-MM-dd');
     DateTime currentDate = DateTime.now();
     int streak = 0;
 
     while (true) {
-      final dateString = formatter.format(currentDate);
+      // final dateString = formatter.format(currentDate);
 
       final meetsCriteria = switch (currentStreakType.value) {
         StreakType.daily => _dailyCompletionCheck(currentDate),
