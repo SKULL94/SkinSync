@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:skin_sync/modules/layout/layout_screen.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
-import 'package:skin_sync/modules/routine/routine_screen.dart';
 import 'package:uuid/uuid.dart';
 
 class CreateRoutineScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   File? _localIcon;
   final Uuid _uuid = const Uuid();
   DateTime? _endDate;
-  DateTime _startDate = DateTime.now();
+  DateTime? _startDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +299,34 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     }
   }
 
+  Widget _buildStartDateSection() {
+    return Column(
+      children: [
+        SwitchListTile(
+          title: const Text('Set Start Date'),
+          value: _startDate != null,
+          onChanged: (value) {
+            if (value) {
+              _selectStartDate();
+            } else {
+              setState(() => _startDate = null);
+            }
+          },
+        ),
+        if (_startDate != null)
+          ListTile(
+            leading: const Icon(Icons.calendar_today),
+            title: Text(
+                'Start Date: ${DateFormat('MMM d, y').format(_startDate!)}'),
+            trailing: IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: _selectStartDate,
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildEndDateSection() {
     return Column(
       children: [
@@ -327,38 +355,10 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     );
   }
 
-  Widget _buildStartDateSection() {
-    return Column(
-      children: [
-        SwitchListTile(
-          title: const Text('Set Start Date'),
-          value: _endDate != null,
-          onChanged: (value) {
-            if (value) {
-              _selectEndDate();
-            } else {
-              setState(() => _endDate = null);
-            }
-          },
-        ),
-        if (_endDate != null)
-          ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: Text(
-                'Start Date: ${DateFormat('MMM d, y').format(_startDate)}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: _selectStartDate,
-            ),
-          ),
-      ],
-    );
-  }
-
   Future<void> _selectStartDate() async {
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: _startDate,
+      initialDate: _startDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
@@ -370,7 +370,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   Future<void> _selectEndDate() async {
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _endDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
@@ -385,17 +385,26 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     final controller = Get.find<RoutineController>();
     final routineId = _uuid.v4();
     final localIconPath = await _saveIconLocally(routineId);
+    final startDate = _startDate != null
+        ? DateTime(_startDate!.year, _startDate!.month, _startDate!.day)
+        : DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day);
+
+    DateTime? endDate;
+    if (_endDate != null) {
+      endDate = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
+    }
 
     controller.addCustomRoutine(
       name: _nameController.text.trim(),
       description: _descController.text.trim(),
       time: _selectedTime,
       localIconPath: localIconPath ?? '',
-      startDate: _startDate,
-      endDate: _endDate,
+      startDate: startDate,
+      endDate: endDate,
     );
 
-    Get.off(() => RoutineScreen());
+    Get.off(() => const LayoutScreen());
     Get.showSnackbar(GetSnackBar(
       message: 'Routine created successfully!',
       duration: const Duration(seconds: 2),

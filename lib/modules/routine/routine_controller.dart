@@ -23,13 +23,26 @@ class RoutineController extends GetxController {
   void updateFilteredRoutines() {
     filteredRoutines.value = routines.where((routine) {
       final selected = selectedDate.value;
-      final startDate = routine.startDate;
-      final endDate = routine.endDate;
+      final selectedDateAtMidnight =
+          DateTime(selected.year, selected.month, selected.day);
 
-      if (endDate == null) {
-        return _isSameDate(startDate, selected);
+      final startDate = routine.startDate;
+      final startDateAtMidnight =
+          DateTime(startDate.year, startDate.month, startDate.day);
+
+      final endDate = routine.endDate;
+      DateTime? endDateAtMidnight;
+      if (endDate != null) {
+        endDateAtMidnight = DateTime(endDate.year, endDate.month, endDate.day);
+      }
+
+      if (endDateAtMidnight == null) {
+        return _isSameDate(startDateAtMidnight, selectedDateAtMidnight);
       } else {
-        return !selected.isBefore(startDate) && !selected.isAfter(endDate);
+        return selectedDateAtMidnight.isAfter(
+                startDateAtMidnight.subtract(const Duration(days: 1))) &&
+            selectedDateAtMidnight
+                .isBefore(endDateAtMidnight.add(const Duration(days: 1)));
       }
     }).toList();
   }
@@ -81,6 +94,8 @@ class RoutineController extends GetxController {
   Future<void> toggleRoutineCompletion(String routineId) async {
     try {
       final userId = StorageService.instance.fetch(AppUtils.userId);
+      if (userId == null) throw 'User not logged in';
+
       final index = routines.indexWhere((r) => r.id == routineId);
       if (index == -1) return;
 
@@ -92,14 +107,11 @@ class RoutineController extends GetxController {
       );
 
       List<DateTime> newDates = List.from(oldRoutine.completionDates);
-      bool isDateCompleted =
+      final isDateCompleted =
           newDates.any((d) => _isSameDate(d, selectedDateDay));
-
-      if (isDateCompleted) {
-        newDates.removeWhere((d) => _isSameDate(d, selectedDateDay));
-      } else {
-        newDates.add(selectedDateDay);
-      }
+      isDateCompleted
+          ? newDates.removeWhere((d) => _isSameDate(d, selectedDateDay))
+          : newDates.add(selectedDateDay);
 
       final progress = _calculateProgress(newDates);
       final updatedRoutine = oldRoutine.copyWith(
@@ -117,7 +129,6 @@ class RoutineController extends GetxController {
       routines[index] = updatedRoutine;
       updateFilteredRoutines();
 
-      // Update completed days in user document
       await _updateCompletedDays(userId);
     } catch (e) {
       Get.snackbar('Error', 'Failed to toggle completion: ${e.toString()}');
@@ -157,22 +168,26 @@ class RoutineController extends GetxController {
   Future<void> _updateCompletedDays(String userId) async {
     final userRef = _firestore.collection('users').doc(userId);
     final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate.value);
-    final allCompleted = filteredRoutines.every((routine) =>
+    final hasAnyCompleted = filteredRoutines.any((routine) =>
         routine.completionDates.any((d) => _isSameDate(d, selectedDate.value)));
 
-    await _firestore.runTransaction((transaction) async {
-      final userSnapshot = await transaction.get(userRef);
-      List<String> completedDays =
-          List.from(userSnapshot['completedDays'] ?? []);
-
-      if (allCompleted && !completedDays.contains(formattedDate)) {
-        completedDays.add(formattedDate);
-      } else if (!allCompleted && completedDays.contains(formattedDate)) {
-        completedDays.remove(formattedDate);
+    try {
+      if (hasAnyCompleted) {
+        await userRef.update({
+          'completedDays': FieldValue.arrayUnion([formattedDate])
+        });
+      } else {
+        await userRef.update({
+          'completedDays': FieldValue.arrayRemove([formattedDate])
+        });
       }
-
-      transaction.update(userRef, {'completedDays': completedDays});
-    });
+    } on FirebaseException catch (e) {
+      if (e.code == 'not-found') {
+        await userRef.set({
+          'completedDays': hasAnyCompleted ? [formattedDate] : [],
+        }, SetOptions(merge: true));
+      }
+    }
   }
 
   Future<String> _uploadImage(
@@ -227,6 +242,7 @@ class RoutineController extends GetxController {
 
       await docRef.set(newRoutine.toMap());
       routines.add(newRoutine);
+      updateFilteredRoutines();
     } catch (e) {
       Get.snackbar('Error', 'Failed to save routine: ${e.toString()}');
     }

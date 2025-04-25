@@ -1,15 +1,26 @@
 // streaks_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:skin_sync/utils/app_utils.dart';
 import 'package:skin_sync/utils/storage.dart';
+
+enum StreakType { daily, weekly, monthly }
 
 class StreaksController extends GetxController {
   final RxBool _isFetchingStreaksData = RxBool(false);
   final RxInt _streaks = RxInt(0);
   final RxList<String> completedDays = <String>[].obs;
+  final Rx<StreakType> currentStreakType = StreakType.daily.obs;
+  final RxMap<String, int> dailyCompletion = <String, int>{}.obs;
+
+  void changeStreakType(StreakType type) {
+    currentStreakType.value = type;
+    _streaks.value = calculateStreak(completedDays);
+  }
 
   int get streaks => _streaks.value;
   bool get isFetchingStreaksData => _isFetchingStreaksData.value;
@@ -34,15 +45,52 @@ class StreaksController extends GetxController {
     } finally {
       _isFetchingStreaksData.value = false;
     }
+
+    Map<String, int> completionMap = {};
+    for (var date in completedDays) {
+      completionMap[date] = (completionMap[date] ?? 0) + 1;
+    }
+    dailyCompletion.value = completionMap;
+  }
+
+  List<FlSpot> getStreakChartData() {
+    final formatter = DateFormat('yyyy-MM-dd');
+    final now = DateTime.now();
+    final List<FlSpot> spots = [];
+
+    List<int> dailyCompletion = List.generate(30, (index) => 0);
+
+    for (int i = 0; i < 30; i++) {
+      final date = now.subtract(Duration(days: 29 - i));
+      if (completedDays.contains(formatter.format(date))) {
+        dailyCompletion[i] = 1;
+      }
+    }
+    int currentStreak = 0;
+    for (int i = 0; i < 30; i++) {
+      currentStreak = dailyCompletion[i] == 1 ? currentStreak + 1 : 0;
+      spots.add(FlSpot(i.toDouble(), currentStreak.toDouble()));
+    }
+
+    return spots;
   }
 
   int calculateStreak(List<String> completedDays) {
     final formatter = DateFormat('yyyy-MM-dd');
-    final now = DateTime.now();
-    DateTime currentDate = DateTime(now.year, now.month, now.day);
+    DateTime currentDate = DateTime.now();
     int streak = 0;
 
-    while (completedDays.contains(formatter.format(currentDate))) {
+    while (true) {
+      final dateString = formatter.format(currentDate);
+
+      final meetsCriteria = switch (currentStreakType.value) {
+        StreakType.daily => _dailyCompletionCheck(currentDate),
+        StreakType.weekly => _weeklyCompletionCheck(currentDate),
+        StreakType.monthly => _monthlyCompletionCheck(currentDate),
+      };
+
+      if (!meetsCriteria) break;
+
       streak++;
       currentDate = currentDate.subtract(const Duration(days: 1));
     }
@@ -50,35 +98,132 @@ class StreaksController extends GetxController {
     return streak;
   }
 
-  List<FlSpot> getStreakChartData() {
-    final formatter = DateFormat('yyyy-MM-dd');
+  bool _dailyCompletionCheck(DateTime date) {
+    final data = getDailyCompletion(date);
+    return data['ratio'] > 0; // At least one routine completed
+  }
+
+  bool _weeklyCompletionCheck(DateTime date) {
+    // Check if week contains minimum 3 completed days
+    final weekStart = date.subtract(Duration(days: date.weekday - 1));
+    int completedDays = 0;
+
+    for (int i = 0; i < 7; i++) {
+      final day = weekStart.add(Duration(days: i));
+      if (_dailyCompletionCheck(day)) completedDays++;
+    }
+
+    return completedDays >= 3;
+  }
+
+  bool _monthlyCompletionCheck(DateTime date) {
+    // Check if month contains minimum 15 completed days
+    final firstDayOfMonth = DateTime(date.year, date.month, 1);
+    final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
+    int completedDays = 0;
+
+    for (int i = 0; i < lastDayOfMonth.day; i++) {
+      final day = firstDayOfMonth.add(Duration(days: i));
+      if (_dailyCompletionCheck(day)) completedDays++;
+    }
+
+    return completedDays >= 15;
+  }
+
+  // bool _weeklyCompletionCheck(DateTime date, List<String> completedDays) {
+  //   // Check if week contains at least 3 completed days
+  //   final weekStart = date.subtract(Duration(days: date.weekday - 1));
+  //   int weeklyCount = 0;
+
+  //   for (int i = 0; i < 7; i++) {
+  //     final day = weekStart.add(Duration(days: i));
+  //     if (completedDays.contains(DateFormat('yyyy-MM-dd').format(day))) {
+  //       weeklyCount++;
+  //     }
+  //   }
+
+  //   return weeklyCount >= 3;
+  // }
+
+  Map<String, dynamic> getDailyCompletion(DateTime date) {
+    final formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    final completed = dailyCompletion[formattedDate] ?? 0;
+    final total = _getTotalRoutinesForDate(date);
+    return {
+      'completed': completed,
+      'total': total,
+      'ratio': total > 0 ? completed / total : 0,
+    };
+  }
+
+  int _getTotalRoutinesForDate(DateTime date) {
+    // Implement logic to get total routines for a date
+    // This should query your routines to find how many were active on this date
+    return Get.find<RoutineController>()
+        .routines
+        .where((r) => _isDateInRange(date, r.startDate, r.endDate))
+        .length;
+  }
+
+  bool _isDateInRange(DateTime date, DateTime start, DateTime? end) {
+    return date.isAfter(start.subtract(Duration(days: 1))) &&
+        (end == null || date.isBefore(end.add(Duration(days: 1))));
+  }
+
+  List<FlSpot> getDailyChartData() {
     final now = DateTime.now();
-    final List<FlSpot> spots = [];
-    final Map<String, int> dailyStreaks = {};
+    final spots = <FlSpot>[];
 
-    for (int i = 29; i >= 0; i--) {
-      DateTime date = now.subtract(Duration(days: i));
-      dailyStreaks[formatter.format(date)] = 0;
+    for (int i = 0; i < 30; i++) {
+      final date = now.subtract(Duration(days: 29 - i));
+      final data = getDailyCompletion(date);
+      spots.add(FlSpot(i.toDouble(), data['ratio']));
     }
-
-    int currentStreak = 0;
-    DateTime currentDate = now;
-    while (currentDate.isAfter(now.subtract(const Duration(days: 30)))) {
-      String dateKey = formatter.format(currentDate);
-      if (completedDays.contains(dateKey)) {
-        currentStreak++;
-      } else {
-        currentStreak = 0;
-      }
-      dailyStreaks[dateKey] = currentStreak;
-      currentDate = currentDate.subtract(const Duration(days: 1));
-    }
-    int index = 0;
-    dailyStreaks.forEach((date, streak) {
-      spots.add(FlSpot(index.toDouble(), streak.toDouble()));
-      index++;
-    });
 
     return spots;
+  }
+
+  List<FlSpot> getWeeklyChartData() {
+    final now = DateTime.now();
+    final spots = <FlSpot>[];
+
+    for (int i = 0; i < 4; i++) {
+      final weekStart = now.subtract(Duration(days: 7 * (3 - i)));
+      double weeklyRatio = 0;
+
+      for (int d = 0; d < 7; d++) {
+        final date = weekStart.add(Duration(days: d));
+        final data = getDailyCompletion(date);
+        weeklyRatio += data['ratio'];
+      }
+
+      spots.add(FlSpot(i.toDouble(), weeklyRatio / 7));
+    }
+
+    return spots;
+  }
+
+  List<FlSpot> getMonthlyChartData() {
+    final now = DateTime.now();
+    final spots = <FlSpot>[];
+
+    for (int i = 0; i < 12; i++) {
+      final month = now.month - i;
+      final year = now.year - (month <= 0 ? 1 : 0);
+      final adjustedMonth = month <= 0 ? month + 12 : month;
+
+      double monthlyRatio = 0;
+      int daysInMonth = DateUtils.getDaysInMonth(year, adjustedMonth);
+
+      for (int d = 1; d <= daysInMonth; d++) {
+        final date = DateTime(year, adjustedMonth, d);
+        final data = getDailyCompletion(date);
+        monthlyRatio += data['ratio'];
+      }
+
+      spots.add(FlSpot((11 - i).toDouble(), monthlyRatio / daysInMonth));
+    }
+
+    return spots.reversed.toList();
   }
 }

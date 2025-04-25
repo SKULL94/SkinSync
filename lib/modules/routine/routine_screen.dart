@@ -15,7 +15,6 @@ class RoutineScreen extends StatelessWidget {
   final DateFormat dateFormat = DateFormat('EEE, MMM d');
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

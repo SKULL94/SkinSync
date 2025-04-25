@@ -37,6 +37,8 @@ class StreaksScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildStreakTypeSelector(controller),
+              const SizedBox(height: 20),
               _buildHeader(controller),
               const SizedBox(height: 20),
               _buildStreakCard(controller, size),
@@ -48,6 +50,63 @@ class StreaksScreen extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildStreakTypeSelector(StreaksController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Obx(() => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStreakTypeButton(
+                label: 'Daily',
+                isActive:
+                    controller.currentStreakType.value == StreakType.daily,
+                onTap: () => controller.changeStreakType(StreakType.daily),
+              ),
+              _buildStreakTypeButton(
+                label: 'Weekly',
+                isActive:
+                    controller.currentStreakType.value == StreakType.weekly,
+                onTap: () => controller.changeStreakType(StreakType.weekly),
+              ),
+              _buildStreakTypeButton(
+                label: 'Perfect',
+                isActive:
+                    controller.currentStreakType.value == StreakType.monthly,
+                onTap: () => controller.changeStreakType(StreakType.monthly),
+              ),
+            ],
+          )),
+    );
+  }
+
+  Widget _buildStreakTypeButton({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xff964F66) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xff964F66),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.white : const Color(0xff964F66),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 
