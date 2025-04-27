@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/streaks/streaks_controller.dart';
 import 'package:skin_sync/routes/app_routes.dart';
+import 'package:skin_sync/utils/mediaquery.dart';
 
 class StreaksScreen extends StatelessWidget {
   StreaksScreen({super.key});
@@ -33,19 +34,21 @@ class StreaksScreen extends StatelessWidget {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(
+              vertical: getHeight(context, 16),
+              horizontal: getWidth(context, 16)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildStreakTypeSelector(controller),
-              const SizedBox(height: 20),
-              _buildHeader(controller),
-              const SizedBox(height: 20),
-              _buildStreakCard(controller, size),
-              const SizedBox(height: 30),
-              _buildChartSection(controller, size),
-              const SizedBox(height: 20),
-              _buildMotivationSection(),
+              _buildStreakTypeSelector(controller, context),
+              SizedBox(height: getHeight(context, 20)),
+              _buildHeader(controller, context),
+              SizedBox(height: getHeight(context, 20)),
+              _buildStreakCard(controller, size, context),
+              SizedBox(height: getHeight(context, 30)),
+              _buildChartSection(controller, size, isTablet(context), context),
+              SizedBox(height: getHeight(context, 30)),
+              _buildMotivationSection(context),
             ],
           ),
         );
@@ -53,47 +56,51 @@ class StreaksScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStreakTypeSelector(StreaksController controller) {
+  Widget _buildStreakTypeSelector(
+      StreaksController controller, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: EdgeInsets.symmetric(
+          vertical: getHeight(context, 16), horizontal: getWidth(context, 16)),
       child: Obx(() => Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildStreakTypeButton(
-                label: 'Daily',
-                isActive:
-                    controller.currentStreakType.value == StreakType.daily,
-                onTap: () => controller.changeStreakType(StreakType.daily),
-              ),
+                  label: 'Daily',
+                  isActive:
+                      controller.currentStreakType.value == StreakType.daily,
+                  onTap: () => controller.changeStreakType(StreakType.daily),
+                  context: context),
               _buildStreakTypeButton(
-                label: 'Weekly',
-                isActive:
-                    controller.currentStreakType.value == StreakType.weekly,
-                onTap: () => controller.changeStreakType(StreakType.weekly),
-              ),
+                  label: 'Weekly',
+                  isActive:
+                      controller.currentStreakType.value == StreakType.weekly,
+                  onTap: () => controller.changeStreakType(StreakType.weekly),
+                  context: context),
               _buildStreakTypeButton(
-                label: 'Perfect',
-                isActive:
-                    controller.currentStreakType.value == StreakType.monthly,
-                onTap: () => controller.changeStreakType(StreakType.monthly),
-              ),
+                  label: 'Perfect',
+                  isActive:
+                      controller.currentStreakType.value == StreakType.monthly,
+                  onTap: () => controller.changeStreakType(StreakType.monthly),
+                  context: context),
             ],
           )),
     );
   }
 
-  Widget _buildStreakTypeButton({
-    required String label,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildStreakTypeButton(
+      {required String label,
+      required bool isActive,
+      required VoidCallback onTap,
+      required BuildContext context}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(
+            vertical: getHeight(context, 16),
+            horizontal: getWidth(context, 16)),
         decoration: BoxDecoration(
           color: isActive ? const Color(0xff964F66) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(getWidth(context, 20)),
           border: Border.all(
             color: const Color(0xff964F66),
             width: 1.5,
@@ -102,92 +109,95 @@ class StreaksScreen extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isActive ? Colors.white : const Color(0xff964F66),
-            fontWeight: FontWeight.w500,
-          ),
+              color: isActive ? Colors.white : const Color(0xff964F66),
+              fontWeight: FontWeight.w500,
+              fontSize: getResponsiveFontSize(context, 14)),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(StreaksController controller) {
+  Widget _buildHeader(StreaksController controller, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Current Streak',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: getResponsiveFontSize(context, 24),
             fontWeight: FontWeight.bold,
             color: Colors.grey[800],
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: getHeight(context, 8)),
         Text(
           '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
-          style: const TextStyle(
-            fontSize: 36,
+          style: TextStyle(
+            fontSize: getResponsiveFontSize(context, 36),
             fontWeight: FontWeight.w900,
-            color: Color(0xff964F66),
+            color: const Color(0xff964F66),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStreakCard(StreaksController controller, Size size) {
+  Widget _buildStreakCard(
+      StreaksController controller, Size size, BuildContext context) {
     return Container(
       width: size.width,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.symmetric(
+          vertical: getHeight(context, 20), horizontal: getWidth(context, 20)),
       decoration: BoxDecoration(
         color: const Color(0xffF2E8EB),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(getWidth(context, 16)),
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             '🔥 Active Streak',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: getResponsiveFontSize(context, 18),
               fontWeight: FontWeight.w600,
-              color: Color(0xff964F66),
+              color: const Color(0xff964F66),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: getHeight(context, 12)),
           Text(
             '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
-            style: const TextStyle(
-              fontSize: 32,
+            style: TextStyle(
+              fontSize: getResponsiveFontSize(context, 32),
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: getHeight(context, 8)),
           LinearProgressIndicator(
             value: controller.streaks / 30,
             backgroundColor: Colors.grey[200],
             valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff964F66)),
             minHeight: 8,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(getWidth(context, 4)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildChartSection(StreaksController controller, Size size) {
+  Widget _buildChartSection(StreaksController controller, Size size,
+      bool isTablet, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Monthly Progress',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: getResponsiveFontSize(context, 18),
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: getHeight(context, 50)),
         SizedBox(
-          height: 200,
+          height: getHeight(context, isTablet ? 120 : 100),
           child: LineChart(
             LineChartData(
               gridData: const FlGridData(show: false),
@@ -217,46 +227,50 @@ class StreaksScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMotivationSection() {
+  Widget _buildMotivationSection(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.symmetric(
+          vertical: getHeight(context, 20), horizontal: getWidth(context, 20)),
       decoration: BoxDecoration(
         color: const Color(0xffF2E8EB),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(getWidth(context, 16)),
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Keep the streak alive!',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: getResponsiveFontSize(context, 18),
               fontWeight: FontWeight.w600,
-              color: Color(0xff964F66),
+              color: const Color(0xff964F66),
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: getHeight(context, 12)),
+          Text(
             'Complete your routines daily to maintain your streak',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: getResponsiveFontSize(context, 14),
               color: Colors.grey,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: getHeight(context, 16)),
           ElevatedButton(
             onPressed: () => Get.back(),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xff964F66),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(getWidth(context, 12)),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: EdgeInsets.symmetric(
+                  vertical: getHeight(context, 12),
+                  horizontal: getWidth(context, 24)),
             ),
-            child: const Text(
+            child: Text(
               'View Routines',
               style: TextStyle(
+                fontSize: getResponsiveFontSize(context, 14),
                 color: Colors.white,
                 fontWeight: FontWeight.w500,
               ),

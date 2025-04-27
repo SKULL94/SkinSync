@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/layout/layout_controller.dart';
 import 'package:skin_sync/modules/layout/widgets/nav_bar_widget.dart';
+import 'package:skin_sync/utils/mediaquery.dart';
 
 class LayoutScreen extends StatelessWidget {
   const LayoutScreen({Key? key}) : super(key: key);
@@ -12,7 +13,7 @@ class LayoutScreen extends StatelessWidget {
 
     return Scaffold(
       bottomNavigationBar: Container(
-        height: 75,
+        height: getHeight(context, 75),
         color: const Color(0xffF2E8EB),
         child: Obx(
           () => Row(
@@ -29,7 +30,7 @@ class LayoutScreen extends StatelessWidget {
                   index: 0,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: getWidth(context, 10)),
               Expanded(
                   flex: 1,
                   child: CustomizedNavBarWidget(

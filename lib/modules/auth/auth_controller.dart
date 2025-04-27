@@ -43,11 +43,11 @@ class AuthController extends GetxController {
   }
 
   Future<void> handleAuth() async {
-    if (useEmailMethod.value) {
-      await handleEmailAuth();
-    } else {
-      await handlePhoneAuth();
-    }
+    // if (useEmailMethod.value) {
+    //   await handleEmailAuth();
+    // } else {
+    await handlePhoneAuth();
+    // }
   }
 
   Future<void> handlePhoneAuth() async {
@@ -112,13 +112,16 @@ class AuthController extends GetxController {
         verificationCompleted: (credential) async {
           await auth.signInWithCredential(credential);
           await handleSuccessfulAuth(auth.currentUser!.uid);
+          isLoading(false);
         },
         verificationFailed: (e) {
           Get.snackbar('Error', 'Verification failed: ${e.message}');
+          isLoading(false);
         },
         codeSent: (verificationId, [forceResendingToken]) {
           this.verificationId.value = verificationId;
           isOtpSent(true);
+          isLoading(false);
         },
         codeAutoRetrievalTimeout: (verificationId) {
           this.verificationId.value = verificationId;
@@ -126,8 +129,7 @@ class AuthController extends GetxController {
       );
     } catch (e) {
       Get.snackbar('Error', 'Failed to verify phone number: $e');
-    } finally {
-      isLoading(false);
+      isLoading(false); // Stop loading on exception
     }
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+// import 'package:skin_sync/device_check.dart';
+// import 'package:skin_sync/modules/routine/custom_routine_screen.dart';
 import 'package:skin_sync/utils/app_utils.dart';
 import 'routes/app_pages.dart';
 
@@ -14,6 +16,9 @@ class MyApp extends StatelessWidget {
       title: 'Daily Routine App',
       initialRoute: AppUtils.checkUser(),
       getPages: AppPages.pages,
+      // home: const ResponsiveScaffold(
+      //   mobile: CreateRoutineScreen(),
+      // ),
     );
   }
 }

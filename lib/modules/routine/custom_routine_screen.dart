@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:skin_sync/modules/layout/layout_screen.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
+import 'package:skin_sync/utils/mediaquery.dart';
 import 'package:uuid/uuid.dart';
 
 class CreateRoutineScreen extends StatefulWidget {
@@ -36,26 +37,26 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.symmetric(
+              horizontal: getWidth(context, 20),
+              vertical: getHeight(context, 20)),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeaderSection(),
-                const SizedBox(height: 30),
+                SizedBox(height: getHeight(context, 30)),
                 _buildIconUploadSection(),
-                const SizedBox(height: 30),
-                _buildFormFields(),
-                const SizedBox(height: 30),
+                SizedBox(height: getHeight(context, 30)),
+                _buildFormFields(isTablet(context)),
+                SizedBox(height: getHeight(context, 30)),
                 _buildTimeSelector(),
-                const SizedBox(height: 30),
+                SizedBox(height: getHeight(context, 30)),
                 _buildStartDateSection(),
-                const SizedBox(
-                  height: 10,
-                ),
+                SizedBox(height: getHeight(context, 30)),
                 _buildEndDateSection(),
-                const SizedBox(height: 40),
+                SizedBox(height: getHeight(context, 40)),
                 _buildSaveButton(),
               ],
             ),
@@ -75,7 +76,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                   color: Colors.grey[800],
                 )),
         Text('Create your personalized skincare regimen',
-            style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+            style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: getResponsiveFontSize(context, 14))),
       ],
     );
   }
@@ -86,43 +89,47 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         children: [
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(getWidth(context, 20)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withValues(alpha: 0.1),
-                  spreadRadius: 2,
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+                  spreadRadius: getWidth(context, 2),
+                  blurRadius: getWidth(context, 8),
+                  offset: Offset(0, getWidth(context, 3)),
                 )
               ],
             ),
             child: GestureDetector(
               onTap: _pickIcon,
               child: Container(
-                width: 120,
-                height: 120,
+                width: getWidth(context, 120),
+                height: getWidth(context, 120),
                 decoration: BoxDecoration(
                   color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(getWidth(context, 20)),
                   border: Border.all(
                     color: Colors.grey[200]!,
-                    width: 2,
+                    width: getWidth(context, 2),
                   ),
                 ),
                 child: _localIcon != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius:
+                            BorderRadius.circular(getWidth(context, 18)),
                         child: Image.file(_localIcon!, fit: BoxFit.cover),
                       )
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.add_a_photo_rounded,
-                              size: 32, color: Colors.grey[400]),
-                          const SizedBox(height: 8),
+                              size: getWidth(context, 32),
+                              color: Colors.grey[400]),
+                          SizedBox(height: getHeight(context, 8)),
                           Text('Add Icon',
                               style: TextStyle(
-                                  color: Colors.grey[500], fontSize: 13)),
+                                  color: Colors.grey[500],
+                                  fontSize:
+                                      getResponsiveFontSize(context, 13))),
                         ],
                       ),
               ),
@@ -131,20 +138,26 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           if (_localIcon != null)
             TextButton(
               onPressed: _pickIcon,
-              child: const Text('Change Icon',
-                  style: TextStyle(color: Colors.blue)),
+              child: Text('Change Icon',
+                  style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: getResponsiveFontSize(context, 14))),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildFormFields() {
+  Widget _buildFormFields(bool isTablet) {
     return Column(
       children: [
         TextFormField(
           controller: _nameController,
           decoration: InputDecoration(
+            contentPadding: EdgeInsets.symmetric(
+              vertical: getHeight(context, 16),
+              horizontal: getWidth(context, isTablet ? 20 : 16),
+            ),
             labelText: 'Routine Name',
             hintText: 'e.g., Morning Glow Routine',
             floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -158,14 +171,20 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                   BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
             ),
           ),
-          style: TextStyle(color: Colors.grey[800], fontSize: 15),
+          style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: getResponsiveFontSize(context, 15)),
           validator: (value) => value!.isEmpty ? 'Required field' : null,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: getHeight(context, 20)),
         TextFormField(
           controller: _descController,
           maxLines: 3,
           decoration: InputDecoration(
+            contentPadding: EdgeInsets.symmetric(
+              vertical: getHeight(context, 16),
+              horizontal: getWidth(context, isTablet ? 20 : 16),
+            ),
             labelText: 'Description (Optional)',
             alignLabelWithHint: true,
             floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -179,7 +198,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                   BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
             ),
           ),
-          style: TextStyle(color: Colors.grey[800], fontSize: 15),
+          style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: getResponsiveFontSize(context, 15)),
         ),
       ],
     );
@@ -189,42 +210,48 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     return GestureDetector(
       onTap: _selectTime,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(getWidth(context, 16)),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(getWidth(context, 15)),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              spreadRadius: 1,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: getWidth(context, 1),
+              blurRadius: getWidth(context, 6),
+              offset: Offset(0, getWidth(context, 2)),
             ),
           ],
         ),
         child: Row(
           children: [
             Icon(Icons.access_time_rounded,
-                color: Theme.of(context).primaryColor),
-            const SizedBox(width: 15),
+                color: Theme.of(context).primaryColor,
+                size: getWidth(context, 24)),
+            SizedBox(width: getWidth(context, 15)),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Routine Time',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                const SizedBox(height: 4),
+                    style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: getResponsiveFontSize(context, 13))),
+                SizedBox(height: getHeight(context, 4)),
                 Text(_selectedTime.format(context),
                     style: TextStyle(
-                        fontSize: 16,
+                        fontSize: getResponsiveFontSize(context, 16),
                         fontWeight: FontWeight.w500,
                         color: Colors.grey[800])),
               ],
             ),
             const Spacer(),
-            Text('Change',
-                style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.w500)),
+            Text(
+              'Change',
+              style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: getResponsiveFontSize(context, 14)),
+            ),
           ],
         ),
       ),
@@ -235,13 +262,16 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        icon: const Icon(Icons.check_circle_outline_rounded),
-        label: const Text('Save Routine',
-            style: TextStyle(fontWeight: FontWeight.w500)),
+        icon: Icon(Icons.check_circle_outline_rounded,
+            size: getWidth(context, 24)),
+        label: Text('Save Routine',
+            style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: getResponsiveFontSize(context, 16))),
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: getHeight(context, 16)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(getWidth(context, 12)),
           ),
           backgroundColor: Theme.of(context).primaryColor,
           foregroundColor: Colors.white,
@@ -303,7 +333,10 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     return Column(
       children: [
         SwitchListTile(
-          title: const Text('Set Start Date'),
+          contentPadding:
+              EdgeInsets.symmetric(horizontal: getWidth(context, 4)),
+          title: Text('Set Start Date',
+              style: TextStyle(fontSize: getResponsiveFontSize(context, 16))),
           value: _startDate != null,
           onChanged: (value) {
             if (value) {
@@ -315,11 +348,12 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         ),
         if (_startDate != null)
           ListTile(
-            leading: const Icon(Icons.calendar_today),
+            leading: Icon(Icons.calendar_today, size: getWidth(context, 24)),
             title: Text(
-                'Start Date: ${DateFormat('MMM d, y').format(_startDate!)}'),
+                'Start Date: ${DateFormat('MMM d, y').format(_startDate!)}',
+                style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
             trailing: IconButton(
-              icon: const Icon(Icons.edit),
+              icon: Icon(Icons.edit, size: getWidth(context, 24)),
               onPressed: _selectStartDate,
             ),
           ),

@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:skin_sync/model/custom_routine.dart';
 import 'package:skin_sync/modules/routine/custom_routine_screen.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
+import 'package:skin_sync/utils/mediaquery.dart';
 import 'package:skin_sync/utils/storage.dart';
 
 class RoutineScreen extends StatelessWidget {
@@ -20,7 +21,9 @@ class RoutineScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
             'Welcome, ${StorageService.instance.fetch('userName') ?? 'Zeeshan'} 👋',
-            style: const TextStyle(fontWeight: FontWeight.w500)),
+            style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: getResponsiveFontSize(context, 18))),
       ),
       floatingActionButton: Obx(() {
         final today = DateTime.now();
@@ -39,15 +42,15 @@ class RoutineScreen extends StatelessWidget {
       }),
       body: Column(
         children: [
-          _buildDateNavigation(),
+          _buildDateNavigation(context),
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return _buildLoadingState();
+                return _buildLoadingState(context);
               }
               return controller.routines.isEmpty
-                  ? _buildEmptyState()
-                  : _buildRoutineList();
+                  ? _buildEmptyState(context)
+                  : _buildRoutineList(context);
             }),
           ),
         ],
@@ -55,7 +58,7 @@ class RoutineScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDateNavigation() {
+  Widget _buildDateNavigation(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Obx(() => Row(
@@ -71,13 +74,16 @@ class RoutineScreen extends StatelessWidget {
                 children: [
                   Text(
                     dateFormat.format(controller.selectedDate.value),
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        fontSize: getResponsiveFontSize(context, 18),
+                        fontWeight: FontWeight.w600),
                   ),
                   Text(
                     'Completed: ${controller.completedRoutinesCount}',
                     style: TextStyle(
-                        color: Colors.green[700], fontWeight: FontWeight.w500),
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.w500,
+                        fontSize: getResponsiveFontSize(context, 14)),
                   ),
                 ],
               ),
@@ -91,7 +97,7 @@ class RoutineScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRoutineList() {
+  Widget _buildRoutineList(BuildContext context) {
     return Obx(() {
       final filteredRoutines = controller.filteredRoutines;
 
@@ -145,7 +151,9 @@ class RoutineScreen extends StatelessWidget {
           0, (sum, section) => sum + 1 + (section['routines'] as List).length);
 
       return ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(
+            vertical: getHeight(context, 16),
+            horizontal: getHeight(context, 16)),
         itemCount: totalItems,
         separatorBuilder: (_, i) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
@@ -156,11 +164,11 @@ class RoutineScreen extends StatelessWidget {
             if (index < current + sectionItemCount) {
               final posInSection = index - current;
               if (posInSection == 0) {
-                return _buildTimeSection(
-                    section['title'] as String, section['icon'] as IconData);
+                return _buildTimeSection(section['title'] as String,
+                    section['icon'] as IconData, context);
               } else {
                 final routineIndex = posInSection - 1;
-                return _buildRoutineCard(routines[routineIndex]);
+                return _buildRoutineCard(routines[routineIndex], context);
               }
             }
             current += sectionItemCount;
@@ -171,16 +179,16 @@ class RoutineScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildTimeSection(String title, IconData icon) {
+  Widget _buildTimeSection(String title, IconData icon, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: getHeight(context, 8)),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.amber[700]),
-          const SizedBox(width: 8),
+          Icon(icon, size: getHeight(context, 20), color: Colors.amber[700]),
+          SizedBox(width: getWidth(context, 8)),
           Text(title,
-              style: const TextStyle(
-                  fontSize: 16,
+              style: TextStyle(
+                  fontSize: getResponsiveFontSize(context, 16),
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5)),
         ],
@@ -188,7 +196,7 @@ class RoutineScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRoutineCard(CustomRoutine routine) {
+  Widget _buildRoutineCard(CustomRoutine routine, BuildContext context) {
     final isCompleted = controller.isDateCompleted(routine);
     final timeColor =
         isCompleted ? Colors.green[700] : Theme.of(Get.context!).primaryColor;
@@ -199,7 +207,7 @@ class RoutineScreen extends StatelessWidget {
         background: Container(
           color: Colors.red,
           alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
+          padding: EdgeInsets.only(right: getHeight(context, 20)),
           child:
               const Icon(Icons.delete_forever, color: Colors.white, size: 30),
         ),
@@ -221,12 +229,12 @@ class RoutineScreen extends StatelessWidget {
         },
         onDismissed: (_) => controller.deleteRoutine(routine.id),
         child: InkWell(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(getWidth(context, 15)),
           onTap: () => controller.toggleRoutineCompletion(routine.id),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(getWidth(context, 15)),
               boxShadow: [
                 BoxShadow(
                     color: Colors.grey.withValues(alpha: 0.1),
@@ -238,39 +246,44 @@ class RoutineScreen extends StatelessWidget {
             child: Stack(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.symmetric(
+                      vertical: getHeight(context, 16),
+                      horizontal: getWidth(context, 16)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          _buildProgressIndicator(routine),
-                          const SizedBox(width: 16),
+                          _buildProgressIndicator(routine, context),
+                          SizedBox(width: getWidth(context, 16)),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(routine.name,
-                                    style: const TextStyle(
-                                        fontSize: 18,
+                                    style: TextStyle(
+                                        fontSize:
+                                            getResponsiveFontSize(context, 14),
                                         fontWeight: FontWeight.w600)),
                                 if (routine.description.isNotEmpty)
                                   Padding(
-                                    padding: const EdgeInsets.only(top: 4),
+                                    padding: EdgeInsets.only(
+                                        top: getHeight(context, 4)),
                                     child: Text(routine.description,
                                         style: TextStyle(
                                             color: Colors.grey[600],
-                                            fontSize: 14)),
+                                            fontSize: getResponsiveFontSize(
+                                                context, 14))),
                                   ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: getHeight(context, 12)),
                       if (routine.imagePath.isNotEmpty)
-                        _buildRoutineImage(routine),
-                      const SizedBox(height: 12),
+                        _buildRoutineImage(routine, context),
+                      SizedBox(height: getHeight(context, 12)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -285,14 +298,14 @@ class RoutineScreen extends StatelessWidget {
                                         : Colors.grey[600])),
                             avatar: Icon(
                                 isCompleted ? Icons.check : Icons.access_time,
-                                size: 18,
+                                size: getHeight(context, 18),
                                 color: isCompleted
                                     ? Colors.green[800]
                                     : Colors.grey[600]),
                           ),
                           Text(routine.time.format(Get.context!),
                               style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: getResponsiveFontSize(context, 16),
                                   fontWeight: FontWeight.w600,
                                   color: timeColor)),
                         ],
@@ -301,11 +314,11 @@ class RoutineScreen extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 16,
-                  right: 16,
+                  top: getHeight(context, 16),
+                  right: getHeight(context, 16),
                   child: IconButton(
                     icon: Icon(Icons.close_rounded,
-                        size: 20, color: Colors.grey[500]),
+                        size: getHeight(context, 20), color: Colors.grey[500]),
                     onPressed: () => controller.deleteRoutine(routine.id),
                   ),
                 ),
@@ -317,7 +330,7 @@ class RoutineScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildProgressIndicator(CustomRoutine routine) {
+  Widget _buildProgressIndicator(CustomRoutine routine, BuildContext context) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -331,20 +344,20 @@ class RoutineScreen extends StatelessWidget {
           routine.localIconPath.isEmpty
               ? Icons.self_improvement_rounded
               : Icons.checklist_rounded,
-          size: 22,
+          size: getHeight(context, 22),
           color: Theme.of(Get.context!).primaryColor,
         ),
       ],
     );
   }
 
-  Widget _buildRoutineImage(CustomRoutine routine) {
+  Widget _buildRoutineImage(CustomRoutine routine, BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: CachedNetworkImage(
         imageUrl: routine.imagePath,
         width: double.infinity,
-        height: 150,
+        height: getHeight(context, 150),
         fit: BoxFit.cover,
         placeholder: (_, __) => Container(
           color: Colors.grey[100],
@@ -352,12 +365,14 @@ class RoutineScreen extends StatelessWidget {
         ),
         errorWidget: (_, __, ___) => Container(
           color: Colors.grey[100],
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, color: Colors.grey),
+              const Icon(Icons.error_outline, color: Colors.grey),
               Text('Failed to load image',
-                  style: TextStyle(color: Colors.grey)),
+                  style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: getResponsiveFontSize(context, 14))),
             ],
           ),
         ),
@@ -365,34 +380,36 @@ class RoutineScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const CircularProgressIndicator(),
-        const SizedBox(height: 16),
+        SizedBox(height: getHeight(context, 16)),
         Text('Loading your routines...',
-            style: TextStyle(color: Colors.grey[600])),
+            style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: getResponsiveFontSize(context, 14))),
       ],
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Lottie.asset(
             'assets/images/Main Scene.json',
-            width: 250,
-            height: 250,
+            width: getHeight(context, 250),
+            height: getHeight(context, 250),
             repeat: true,
             frameRate: const FrameRate(60),
           ),
-          const SizedBox(height: 15),
+          SizedBox(height: getHeight(context, 15)),
           Text("No Routines Found",
               style: TextStyle(
-                  fontSize: 18,
+                  fontSize: getResponsiveFontSize(context, 18),
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
