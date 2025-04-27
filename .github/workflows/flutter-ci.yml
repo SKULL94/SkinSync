@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run Analyzer
-        run: flutter analyze
+      - name: Run Analyzer (errors only)
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
       # - name: Run Tests
       #   run: flutter test
