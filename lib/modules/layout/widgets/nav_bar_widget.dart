@@ -6,12 +6,14 @@ class CustomizedNavBarWidget extends StatelessWidget {
   final String title;
   final IconData icon;
   final int index;
+  final ThemeData theme;
 
   const CustomizedNavBarWidget(
       {super.key,
       required this.title,
       required this.icon,
-      required this.index});
+      required this.index,
+      required this.theme});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,7 @@ class CustomizedNavBarWidget extends StatelessWidget {
             border: Border(
                 top: BorderSide(
           color: index == layoutController.currentIndex
-              ? const Color(0xff964F66)
+              ? theme.primaryColor
               : Colors.transparent,
           width: 3,
         ))),
@@ -37,7 +39,7 @@ class CustomizedNavBarWidget extends StatelessWidget {
                     icon,
                     color: index != layoutController.currentIndex
                         ? Colors.grey
-                        : const Color(0xff964F66),
+                        : theme.primaryColor,
                   )),
               const SizedBox(height: 2),
               Obx(() => Text(
@@ -49,7 +51,7 @@ class CustomizedNavBarWidget extends StatelessWidget {
                             : FontWeight.bold,
                         color: index != layoutController.currentIndex
                             ? Colors.grey
-                            : const Color(0xff964F66)),
+                            : theme.primaryColor),
                   ))
             ],
           ),

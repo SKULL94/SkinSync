@@ -5,21 +5,30 @@ import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 
+FlutterLocalNotificationsPlugin notificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
   Future<void> initialize() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
 
-    await _notificationsPlugin.initialize(initializationSettings);
+    DarwinInitializationSettings iosSettings =
+        const DarwinInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+            requestCriticalPermission: true,
+            requestProvisionalPermission: true);
+
+    InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid, iOS: iosSettings);
+
+    await notificationsPlugin.initialize(initializationSettings);
     tz.initializeTimeZones();
   }
 
@@ -29,77 +38,97 @@ class NotificationService {
         final controller = Get.find<RoutineController>();
         final routines = controller.routines;
 
-        const androidDetails = AndroidNotificationDetails(
+        AndroidNotificationDetails androidDetails =
+            const AndroidNotificationDetails(
           'routine_channel',
           'Routine Reminders',
           importance: Importance.high,
           priority: Priority.high,
           enableVibration: true,
         );
-
-        const platformDetails = NotificationDetails(android: androidDetails);
+        NotificationDetails notificationDetails =
+            NotificationDetails(android: androidDetails);
 
         for (final routine in routines) {
-          await _scheduleDaily(
-            hour: routine.time.hour,
-            minutes: routine.time.minute,
-            id: routine.id.hashCode,
-            title: '⏰ ${routine.name} Time!',
-            body: routine.description,
-            platformDetails: platformDetails,
-          );
+          final startDate = routine.startDate;
+          final endDate = routine.endDate;
+          final time = routine.time;
+
+          if (endDate == null) {
+            await scheduleRepeatingDaily(
+              hour: time.hour,
+              minutes: time.minute,
+              id: routine.id.hashCode,
+              title: '⏰ ${routine.name} Time!',
+              body: routine.description,
+              startDate: startDate,
+              platformDetails: notificationDetails,
+            );
+          } else {
+            final dates = getDatesInRange(startDate, endDate);
+            for (final date in dates) {
+              await _scheduleSingleNotification(
+                id: routine.id.hashCode + date.hashCode,
+                title: '⏰ ${routine.name} Time!',
+                body: routine.description,
+                scheduledDate: DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                  time.hour,
+                  time.minute,
+                ),
+                platformDetails: notificationDetails,
+              );
+            }
+          }
         }
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint("Error scheduling routines: $e");
-      }
+      debugPrint("Error scheduling routines: $e");
     }
   }
-  // Future<void> scheduleDailyRoutineReminders() async {
-  //   const androidDetails = AndroidNotificationDetails(
-  //     'routine_channel',
-  //     'Routine Reminders',
-  //     importance: Importance.high,
-  //     priority: Priority.high,
-  //     enableVibration: true,
-  //   );
 
-  //   const platformDetails = NotificationDetails(android: androidDetails);
+  List<DateTime> getDatesInRange(DateTime startDate, DateTime endDate) {
+    List<DateTime> dates = [];
+    DateTime currentDate = startDate;
+    while (currentDate.isBefore(endDate) ||
+        currentDate.isAtSameMomentAs(endDate)) {
+      dates.add(currentDate);
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+    return dates;
+  }
 
-  //   // Morning Routine
-  //   await _scheduleDaily(
-  //     hour: 8,
-  //     minutes: 0,
-  //     id: 1,
-  //     title: '🌞 Morning Cleanser Time!',
-  //     body: 'Start your day with Cetaphil Gentle Skin Cleanser',
-  //     platformDetails: platformDetails,
-  //   );
-
-  //   await _scheduleDaily(
-  //     hour: 8,
-  //     minutes: 15,
-  //     id: 2,
-  //     title: '🧴 Apply Toner',
-  //     body: 'Use Thayers Witch Hazel Toner',
-  //     platformDetails: platformDetails,
-  //   );
-  // }
-
-  Future<void> _scheduleDaily({
+  Future<void> scheduleRepeatingDaily({
     required int hour,
     required int minutes,
     required int id,
     required String title,
     required String body,
+    required DateTime startDate,
     required NotificationDetails platformDetails,
   }) async {
-    await _notificationsPlugin.zonedSchedule(
+    tz.TZDateTime scheduledDate = tz.TZDateTime.from(startDate, tz.local);
+    scheduledDate = tz.TZDateTime(
+      tz.local,
+      scheduledDate.year,
+      scheduledDate.month,
+      scheduledDate.day,
+      hour,
+      minutes,
+    );
+
+    final now = tz.TZDateTime.now(tz.local);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    await notificationsPlugin.zonedSchedule(
       id,
       title,
       body,
-      _nextTime(hour, minutes),
+      scheduledDate,
       platformDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
@@ -108,19 +137,27 @@ class NotificationService {
     );
   }
 
-  tz.TZDateTime _nextTime(int hour, int minutes) {
+  Future<void> _scheduleSingleNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    required NotificationDetails platformDetails,
+  }) async {
+    final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
     final now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minutes,
+
+    if (tzScheduledDate.isBefore(now)) return;
+
+    await notificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tzScheduledDate,
+      platformDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-    return scheduledDate;
   }
 }

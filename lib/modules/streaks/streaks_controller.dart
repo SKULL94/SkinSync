@@ -75,13 +75,10 @@ class StreaksController extends GetxController {
   }
 
   int calculateStreak(List<String> completedDays) {
-    // final formatter = DateFormat('yyyy-MM-dd');
     DateTime currentDate = DateTime.now();
     int streak = 0;
 
     while (true) {
-      // final dateString = formatter.format(currentDate);
-
       final meetsCriteria = switch (currentStreakType.value) {
         StreakType.daily => _dailyCompletionCheck(currentDate),
         StreakType.weekly => _weeklyCompletionCheck(currentDate),
@@ -99,11 +96,10 @@ class StreaksController extends GetxController {
 
   bool _dailyCompletionCheck(DateTime date) {
     final data = getDailyCompletion(date);
-    return data['ratio'] > 0; // At least one routine completed
+    return data['ratio'] > 0;
   }
 
   bool _weeklyCompletionCheck(DateTime date) {
-    // Check if week contains minimum 3 completed days
     final weekStart = date.subtract(Duration(days: date.weekday - 1));
     int completedDays = 0;
 
@@ -116,7 +112,6 @@ class StreaksController extends GetxController {
   }
 
   bool _monthlyCompletionCheck(DateTime date) {
-    // Check if month contains minimum 15 completed days
     final firstDayOfMonth = DateTime(date.year, date.month, 1);
     final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
     int completedDays = 0;
@@ -128,21 +123,6 @@ class StreaksController extends GetxController {
 
     return completedDays >= 15;
   }
-
-  // bool _weeklyCompletionCheck(DateTime date, List<String> completedDays) {
-  //   // Check if week contains at least 3 completed days
-  //   final weekStart = date.subtract(Duration(days: date.weekday - 1));
-  //   int weeklyCount = 0;
-
-  //   for (int i = 0; i < 7; i++) {
-  //     final day = weekStart.add(Duration(days: i));
-  //     if (completedDays.contains(DateFormat('yyyy-MM-dd').format(day))) {
-  //       weeklyCount++;
-  //     }
-  //   }
-
-  //   return weeklyCount >= 3;
-  // }
 
   Map<String, dynamic> getDailyCompletion(DateTime date) {
     final formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -156,8 +136,6 @@ class StreaksController extends GetxController {
   }
 
   int _getTotalRoutinesForDate(DateTime date) {
-    // Implement logic to get total routines for a date
-    // This should query your routines to find how many were active on this date
     return Get.find<RoutineController>()
         .routines
         .where((r) => _isDateInRange(date, r.startDate, r.endDate))

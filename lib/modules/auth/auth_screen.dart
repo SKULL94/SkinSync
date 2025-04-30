@@ -245,11 +245,11 @@ class AuthScreen extends StatelessWidget {
                   //   }),
                   // ),
                   SizedBox(height: getHeight(context, 24)),
-                  controller.useEmailMethod.value
-                      ? _buildPhoneInput(
-                          controller, theme, context, isTabletDevice)
-                      : _buildPhoneInput(
-                          controller, theme, context, isTabletDevice),
+                  // controller.useEmailMethod.value
+                  //     ? _buildPhoneInput(
+                  //         controller, theme, context, isTabletDevice)
+                  //     :
+                  _buildPhoneInput(controller, theme, context, isTabletDevice),
                   SizedBox(height: getHeight(context, 24)),
                   FilledButton(
                     onPressed: controller.handleAuth,
@@ -277,69 +277,6 @@ class AuthScreen extends StatelessWidget {
       ),
     );
   }
-
-  // Widget _buildSocialAuthButtons(AuthController controller, ThemeData theme,
-  //     bool isTablet, BuildContext context) {
-  //   // MODIFIED
-  //   return Column(
-  //     children: [
-  //       ConstrainedBox(
-  //         constraints: BoxConstraints(
-  //           maxWidth: isTablet ? 500 : double.infinity,
-  //         ),
-  //         child: OutlinedButton.icon(
-  //           icon: Icon(Icons.g_mobiledata,
-  //               size: getWidth(context, 24), color: Colors.red),
-  //           label: Text('Continue with Google',
-  //               style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
-  //           onPressed: () => _handleGoogleSignIn(controller),
-  //           style: OutlinedButton.styleFrom(
-  //             minimumSize: Size(double.infinity, getHeight(context, 50)),
-  //             padding: EdgeInsets.symmetric(vertical: getHeight(context, 14)),
-  //           ),
-  //         ),
-  //       ),
-  //       SizedBox(height: getHeight(context, 12)),
-  //       ConstrainedBox(
-  //         constraints: BoxConstraints(
-  //           maxWidth: isTablet ? 500 : double.infinity,
-  //         ),
-  //         child: OutlinedButton.icon(
-  //           icon: Icon(Icons.apple,
-  //               size: getWidth(context, 24), color: Colors.black),
-  //           label: Text('Continue with Apple',
-  //               style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
-  //           onPressed: () {},
-  //           style: OutlinedButton.styleFrom(
-  //             minimumSize: Size(double.infinity, getHeight(context, 50)),
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
-  // Future<void> _handleGoogleSignIn(AuthController controller) async {
-  //   try {
-  //     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-  //     if (googleUser != null) {
-  //       controller.isLoading(true);
-  //       final GoogleSignInAuthentication googleAuth =
-  //           await googleUser.authentication;
-  //       final credential = GoogleAuthProvider.credential(
-  //         accessToken: googleAuth.accessToken,
-  //         idToken: googleAuth.idToken,
-  //       );
-  //       final UserCredential userCredential =
-  //           await FirebaseAuth.instance.signInWithCredential(credential);
-  //       await controller.handleSuccessfulAuth(userCredential.user!.uid);
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar('Error', 'Failed to sign in with Google: $e');
-  //   } finally {
-  //     controller.isLoading(false);
-  //   }
-  // }
 
   Widget _buildPhoneInput(AuthController controller, ThemeData theme,
       BuildContext context, bool isTabletDevice) {
@@ -464,5 +401,68 @@ class AuthScreen extends StatelessWidget {
   //       ],
   //     ),
   //   );
+  // }
+
+  // Widget _buildSocialAuthButtons(AuthController controller, ThemeData theme,
+  //     bool isTablet, BuildContext context) {
+  //   // MODIFIED
+  //   return Column(
+  //     children: [
+  //       ConstrainedBox(
+  //         constraints: BoxConstraints(
+  //           maxWidth: isTablet ? 500 : double.infinity,
+  //         ),
+  //         child: OutlinedButton.icon(
+  //           icon: Icon(Icons.g_mobiledata,
+  //               size: getWidth(context, 24), color: Colors.red),
+  //           label: Text('Continue with Google',
+  //               style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
+  //           onPressed: () => _handleGoogleSignIn(controller),
+  //           style: OutlinedButton.styleFrom(
+  //             minimumSize: Size(double.infinity, getHeight(context, 50)),
+  //             padding: EdgeInsets.symmetric(vertical: getHeight(context, 14)),
+  //           ),
+  //         ),
+  //       ),
+  //       SizedBox(height: getHeight(context, 12)),
+  //       ConstrainedBox(
+  //         constraints: BoxConstraints(
+  //           maxWidth: isTablet ? 500 : double.infinity,
+  //         ),
+  //         child: OutlinedButton.icon(
+  //           icon: Icon(Icons.apple,
+  //               size: getWidth(context, 24), color: Colors.black),
+  //           label: Text('Continue with Apple',
+  //               style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
+  //           onPressed: () {},
+  //           style: OutlinedButton.styleFrom(
+  //             minimumSize: Size(double.infinity, getHeight(context, 50)),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  // Future<void> _handleGoogleSignIn(AuthController controller) async {
+  //   try {
+  //     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+  //     if (googleUser != null) {
+  //       controller.isLoading(true);
+  //       final GoogleSignInAuthentication googleAuth =
+  //           await googleUser.authentication;
+  //       final credential = GoogleAuthProvider.credential(
+  //         accessToken: googleAuth.accessToken,
+  //         idToken: googleAuth.idToken,
+  //       );
+  //       final UserCredential userCredential =
+  //           await FirebaseAuth.instance.signInWithCredential(credential);
+  //       await controller.handleSuccessfulAuth(userCredential.user!.uid);
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar('Error', 'Failed to sign in with Google: $e');
+  //   } finally {
+  //     controller.isLoading(false);
+  //   }
   // }
 }

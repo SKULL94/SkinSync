@@ -13,8 +13,6 @@ void main() async {
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwenR0eXRlcGVidmlocnlyanF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5Nzc4OTcsImV4cCI6MjA2MDU1Mzg5N30.SyGcEyunS-PkbsBWy2KUyeKjbOBJPAAr9KB-i4h7D88');
   await GetStorage.init();
   await Firebase.initializeApp();
-
-  // Initialize notifications
   await NotificationService().initialize();
   await NotificationService().scheduleCustomRoutines();
 

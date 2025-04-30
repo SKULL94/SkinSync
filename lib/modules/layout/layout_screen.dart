@@ -10,11 +10,11 @@ class LayoutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layoutController = Get.put(LayoutController());
+    final theme = Theme.of(context);
 
     return Scaffold(
-      bottomNavigationBar: Container(
+      bottomNavigationBar: SizedBox(
         height: getHeight(context, 75),
-        color: const Color(0xffF2E8EB),
         child: Obx(
           () => Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -23,6 +23,7 @@ class LayoutScreen extends StatelessWidget {
               Expanded(
                 flex: 1,
                 child: CustomizedNavBarWidget(
+                  theme: theme,
                   title: "Routine",
                   icon: layoutController.currentIndex == 0
                       ? Icons.home
@@ -34,6 +35,7 @@ class LayoutScreen extends StatelessWidget {
               Expanded(
                   flex: 1,
                   child: CustomizedNavBarWidget(
+                      theme: theme,
                       title: "Streaks",
                       icon: layoutController.currentIndex == 1
                           ? Icons.people_alt

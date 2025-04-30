@@ -73,12 +73,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         Text('New Skin Routine',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey[800],
                 )),
         Text('Create your personalized skincare regimen',
-            style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: getResponsiveFontSize(context, 14))),
+            style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
       ],
     );
   }
@@ -90,14 +87,6 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(getWidth(context, 20)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                  spreadRadius: getWidth(context, 2),
-                  blurRadius: getWidth(context, 8),
-                  offset: Offset(0, getWidth(context, 3)),
-                )
-              ],
             ),
             child: GestureDetector(
               onTap: _pickIcon,
@@ -212,16 +201,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       child: Container(
         padding: EdgeInsets.all(getWidth(context, 16)),
         decoration: BoxDecoration(
-          color: Colors.white,
           borderRadius: BorderRadius.circular(getWidth(context, 15)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: getWidth(context, 1),
-              blurRadius: getWidth(context, 6),
-              offset: Offset(0, getWidth(context, 2)),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -234,14 +214,13 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               children: [
                 Text('Routine Time',
                     style: TextStyle(
-                        color: Colors.grey[600],
                         fontSize: getResponsiveFontSize(context, 13))),
                 SizedBox(height: getHeight(context, 4)),
                 Text(_selectedTime.format(context),
                     style: TextStyle(
-                        fontSize: getResponsiveFontSize(context, 16),
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[800])),
+                      fontSize: getResponsiveFontSize(context, 16),
+                      fontWeight: FontWeight.w500,
+                    )),
               ],
             ),
             const Spacer(),

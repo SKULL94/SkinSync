@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:skin_sync/modules/streaks/streaks_controller.dart';
 import 'package:skin_sync/routes/app_routes.dart';
 import 'package:skin_sync/utils/mediaquery.dart';
@@ -9,6 +10,7 @@ class StreaksScreen extends StatelessWidget {
   StreaksScreen({super.key});
 
   final StreaksController controller = Get.put(StreaksController());
+  final RoutineController routineController = Get.find<RoutineController>();
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +18,7 @@ class StreaksScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xffFCF7FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Streaks'),
         centerTitle: true,
@@ -40,11 +42,11 @@ class StreaksScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildStreakTypeSelector(controller, context),
+              _buildStreakTypeSelector(controller, context, theme),
               SizedBox(height: getHeight(context, 20)),
-              _buildHeader(controller, context),
+              _buildHeader(controller, context, theme),
               SizedBox(height: getHeight(context, 20)),
-              _buildStreakCard(controller, size, context),
+              _buildStreakCard(controller, size, context, theme),
               SizedBox(height: getHeight(context, 30)),
               _buildChartSection(controller, size, isTablet(context), context),
               SizedBox(height: getHeight(context, 30)),
@@ -57,7 +59,7 @@ class StreaksScreen extends StatelessWidget {
   }
 
   Widget _buildStreakTypeSelector(
-      StreaksController controller, BuildContext context) {
+      StreaksController controller, BuildContext context, ThemeData theme) {
     return Padding(
       padding: EdgeInsets.symmetric(
           vertical: getHeight(context, 16), horizontal: getWidth(context, 16)),
@@ -69,29 +71,34 @@ class StreaksScreen extends StatelessWidget {
                   isActive:
                       controller.currentStreakType.value == StreakType.daily,
                   onTap: () => controller.changeStreakType(StreakType.daily),
-                  context: context),
+                  context: context,
+                  theme: theme),
               _buildStreakTypeButton(
                   label: 'Weekly',
                   isActive:
                       controller.currentStreakType.value == StreakType.weekly,
                   onTap: () => controller.changeStreakType(StreakType.weekly),
-                  context: context),
+                  context: context,
+                  theme: theme),
               _buildStreakTypeButton(
                   label: 'Perfect',
                   isActive:
                       controller.currentStreakType.value == StreakType.monthly,
                   onTap: () => controller.changeStreakType(StreakType.monthly),
-                  context: context),
+                  context: context,
+                  theme: theme),
             ],
           )),
     );
   }
 
-  Widget _buildStreakTypeButton(
-      {required String label,
-      required bool isActive,
-      required VoidCallback onTap,
-      required BuildContext context}) {
+  Widget _buildStreakTypeButton({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+    required BuildContext context,
+    required ThemeData theme,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -99,17 +106,16 @@ class StreaksScreen extends StatelessWidget {
             vertical: getHeight(context, 16),
             horizontal: getWidth(context, 16)),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xff964F66) : Colors.transparent,
+          color: isActive ? theme.primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(getWidth(context, 20)),
           border: Border.all(
-            color: const Color(0xff964F66),
+            color: theme.primaryColor,
             width: 1.5,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-              color: isActive ? Colors.white : const Color(0xff964F66),
               fontWeight: FontWeight.w500,
               fontSize: getResponsiveFontSize(context, 14)),
         ),
@@ -117,7 +123,8 @@ class StreaksScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(StreaksController controller, BuildContext context) {
+  Widget _buildHeader(
+      StreaksController controller, BuildContext context, ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -126,7 +133,6 @@ class StreaksScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: getResponsiveFontSize(context, 24),
             fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
           ),
         ),
         SizedBox(height: getHeight(context, 8)),
@@ -135,21 +141,21 @@ class StreaksScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: getResponsiveFontSize(context, 36),
             fontWeight: FontWeight.w900,
-            color: const Color(0xff964F66),
+            color: theme.primaryColor,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStreakCard(
-      StreaksController controller, Size size, BuildContext context) {
+  Widget _buildStreakCard(StreaksController controller, Size size,
+      BuildContext context, ThemeData theme) {
     return Container(
       width: size.width,
       padding: EdgeInsets.symmetric(
           vertical: getHeight(context, 20), horizontal: getWidth(context, 20)),
       decoration: BoxDecoration(
-        color: const Color(0xffF2E8EB),
+        color: theme.primaryColor,
         borderRadius: BorderRadius.circular(getWidth(context, 16)),
       ),
       child: Column(
@@ -157,18 +163,18 @@ class StreaksScreen extends StatelessWidget {
           Text(
             '🔥 Active Streak',
             style: TextStyle(
-              fontSize: getResponsiveFontSize(context, 18),
-              fontWeight: FontWeight.w600,
-              color: const Color(0xff964F66),
-            ),
+                fontSize: getResponsiveFontSize(context, 18),
+                fontWeight: FontWeight.w600,
+                color: theme.secondaryHeaderColor),
           ),
           SizedBox(height: getHeight(context, 12)),
           Text(
-            '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
+            '${routineController.completedRoutinesCount}',
+            // '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
             style: TextStyle(
-              fontSize: getResponsiveFontSize(context, 32),
-              fontWeight: FontWeight.bold,
-            ),
+                fontSize: getResponsiveFontSize(context, 32),
+                fontWeight: FontWeight.bold,
+                color: theme.secondaryHeaderColor),
           ),
           SizedBox(height: getHeight(context, 8)),
           LinearProgressIndicator(
@@ -211,11 +217,11 @@ class StreaksScreen extends StatelessWidget {
                 LineChartBarData(
                   spots: controller.getStreakChartData(),
                   isCurved: true,
-                  color: const Color(0xff964F66),
+                  // color: const Color(0xff964F66),
                   barWidth: 3,
                   belowBarData: BarAreaData(
                     show: true,
-                    color: const Color(0xff964F66).withValues(alpha: 0.1),
+                    // color: const Color(0xff964F66).withValues(alpha: 0.1),
                   ),
                   dotData: const FlDotData(show: false),
                 ),
@@ -255,27 +261,27 @@ class StreaksScreen extends StatelessWidget {
               color: Colors.grey,
             ),
           ),
-          SizedBox(height: getHeight(context, 16)),
-          ElevatedButton(
-            onPressed: () => Get.back(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff964F66),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(getWidth(context, 12)),
-              ),
-              padding: EdgeInsets.symmetric(
-                  vertical: getHeight(context, 12),
-                  horizontal: getWidth(context, 24)),
-            ),
-            child: Text(
-              'View Routines',
-              style: TextStyle(
-                fontSize: getResponsiveFontSize(context, 14),
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
+          // SizedBox(height: getHeight(context, 16)),
+          // ElevatedButton(
+          //   onPressed: () => Get.back(),
+          //   style: ElevatedButton.styleFrom(
+          //     backgroundColor: const Color(0xff964F66),
+          //     shape: RoundedRectangleBorder(
+          //       borderRadius: BorderRadius.circular(getWidth(context, 12)),
+          //     ),
+          //     padding: EdgeInsets.symmetric(
+          //         vertical: getHeight(context, 12),
+          //         horizontal: getWidth(context, 24)),
+          //   ),
+          //   child: Text(
+          //     'View Routines',
+          //     style: TextStyle(
+          //       fontSize: getResponsiveFontSize(context, 14),
+          //       color: Colors.white,
+          //       fontWeight: FontWeight.w500,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

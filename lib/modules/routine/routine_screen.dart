@@ -12,7 +12,7 @@ import 'package:skin_sync/utils/storage.dart';
 class RoutineScreen extends StatelessWidget {
   RoutineScreen({super.key});
 
-  final RoutineController controller = Get.put(RoutineController());
+  final RoutineController controller = Get.find<RoutineController>();
   final DateFormat dateFormat = DateFormat('EEE, MMM d');
 
   @override
@@ -20,10 +20,26 @@ class RoutineScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            'Welcome, ${StorageService.instance.fetch('userName') ?? 'Zeeshan'} 👋',
-            style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: getResponsiveFontSize(context, 18))),
+          'Welcome, ${StorageService.instance.fetch('userName') ?? 'Zeeshan'} 👋',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: getResponsiveFontSize(context, 18),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Get.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: Theme.of(context).iconTheme.color,
+            ),
+            onPressed: () {
+              final newTheme = Get.isDarkMode ? 'light' : 'dark';
+              Get.changeThemeMode(
+                  newTheme == 'dark' ? ThemeMode.dark : ThemeMode.light);
+              StorageService.instance.save('theme', newTheme);
+            },
+          ),
+        ],
       ),
       floatingActionButton: Obx(() {
         final today = DateTime.now();
@@ -36,8 +52,6 @@ class RoutineScreen extends StatelessWidget {
           onPressed: isPastDate
               ? null
               : () => Get.to(() => const CreateRoutineScreen()),
-          backgroundColor:
-              isPastDate ? Colors.grey : Theme.of(context).secondaryHeaderColor,
         );
       }),
       body: Column(
@@ -101,77 +115,76 @@ class RoutineScreen extends StatelessWidget {
     return Obx(() {
       final filteredRoutines = controller.filteredRoutines;
 
-      final morningRoutines = filteredRoutines.where((r) {
-        final hour = r.time.hour;
-        return hour >= 5 && hour < 12;
-      }).toList();
+      Map<String, List<CustomRoutine>> routineGroups = {
+        'Morning Routine': [],
+        'Afternoon Routine': [],
+        'Evening Routine': [],
+        'Night Routine': [],
+      };
 
-      final afternoonRoutines = filteredRoutines.where((r) {
-        final hour = r.time.hour;
-        return hour >= 12 && hour < 17;
-      }).toList();
-
-      final eveningRoutines = filteredRoutines.where((r) {
-        final hour = r.time.hour;
-        return hour >= 17 && hour < 21;
-      }).toList();
-
-      final nightRoutines = filteredRoutines.where((r) {
-        final hour = r.time.hour;
-        return hour >= 21 || hour < 5;
-      }).toList();
+      for (CustomRoutine r in filteredRoutines) {
+        final int hour = r.time.hour;
+        if (hour >= 5 && hour < 12) {
+          routineGroups['Morning Routine']!.add(r);
+        } else if (hour >= 12 && hour < 17) {
+          routineGroups['Afternoon Routine']!.add(r);
+        } else if (hour >= 17 && hour < 21) {
+          routineGroups['Evening Routine']!.add(r);
+        } else {
+          routineGroups['Night Routine']!.add(r);
+        }
+      }
 
       final sections = [
         {
           'title': 'Morning Routine',
           'icon': Icons.wb_sunny_rounded,
-          'routines': morningRoutines,
+          'routines': routineGroups['Morning Routine'],
         },
         {
           'title': 'Afternoon Routine',
           'icon': Icons.brightness_5_rounded,
-          'routines': afternoonRoutines,
+          'routines': routineGroups['Afternoon Routine'],
         },
         {
           'title': 'Evening Routine',
           'icon': Icons.nightlight_round_rounded,
-          'routines': eveningRoutines,
+          'routines': routineGroups['Evening Routine'],
         },
         {
           'title': 'Night Routine',
           'icon': Icons.bedtime_rounded,
-          'routines': nightRoutines,
+          'routines': routineGroups['Night Routine'],
         },
-      ];
+      ].where((s) => (s['routines'] as List).isNotEmpty).toList();
 
-      final nonEmptySections =
-          sections.where((s) => (s['routines'] as List).isNotEmpty).toList();
-
-      int totalItems = nonEmptySections.fold(
-          0, (sum, section) => sum + 1 + (section['routines'] as List).length);
+      final totalItems = sections.fold(
+        0,
+        (sum, section) => sum + 1 + (section['routines'] as List).length,
+      );
 
       return ListView.separated(
         padding: EdgeInsets.symmetric(
-            vertical: getHeight(context, 16),
-            horizontal: getHeight(context, 16)),
+          vertical: getHeight(context, 16),
+          horizontal: getHeight(context, 16),
+        ),
         itemCount: totalItems,
-        separatorBuilder: (_, i) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          int current = 0;
-          for (var section in nonEmptySections) {
+          int currentIndex = 0;
+          for (Map<String, Object?> section in sections) {
             final routines = section['routines'] as List<CustomRoutine>;
             final sectionItemCount = 1 + routines.length;
-            if (index < current + sectionItemCount) {
-              final posInSection = index - current;
-              if (posInSection == 0) {
+            if (index < currentIndex + sectionItemCount) {
+              final pos = index - currentIndex;
+              if (pos == 0) {
                 return _buildTimeSection(section['title'] as String,
                     section['icon'] as IconData, context);
               } else {
-                final routineIndex = posInSection - 1;
-                return _buildRoutineCard(routines[routineIndex], context);
+                return _buildRoutineCard(routines[pos - 1], context);
               }
             }
-            current += sectionItemCount;
+            currentIndex += sectionItemCount;
           }
           return const SizedBox.shrink();
         },
@@ -410,11 +423,9 @@ class RoutineScreen extends StatelessWidget {
           Text("No Routines Found",
               style: TextStyle(
                   fontSize: getResponsiveFontSize(context, 18),
-                  color: Colors.grey[600],
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
-          Text("Tap the + button to create your first routine!",
-              style: TextStyle(color: Colors.grey[500])),
+          const Text("Tap the + button to create your first routine!"),
         ],
       ),
     );

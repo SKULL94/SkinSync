@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/model/custom_routine.dart';
 import 'package:skin_sync/utils/app_utils.dart';
+import 'package:skin_sync/utils/notification_service.dart';
 import 'package:skin_sync/utils/storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -243,6 +244,7 @@ class RoutineController extends GetxController {
       await docRef.set(newRoutine.toMap());
       routines.add(newRoutine);
       updateFilteredRoutines();
+      await NotificationService().scheduleCustomRoutines();
     } catch (e) {
       Get.snackbar('Error', 'Failed to save routine: ${e.toString()}');
     }
@@ -266,6 +268,16 @@ class RoutineController extends GetxController {
 
       routines.removeWhere((r) => r.id == id);
       updateFilteredRoutines();
+      final endDate = routine.endDate;
+      if (endDate == null) {
+        await notificationsPlugin.cancel(routine.id.hashCode);
+      } else {
+        final dates =
+            NotificationService().getDatesInRange(routine.startDate, endDate);
+        for (final date in dates) {
+          await notificationsPlugin.cancel(routine.id.hashCode + date.hashCode);
+        }
+      }
     } catch (e) {
       Get.snackbar('Error', 'Failed to delete routine: ${e.toString()}');
     }
