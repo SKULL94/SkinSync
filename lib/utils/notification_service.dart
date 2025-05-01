@@ -3,7 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest_10y.dart' as tz;
 
 FlutterLocalNotificationsPlugin notificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -55,13 +55,32 @@ class NotificationService {
           final time = routine.time;
 
           if (endDate == null) {
+            final now = DateTime.now();
+            final todayRoutineTime = DateTime(
+              startDate.year,
+              startDate.month,
+              startDate.day,
+              time.hour,
+              time.minute,
+            );
+
+            if (todayRoutineTime.isAfter(now)) {
+              await _scheduleSingleNotification(
+                id: routine.id.hashCode + startDate.hashCode,
+                title: '⏰ ${routine.name} Time!',
+                body: routine.description,
+                scheduledDate: todayRoutineTime,
+                platformDetails: notificationDetails,
+              );
+            }
+
             await scheduleRepeatingDaily(
               hour: time.hour,
               minutes: time.minute,
               id: routine.id.hashCode,
               title: '⏰ ${routine.name} Time!',
               body: routine.description,
-              startDate: startDate,
+              startDate: startDate.add(const Duration(days: 1)),
               platformDetails: notificationDetails,
             );
           } else {
@@ -130,9 +149,9 @@ class NotificationService {
       body,
       scheduledDate,
       platformDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exact,
       uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+          UILocalNotificationDateInterpretation.wallClockTime,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
@@ -155,9 +174,9 @@ class NotificationService {
       body,
       tzScheduledDate,
       platformDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exact,
       uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+          UILocalNotificationDateInterpretation.wallClockTime,
     );
   }
 }

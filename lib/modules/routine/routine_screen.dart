@@ -246,7 +246,7 @@ class RoutineScreen extends StatelessWidget {
           onTap: () => controller.toggleRoutineCompletion(routine.id),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              // color: Colors.white,
               borderRadius: BorderRadius.circular(getWidth(context, 15)),
               boxShadow: [
                 BoxShadow(
@@ -284,7 +284,7 @@ class RoutineScreen extends StatelessWidget {
                                         top: getHeight(context, 4)),
                                     child: Text(routine.description,
                                         style: TextStyle(
-                                            color: Colors.grey[600],
+                                            // color: Colors.grey[600],
                                             fontSize: getResponsiveFontSize(
                                                 context, 14))),
                                   ),
@@ -301,14 +301,15 @@ class RoutineScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Chip(
-                            backgroundColor: isCompleted
-                                ? Colors.green[50]
-                                : Colors.grey[100],
+                            // backgroundColor: isCompleted
+                            //     ? Colors.green[50]
+                            //     : Colors.grey[100],
                             label: Text(isCompleted ? "Completed" : "Pending",
                                 style: TextStyle(
-                                    color: isCompleted
-                                        ? Colors.green[800]
-                                        : Colors.grey[600])),
+                                    // color: isCompleted
+                                    //     ? Colors.green[800]
+                                    //     : Colors.grey[600]
+                                    )),
                             avatar: Icon(
                                 isCompleted ? Icons.check : Icons.access_time,
                                 size: getHeight(context, 18),

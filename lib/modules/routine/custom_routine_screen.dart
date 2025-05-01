@@ -161,7 +161,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             ),
           ),
           style: TextStyle(
-              color: Colors.grey[800],
+              // color: Colors.grey[800],
               fontSize: getResponsiveFontSize(context, 15)),
           validator: (value) => value!.isEmpty ? 'Required field' : null,
         ),
@@ -188,7 +188,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             ),
           ),
           style: TextStyle(
-              color: Colors.grey[800],
+              // color: Colors.grey[800],
               fontSize: getResponsiveFontSize(context, 15)),
         ),
       ],
