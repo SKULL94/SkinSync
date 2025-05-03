@@ -11,7 +11,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final storage = StorageService.instance;
-    // Get stored theme or default to system
     final themeString = storage.fetch('theme') ?? 'system';
     final ThemeMode themeMode = themeString == 'dark'
         ? ThemeMode.dark

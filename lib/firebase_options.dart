@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '896982541880',
     projectId: 'skin-sync-ff3ba',
     storageBucket: 'skin-sync-ff3ba.firebasestorage.app',
-    iosBundleId: 'com.example.urbanCulture',
+    iosBundleId: 'com.zeeshan.skinsync',
   );
 }
