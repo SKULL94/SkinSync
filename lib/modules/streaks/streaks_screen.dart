@@ -1,8 +1,12 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:skin_sync/modules/streaks/streaks_controller.dart';
+import 'package:skin_sync/modules/streaks/widgets/streak_chart_section.dart';
+import 'package:skin_sync/modules/streaks/widgets/streak_header.dart';
+import 'package:skin_sync/modules/streaks/widgets/streak_motivation_section.dart';
+import 'package:skin_sync/modules/streaks/widgets/streak_progress.dart';
+import 'package:skin_sync/modules/streaks/widgets/streak_type_selector.dart';
 import 'package:skin_sync/routes/app_routes.dart';
 import 'package:skin_sync/utils/mediaquery.dart';
 
@@ -14,276 +18,55 @@ class StreaksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Streaks'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () => Get.offAllNamed(AppRoutes.authRoute),
-            icon: const Icon(Icons.logout),
-          )
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isFetchingStreaksData) {
-          return Center(
-              child: CircularProgressIndicator(color: theme.primaryColor));
-        }
-
-        return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-              vertical: getHeight(context, 16),
-              horizontal: getWidth(context, 16)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStreakTypeSelector(controller, context, theme),
-              SizedBox(height: getHeight(context, 20)),
-              _buildHeader(controller, context, theme),
-              SizedBox(height: getHeight(context, 20)),
-              _buildStreakCard(controller, size, context, theme),
-              SizedBox(height: getHeight(context, 30)),
-              _buildChartSection(controller, size, isTablet(context), context),
-              SizedBox(height: getHeight(context, 30)),
-              _buildMotivationSection(context),
-            ],
-          ),
-        );
-      }),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: _buildAppBar(),
+      body: Obx(() => _buildBody(context)),
     );
   }
 
-  Widget _buildStreakTypeSelector(
-      StreaksController controller, BuildContext context, ThemeData theme) {
-    return Padding(
+  Widget _buildBody(BuildContext context) {
+    if (controller.isFetchingStreaksData) {
+      return Center(
+        child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+      );
+    }
+
+    return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
-          vertical: getHeight(context, 16), horizontal: getWidth(context, 16)),
-      child: Obx(() => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildStreakTypeButton(
-                  label: 'Daily',
-                  isActive:
-                      controller.currentStreakType.value == StreakType.daily,
-                  onTap: () => controller.changeStreakType(StreakType.daily),
-                  context: context,
-                  theme: theme),
-              _buildStreakTypeButton(
-                  label: 'Weekly',
-                  isActive:
-                      controller.currentStreakType.value == StreakType.weekly,
-                  onTap: () => controller.changeStreakType(StreakType.weekly),
-                  context: context,
-                  theme: theme),
-              _buildStreakTypeButton(
-                  label: 'Perfect',
-                  isActive:
-                      controller.currentStreakType.value == StreakType.monthly,
-                  onTap: () => controller.changeStreakType(StreakType.monthly),
-                  context: context,
-                  theme: theme),
-            ],
-          )),
-    );
-  }
-
-  Widget _buildStreakTypeButton({
-    required String label,
-    required bool isActive,
-    required VoidCallback onTap,
-    required BuildContext context,
-    required ThemeData theme,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-            vertical: getHeight(context, 16),
-            horizontal: getWidth(context, 16)),
-        decoration: BoxDecoration(
-          color: isActive ? theme.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(getWidth(context, 20)),
-          border: Border.all(
-            color: theme.primaryColor,
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: getResponsiveFontSize(context, 14)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(
-      StreaksController controller, BuildContext context, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Current Streak',
-          style: TextStyle(
-            fontSize: getResponsiveFontSize(context, 24),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: getHeight(context, 8)),
-        Text(
-          '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
-          style: TextStyle(
-            fontSize: getResponsiveFontSize(context, 36),
-            fontWeight: FontWeight.w900,
-            color: theme.primaryColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStreakCard(StreaksController controller, Size size,
-      BuildContext context, ThemeData theme) {
-    return Container(
-      width: size.width,
-      padding: EdgeInsets.symmetric(
-          vertical: getHeight(context, 20), horizontal: getWidth(context, 20)),
-      decoration: BoxDecoration(
-        color: theme.primaryColor,
-        borderRadius: BorderRadius.circular(getWidth(context, 16)),
+        vertical: getHeight(context, 16),
+        horizontal: getWidth(context, 16),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '🔥 Active Streak',
-            style: TextStyle(
-                fontSize: getResponsiveFontSize(context, 18),
-                fontWeight: FontWeight.w600,
-                color: theme.secondaryHeaderColor),
+          StreakTypeSelector(controller: controller),
+          SizedBox(height: getHeight(context, 20)),
+          StreakHeader(controller: controller),
+          SizedBox(height: getHeight(context, 20)),
+          StreakProgressCard(
+            controller: controller,
+            routineController: routineController,
           ),
-          SizedBox(height: getHeight(context, 12)),
-          Text(
-            '${routineController.completedRoutinesCount}',
-            // '${controller.streaks} day${controller.streaks == 1 ? '' : 's'}',
-            style: TextStyle(
-                fontSize: getResponsiveFontSize(context, 32),
-                fontWeight: FontWeight.bold,
-                color: theme.secondaryHeaderColor),
-          ),
-          SizedBox(height: getHeight(context, 8)),
-          LinearProgressIndicator(
-            value: controller.streaks / 30,
-            backgroundColor: Colors.grey[200],
-            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff964F66)),
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(getWidth(context, 4)),
-          ),
+          SizedBox(height: getHeight(context, 30)),
+          StreakChartSection(controller: controller),
+          SizedBox(height: getHeight(context, 30)),
+          const MotivationSection(),
         ],
       ),
     );
   }
 
-  Widget _buildChartSection(StreaksController controller, Size size,
-      bool isTablet, BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Monthly Progress',
-          style: TextStyle(
-            fontSize: getResponsiveFontSize(context, 18),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: getHeight(context, 50)),
-        SizedBox(
-          height: getHeight(context, isTablet ? 120 : 100),
-          child: LineChart(
-            LineChartData(
-              gridData: const FlGridData(show: false),
-              titlesData: const FlTitlesData(show: false),
-              borderData: FlBorderData(show: false),
-              minX: 0,
-              maxX: 29,
-              minY: 0,
-              maxY: controller.streaks.toDouble() + 2,
-              lineBarsData: [
-                LineChartBarData(
-                  spots: controller.getStreakChartData(),
-                  isCurved: true,
-                  // color: const Color(0xff964F66),
-                  barWidth: 3,
-                  belowBarData: BarAreaData(
-                    show: true,
-                    // color: const Color(0xff964F66).withValues(alpha: 0.1),
-                  ),
-                  dotData: const FlDotData(show: false),
-                ),
-              ],
-            ),
-          ),
-        ),
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const Text('Streaks'),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          onPressed: () => Get.offAllNamed(AppRoutes.authRoute),
+          icon: const Icon(Icons.logout),
+        )
       ],
-    );
-  }
-
-  Widget _buildMotivationSection(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-          vertical: getHeight(context, 20), horizontal: getWidth(context, 20)),
-      decoration: BoxDecoration(
-        color: const Color(0xffF2E8EB),
-        borderRadius: BorderRadius.circular(getWidth(context, 16)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Keep the streak alive!',
-            style: TextStyle(
-              fontSize: getResponsiveFontSize(context, 18),
-              fontWeight: FontWeight.w600,
-              color: const Color(0xff964F66),
-            ),
-          ),
-          SizedBox(height: getHeight(context, 12)),
-          Text(
-            'Complete your routines daily to maintain your streak',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: getResponsiveFontSize(context, 14),
-              color: Colors.grey,
-            ),
-          ),
-          // SizedBox(height: getHeight(context, 16)),
-          // ElevatedButton(
-          //   onPressed: () => Get.back(),
-          //   style: ElevatedButton.styleFrom(
-          //     backgroundColor: const Color(0xff964F66),
-          //     shape: RoundedRectangleBorder(
-          //       borderRadius: BorderRadius.circular(getWidth(context, 12)),
-          //     ),
-          //     padding: EdgeInsets.symmetric(
-          //         vertical: getHeight(context, 12),
-          //         horizontal: getWidth(context, 24)),
-          //   ),
-          //   child: Text(
-          //     'View Routines',
-          //     style: TextStyle(
-          //       fontSize: getResponsiveFontSize(context, 14),
-          //       color: Colors.white,
-          //       fontWeight: FontWeight.w500,
-          //     ),
-          //   ),
-          // ),
-        ],
-      ),
     );
   }
 }

@@ -2,10 +2,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:skin_sync/modules/layout/layout_screen.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
+import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/build_form_fields.dart';
+import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/build_icon_upload.dart';
+import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/end_date.dart';
+import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/header.dart';
+import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/save_button.dart';
+import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/start_date.dart';
+import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/time_selector.dart';
 import 'package:skin_sync/utils/mediaquery.dart';
 import 'package:uuid/uuid.dart';
 
@@ -45,217 +51,49 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeaderSection(),
+                const CustomRoutineHeader(),
                 SizedBox(height: getHeight(context, 30)),
-                _buildIconUploadSection(),
+                IconUploadSection(localIcon: _localIcon, onPickIcon: _pickIcon),
                 SizedBox(height: getHeight(context, 30)),
-                _buildFormFields(isTablet(context)),
+                CustomRoutineFormField(
+                    controller: _nameController,
+                    descController: _descController,
+                    isTablet: isTablet(context)),
                 SizedBox(height: getHeight(context, 30)),
-                _buildTimeSelector(),
+                CustomRoutineTimeSelector(
+                    onSelectTime: _selectTime, selectedTime: _selectedTime),
                 SizedBox(height: getHeight(context, 30)),
-                _buildStartDateSection(),
-                SizedBox(height: getHeight(context, 30)),
-                _buildEndDateSection(),
-                SizedBox(height: getHeight(context, 40)),
-                _buildSaveButton(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('New Skin Routine',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                )),
-        Text('Create your personalized skincare regimen',
-            style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
-      ],
-    );
-  }
-
-  Widget _buildIconUploadSection() {
-    return Center(
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(getWidth(context, 20)),
-            ),
-            child: GestureDetector(
-              onTap: _pickIcon,
-              child: Container(
-                width: getWidth(context, 120),
-                height: getWidth(context, 120),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(getWidth(context, 20)),
-                  border: Border.all(
-                    color: Colors.grey[200]!,
-                    width: getWidth(context, 2),
-                  ),
+                CustomRoutineStartDateSelector(
+                  startDate: _startDate,
+                  isEnabled: _startDate != null,
+                  onToggle: (value) => setState(() {
+                    if (value) {
+                      _selectStartDate();
+                    } else {
+                      _startDate = null;
+                    }
+                  }),
+                  onDateChanged: _selectStartDate,
                 ),
-                child: _localIcon != null
-                    ? ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(getWidth(context, 18)),
-                        child: Image.file(_localIcon!, fit: BoxFit.cover),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_a_photo_rounded,
-                              size: getWidth(context, 32),
-                              color: Colors.grey[400]),
-                          SizedBox(height: getHeight(context, 8)),
-                          Text('Add Icon',
-                              style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize:
-                                      getResponsiveFontSize(context, 13))),
-                        ],
-                      ),
-              ),
-            ),
-          ),
-          if (_localIcon != null)
-            TextButton(
-              onPressed: _pickIcon,
-              child: Text('Change Icon',
-                  style: TextStyle(
-                      color: Colors.blue,
-                      fontSize: getResponsiveFontSize(context, 14))),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFormFields(bool isTablet) {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(
-              vertical: getHeight(context, 16),
-              horizontal: getWidth(context, isTablet ? 20 : 16),
-            ),
-            labelText: 'Routine Name',
-            hintText: 'e.g., Morning Glow Routine',
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
-            ),
-          ),
-          style: TextStyle(
-              // color: Colors.grey[800],
-              fontSize: getResponsiveFontSize(context, 15)),
-          validator: (value) => value!.isEmpty ? 'Required field' : null,
-        ),
-        SizedBox(height: getHeight(context, 20)),
-        TextFormField(
-          controller: _descController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(
-              vertical: getHeight(context, 16),
-              horizontal: getWidth(context, isTablet ? 20 : 16),
-            ),
-            labelText: 'Description (Optional)',
-            alignLabelWithHint: true,
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
-            ),
-          ),
-          style: TextStyle(
-              // color: Colors.grey[800],
-              fontSize: getResponsiveFontSize(context, 15)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTimeSelector() {
-    return GestureDetector(
-      onTap: _selectTime,
-      child: Container(
-        padding: EdgeInsets.all(getWidth(context, 16)),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(getWidth(context, 15)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.access_time_rounded,
-                color: Theme.of(context).primaryColor,
-                size: getWidth(context, 24)),
-            SizedBox(width: getWidth(context, 15)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Routine Time',
-                    style: TextStyle(
-                        fontSize: getResponsiveFontSize(context, 13))),
-                SizedBox(height: getHeight(context, 4)),
-                Text(_selectedTime.format(context),
-                    style: TextStyle(
-                      fontSize: getResponsiveFontSize(context, 16),
-                      fontWeight: FontWeight.w500,
-                    )),
+                SizedBox(height: getHeight(context, 30)),
+                CustomRoutineEndDateSelector(
+                  startDate: _endDate,
+                  isEnabled: _endDate != null,
+                  onToggle: (value) => setState(() {
+                    if (value) {
+                      _selectStartDate();
+                    } else {
+                      _endDate = null;
+                    }
+                  }),
+                  onDateChanged: _selectEndDate,
+                ),
+                SizedBox(height: getHeight(context, 40)),
+                CustomRoutineSaveButton(saveRoutine: _saveRoutine),
               ],
             ),
-            const Spacer(),
-            Text(
-              'Change',
-              style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: getResponsiveFontSize(context, 14)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        icon: Icon(Icons.check_circle_outline_rounded,
-            size: getWidth(context, 24)),
-        label: Text('Save Routine',
-            style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: getResponsiveFontSize(context, 16))),
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: getHeight(context, 16)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(getWidth(context, 12)),
           ),
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
         ),
-        onPressed: _saveRoutine,
       ),
     );
   }
@@ -308,66 +146,6 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     }
   }
 
-  Widget _buildStartDateSection() {
-    return Column(
-      children: [
-        SwitchListTile(
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: getWidth(context, 4)),
-          title: Text('Set Start Date',
-              style: TextStyle(fontSize: getResponsiveFontSize(context, 16))),
-          value: _startDate != null,
-          onChanged: (value) {
-            if (value) {
-              _selectStartDate();
-            } else {
-              setState(() => _startDate = null);
-            }
-          },
-        ),
-        if (_startDate != null)
-          ListTile(
-            leading: Icon(Icons.calendar_today, size: getWidth(context, 24)),
-            title: Text(
-                'Start Date: ${DateFormat('MMM d, y').format(_startDate!)}',
-                style: TextStyle(fontSize: getResponsiveFontSize(context, 14))),
-            trailing: IconButton(
-              icon: Icon(Icons.edit, size: getWidth(context, 24)),
-              onPressed: _selectStartDate,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildEndDateSection() {
-    return Column(
-      children: [
-        SwitchListTile(
-          title: const Text('Set End Date'),
-          value: _endDate != null,
-          onChanged: (value) {
-            if (value) {
-              _selectEndDate();
-            } else {
-              setState(() => _endDate = null);
-            }
-          },
-        ),
-        if (_endDate != null)
-          ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title:
-                Text('End Date: ${DateFormat('MMM d, y').format(_endDate!)}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: _selectEndDate,
-            ),
-          ),
-      ],
-    );
-  }
-
   Future<void> _selectStartDate() async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -375,6 +153,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
+
     if (pickedDate != null) {
       setState(() => _startDate = pickedDate);
     }

@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "937298894895",
-    "project_id": "skin-sync-a2248",
-    "storage_bucket": "skin-sync-a2248.firebasestorage.app"
+    "project_number": "896982541880",
+    "project_id": "skin-sync-ff3ba",
+    "storage_bucket": "skin-sync-ff3ba.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:937298894895:android:b2008eb097ae72de7366da",
+        "mobilesdk_app_id": "1:896982541880:android:8be72156d362c3ff3da8cd",
         "android_client_info": {
           "package_name": "com.zeeshan.skinsync"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAxbxpxwVlcYEqlg_gawdeGXdSCxpGgoNA"
+          "current_key": "AIzaSyD8rQwmev0o46qx-cTDEyltY1-3glN7owk"
         }
       ],
       "services": {
