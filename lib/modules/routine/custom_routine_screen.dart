@@ -23,6 +23,7 @@ class CreateRoutineScreen extends StatefulWidget {
 }
 
 class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
+  final controller = Get.find<RoutineController>();
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
@@ -81,7 +82,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                   isEnabled: _endDate != null,
                   onToggle: (value) => setState(() {
                     if (value) {
-                      _selectStartDate();
+                      _selectEndDate();
                     } else {
                       _endDate = null;
                     }
@@ -173,8 +174,6 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
 
   void _saveRoutine() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final controller = Get.find<RoutineController>();
     final routineId = _uuid.v4();
     final localIconPath = await _saveIconLocally(routineId);
     final startDate = _startDate != null
@@ -187,7 +186,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       endDate = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
     }
 
-    controller.addCustomRoutine(
+    await controller.addCustomRoutine(
       name: _nameController.text.trim(),
       description: _descController.text.trim(),
       time: _selectedTime,
