@@ -2,24 +2,155 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:skin_sync/model/custom_routine.dart';
+import 'package:skin_sync/modules/layout/layout_screen.dart';
 import 'package:skin_sync/utils/app_utils.dart';
 import 'package:skin_sync/utils/notification_service.dart';
 import 'package:skin_sync/utils/storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 class RoutineController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RxList<CustomRoutine> routines = <CustomRoutine>[].obs;
   final RxBool isLoading = false.obs;
+  final Uuid _uuid = const Uuid();
 
+  // Form state
+  final Rx<TimeOfDay> selectedTime = TimeOfDay.now().obs;
+  final Rx<File?> localIcon = Rx<File?>(null);
+  final Rx<DateTime?> startDate = DateTime.now().obs;
+  final Rx<DateTime?> endDate = Rx<DateTime?>(null);
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController descController = TextEditingController();
+
+  // Date management
   DateTime get currentDate => DateTime.now();
-  DateTime get previousDate => currentDate.subtract(const Duration(days: 1));
-  DateTime get nextDate => currentDate.add(const Duration(days: 1));
-
   final selectedDate = DateTime.now().obs;
   RxList<CustomRoutine> filteredRoutines = <CustomRoutine>[].obs;
+
+  Future<void> pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (pickedFile != null) {
+      localIcon.value = File(pickedFile.path);
+    }
+  }
+
+  Future<String?> saveIconLocally(String routineId) async {
+    if (localIcon.value == null) return null;
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final routineIconsDir = Directory('${directory.path}/routine_icons');
+      if (!await routineIconsDir.exists()) {
+        await routineIconsDir.create(recursive: true);
+      }
+      final iconPath = '${routineIconsDir.path}/$routineId.png';
+      await localIcon.value!.copy(iconPath);
+      return iconPath;
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to save icon: ${e.toString()}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red[100]);
+      return null;
+    }
+  }
+
+  Future<void> selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime.value,
+      builder: (context, child) => Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Theme.of(context).primaryColor,
+            secondary: Theme.of(context).primaryColor,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      selectedTime.value = picked;
+    }
+  }
+
+  Future<void> selectEndDate(BuildContext context) async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: endDate.value ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      endDate.value = pickedDate;
+    }
+  }
+
+  Future<void> selectStartDate(BuildContext context) async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: startDate.value ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      startDate.value = pickedDate;
+    }
+  }
+
+  Future<void> saveRoutine() async {
+    try {
+      final routineId = _uuid.v4();
+      final localIconPath = await saveIconLocally(routineId);
+
+      final newRoutine = CustomRoutine(
+        id: routineId,
+        name: nameController.text.trim(),
+        description: descController.text.trim(),
+        time: selectedTime.value,
+        userId: StorageService.instance.fetch(AppUtils.userId),
+        createdDate: DateTime.now(),
+        localIconPath: localIconPath ?? '',
+        startDate: startDate.value!,
+        endDate: endDate.value,
+        isCompleted: false,
+        completionProgress: 0.0,
+        completionDates: [],
+        imagePath: '',
+      );
+
+      await _firestore
+          .collection('users')
+          .doc(newRoutine.userId)
+          .collection('routines')
+          .doc(routineId)
+          .set(newRoutine.toMap());
+
+      routines.add(newRoutine);
+      updateFilteredRoutines();
+      await NotificationService().scheduleCustomRoutines();
+
+      Get.off(() => const LayoutScreen());
+      Get.showSnackbar(GetSnackBar(
+        message: 'Routine created successfully!',
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.green[400]!,
+        snackPosition: SnackPosition.TOP,
+        borderRadius: 8,
+        margin: const EdgeInsets.all(16),
+      ));
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to save routine: ${e.toString()}');
+    }
+  }
 
   void updateFilteredRoutines() {
     filteredRoutines.value = routines.where((routine) {

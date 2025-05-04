@@ -50,9 +50,8 @@ class RoutineScreen extends StatelessWidget {
         return FloatingActionButton.extended(
           icon: const Icon(Icons.add_task_rounded),
           label: const Text("New Routine"),
-          onPressed: isPastDate
-              ? null
-              : () => Get.to(() => const CreateRoutineScreen()),
+          onPressed:
+              isPastDate ? null : () => Get.to(() => CreateRoutineScreen()),
         );
       }),
       body: Column(

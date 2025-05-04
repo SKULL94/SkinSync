@@ -34,7 +34,7 @@ class AppPages {
         ]),
     GetPage(
       name: AppRoutes.createRoutineRoute,
-      page: () => const CreateRoutineScreen(),
+      page: () => CreateRoutineScreen(),
       binding: RoutineBinding(),
     ),
   ];
