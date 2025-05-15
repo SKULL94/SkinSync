@@ -1,0 +1,1 @@
+/Users/zeeshan/Desktop/SkinSync-main/build/app/intermediates/cxx/RelWithDebInfo/3q537505/obj/x86_64

@@ -1,0 +1,2 @@
+/Users/zeeshan/Desktop/SkinSync-main/android/app/.cxx/RelWithDebInfo/3q537505/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/zeeshan/Desktop/SkinSync-main/android/app/.cxx/RelWithDebInfo/3q537505/armeabi-v7a/CMakeFiles/rebuild_cache.dir

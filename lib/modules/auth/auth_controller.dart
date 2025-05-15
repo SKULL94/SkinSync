@@ -35,16 +35,8 @@ class AuthController extends GetxController {
 
   void toggleAuthType(bool isLoginValue) => isLogin.value = isLoginValue;
 
-  // void toggleAuthMethod() {
-  //   useEmailMethod.value = !useEmailMethod.value;
-  // }
-
   Future<void> handleAuth() async {
-    // if (useEmailMethod.value) {
-    //   await handleEmailAuth();
-    // } else {
     await handlePhoneAuth();
-    // }
   }
 
   Future<void> handlePhoneAuth() async {
@@ -120,119 +112,4 @@ class AuthController extends GetxController {
       Get.offAllNamed(AppRoutes.layoutRoute);
     }
   }
-
-  // Future<void> signInWithGoogle() async {
-  //   try {
-  //     isLoading(true);
-  //     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
-  //     if (googleUser == null) return;
-  //     final GoogleSignInAuthentication googleAuth =
-  //         await googleUser.authentication;
-  //     final credential = GoogleAuthProvider.credential(
-  //       accessToken: googleAuth.accessToken,
-  //       idToken: googleAuth.idToken,
-  //     );
-  //     final UserCredential userCredential =
-  //         await auth.signInWithCredential(credential);
-  //     if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-  //       await _handleNewUserSetup(userCredential.user!.uid);
-  //     }
-
-  //     await handleSuccessfulAuth(userCredential.user!.uid);
-  //   } catch (e) {
-  //     Get.snackbar('Error', 'Failed to sign in with Google: $e');
-  //   } finally {
-  //     isLoading(false);
-  //   }
-  // }
-
-  // Future<void> handleEmailAuth() async {
-  //   if (!validateEmailPassword()) return;
-
-  //   isLoading(true);
-  //   try {
-  //     if (isLogin.value) {
-  //       await signInWithEmailPassword();
-  //     } else {
-  //       await createUserWithEmailPassword();
-  //     }
-  //   } finally {
-  //     isLoading(false);
-  //   }
-  // }
-
-  // Future<void> _handleNewUserSetup(String userId) async {
-  //   final userDoc = await _firestore.collection('users').doc(userId).get();
-  //   if (!userDoc.exists) {
-  //     await _firestore.collection('users').doc(userId).set({
-  //       'userId': userId,
-  //       'createdAt': FieldValue.serverTimestamp(),
-  //       'streakCount': 0,
-  //       'lastUpdatedDay': DateTime.now().toString().split(' ')[0],
-  //     });
-  //   }
-  // }
-
-  // bool validateEmailPassword() {
-  //   if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-  //     Get.snackbar('Error', 'Please fill in all fields');
-  //     return false;
-  //   }
-  //   if (!isLogin.value &&
-  //       passwordController.text != confirmPasswordController.text) {
-  //     Get.snackbar('Error', 'Passwords do not match');
-  //     return false;
-  //   }
-  //   return true;
-  // }
-
-  // String _mapAuthError(FirebaseAuthException e) {
-  //   switch (e.code) {
-  //     case 'user-not-found':
-  //       return 'No user found with this email';
-  //     case 'wrong-password':
-  //       return 'Incorrect password';
-  //     case 'email-already-in-use':
-  //       return 'Email already in use';
-  //     case 'weak-password':
-  //       return 'Password is too weak';
-  //     default:
-  //       return 'Authentication failed: ${e.message}';
-  //   }
-  // }
-
-  // Future<void> signInWithEmailPassword() async {
-  //   try {
-  //     final userCredential = await auth.signInWithEmailAndPassword(
-  //       email: emailController.text.trim(),
-  //       password: passwordController.text.trim(),
-  //     );
-  //     await handleSuccessfulAuth(userCredential.user!.uid);
-  //   } on FirebaseAuthException catch (e) {
-  //     Get.snackbar('Error', _mapAuthError(e));
-  //   }
-  // }
-
-  // Future<void> createUserWithEmailPassword() async {
-  //   try {
-  //     final userCredential = await auth.createUserWithEmailAndPassword(
-  //       email: emailController.text.trim(),
-  //       password: passwordController.text.trim(),
-  //     );
-  //     await _handleNewUserSetup(userCredential.user!.uid);
-  //     await handleSuccessfulAuth(userCredential.user!.uid);
-  //   } on FirebaseAuthException catch (e) {
-  //     Get.snackbar('Error', _mapAuthError(e));
-  //   }
-  // }
-
-  // Future<void> sendPasswordResetEmail() async {
-  //   try {
-  //     await auth.sendPasswordResetEmail(email: emailController.text.trim());
-  //     Get.snackbar('Success', 'Password reset email sent');
-  //   } on FirebaseAuthException catch (e) {
-  //     Get.snackbar('Error', 'Failed to send email: ${e.message}');
-  //   }
-  // }
 }

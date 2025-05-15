@@ -7,10 +7,11 @@ import 'package:skin_sync/utils/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await GetStorage.init();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await GetStorage.init();
   await NotificationService().initialize();
   await NotificationService().scheduleCustomRoutines();
 

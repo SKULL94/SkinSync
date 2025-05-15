@@ -10,7 +10,6 @@ import 'package:skin_sync/modules/layout/layout_screen.dart';
 import 'package:skin_sync/utils/app_utils.dart';
 import 'package:skin_sync/utils/notification_service.dart';
 import 'package:skin_sync/utils/storage.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 class RoutineController extends GetxController {
@@ -276,27 +275,6 @@ class RoutineController extends GetxController {
     return thisMonthDates / totalDays;
   }
 
-  Future<void> updateRoutineImage(String routineId, File image) async {
-    try {
-      final userId = StorageService.instance.fetch(AppUtils.userId);
-      final imageUrl = await _uploadImage(image, userId, routineId);
-
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('routines')
-          .doc(routineId)
-          .update({'imagePath': imageUrl});
-
-      final index = routines.indexWhere((r) => r.id == routineId);
-      if (index != -1) {
-        routines[index] = routines[index].copyWith(imagePath: imageUrl);
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to update image: ${e.toString()}');
-    }
-  }
-
   Future<void> _updateCompletedDays(String userId) async {
     final userRef = _firestore.collection('users').doc(userId);
     final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate.value);
@@ -319,23 +297,6 @@ class RoutineController extends GetxController {
           'completedDays': hasAnyCompleted ? [formattedDate] : [],
         }, SetOptions(merge: true));
       }
-    }
-  }
-
-  Future<String> _uploadImage(
-      File image, String userId, String routineId) async {
-    try {
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final filePath = 'users/$userId/images/$routineId/$fileName';
-      final supabase = Supabase.instance.client;
-
-      await supabase.storage.from('images').upload(filePath, image,
-          fileOptions: const FileOptions(contentType: 'image/jpeg'));
-
-      return supabase.storage.from('images').getPublicUrl(filePath);
-    } catch (e) {
-      Get.snackbar('Upload Error', 'Failed to upload image: ${e.toString()}');
-      rethrow;
     }
   }
 

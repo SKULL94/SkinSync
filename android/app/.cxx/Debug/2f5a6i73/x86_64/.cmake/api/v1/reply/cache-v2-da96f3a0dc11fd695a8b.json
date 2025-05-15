@@ -151,7 +151,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/Users/zeeshan/Desktop/urban_culture-main/android/app/.cxx/Debug/2f5a6i73/x86_64"
+			"value" : "/Users/zeeshan/Desktop/skin_sync-main/android/app/.cxx/Debug/2f5a6i73/x86_64"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -763,7 +763,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "/Users/zeeshan/Desktop/urban_culture-main/build/app/intermediates/cxx/Debug/2f5a6i73/obj/x86_64"
+			"value" : "/Users/zeeshan/Desktop/skin_sync-main/build/app/intermediates/cxx/Debug/2f5a6i73/obj/x86_64"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -1035,7 +1035,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "/Users/zeeshan/Desktop/urban_culture-main/build/app/intermediates/cxx/Debug/2f5a6i73/obj/x86_64"
+			"value" : "/Users/zeeshan/Desktop/skin_sync-main/build/app/intermediates/cxx/Debug/2f5a6i73/obj/x86_64"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1355,7 +1355,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/Users/zeeshan/Desktop/urban_culture-main/android/app/.cxx/Debug/2f5a6i73/x86_64"
+			"value" : "/Users/zeeshan/Desktop/skin_sync-main/android/app/.cxx/Debug/2f5a6i73/x86_64"
 		},
 		{
 			"name" : "Project_IS_TOP_LEVEL",

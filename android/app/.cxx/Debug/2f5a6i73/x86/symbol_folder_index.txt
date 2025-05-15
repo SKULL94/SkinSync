@@ -1,1 +1,1 @@
-/Users/zeeshan/Desktop/urban_culture-main/build/app/intermediates/cxx/Debug/2f5a6i73/obj/x86
+/Users/zeeshan/Desktop/skin_sync-main/build/app/intermediates/cxx/Debug/2f5a6i73/obj/x86

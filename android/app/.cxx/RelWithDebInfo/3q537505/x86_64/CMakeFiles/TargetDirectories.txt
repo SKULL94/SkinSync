@@ -1,0 +1,2 @@
+/Users/zeeshan/Desktop/SkinSync-main/android/app/.cxx/RelWithDebInfo/3q537505/x86_64/CMakeFiles/edit_cache.dir
+/Users/zeeshan/Desktop/SkinSync-main/android/app/.cxx/RelWithDebInfo/3q537505/x86_64/CMakeFiles/rebuild_cache.dir
