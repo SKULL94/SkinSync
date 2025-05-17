@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as dateutils;
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
@@ -190,7 +190,7 @@ class StreaksController extends GetxController {
       final adjustedMonth = month <= 0 ? month + 12 : month;
 
       double monthlyRatio = 0;
-      int daysInMonth = DateUtils.getDaysInMonth(year, adjustedMonth);
+      int daysInMonth = dateutils.DateUtils.getDaysInMonth(year, adjustedMonth);
 
       for (int d = 1; d <= daysInMonth; d++) {
         final date = DateTime(year, adjustedMonth, d);

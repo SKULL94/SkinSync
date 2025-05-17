@@ -14,58 +14,46 @@ import 'package:uuid/uuid.dart';
 
 class RoutineController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final RxList<CustomRoutine> routines = <CustomRoutine>[].obs;
-  final RxBool isLoading = false.obs;
+  final NotificationService _notificationService = NotificationService();
   final Uuid _uuid = const Uuid();
 
-  // Form state
-  final Rx<TimeOfDay> selectedTime = TimeOfDay.now().obs;
-  final Rx<File?> localIcon = Rx<File?>(null);
-  final Rx<DateTime?> startDate = DateTime.now().obs;
-  final Rx<DateTime?> endDate = Rx<DateTime?>(null);
+  final RxList<CustomRoutine> routines = <CustomRoutine>[].obs;
+  final RxList<CustomRoutine> filteredRoutines = <CustomRoutine>[].obs;
+  final RxBool isLoading = false.obs;
+
+  // Form controllers
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descController = TextEditingController();
+  final Rx<TimeOfDay> selectedTime = TimeOfDay.now().obs;
+  final Rx<File?> localIcon = Rx<File?>(null);
+  final Rx<DateTime> startDate = DateTime.now().obs;
+  final Rx<DateTime?> endDate = Rx<DateTime?>(null);
+  final Rx<DateTime> selectedDate = DateTime.now().obs;
 
-  // Date management
-  DateTime get currentDate => DateTime.now();
-  final selectedDate = DateTime.now().obs;
-  RxList<CustomRoutine> filteredRoutines = <CustomRoutine>[].obs;
+  String get _userId => StorageService.instance.fetch(AppUtils.userId);
+  CollectionReference get _userRoutines =>
+      _firestore.collection('users').doc(_userId).collection('routines');
+
+  @override
+  void onInit() {
+    selectedDate.listen((_) => _filterRoutines());
+    super.onInit();
+  }
 
   Future<void> pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
     );
-    if (pickedFile != null) {
-      localIcon.value = File(pickedFile.path);
-    }
-  }
-
-  Future<String?> saveIconLocally(String routineId) async {
-    if (localIcon.value == null) return null;
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final routineIconsDir = Directory('${directory.path}/routine_icons');
-      if (!await routineIconsDir.exists()) {
-        await routineIconsDir.create(recursive: true);
-      }
-      final iconPath = '${routineIconsDir.path}/$routineId.png';
-      await localIcon.value!.copy(iconPath);
-      return iconPath;
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to save icon: ${e.toString()}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red[100]);
-      return null;
-    }
+    localIcon.value = pickedFile != null ? File(pickedFile.path) : null;
   }
 
   Future<void> selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
+    final picked = await showTimePicker(
       context: context,
       initialTime: selectedTime.value,
       builder: (context, child) => Theme(
-        data: ThemeData.light().copyWith(
+        data: Theme.of(context).copyWith(
           colorScheme: ColorScheme.light(
             primary: Theme.of(context).primaryColor,
             secondary: Theme.of(context).primaryColor,
@@ -74,51 +62,39 @@ class RoutineController extends GetxController {
         child: child!,
       ),
     );
+    if (picked != null) selectedTime.value = picked;
+  }
+
+  Future<void> selectDate(BuildContext context,
+      {required bool isStartDate}) async {
+    final initialDate =
+        isStartDate ? startDate.value : endDate.value ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
     if (picked != null) {
-      selectedTime.value = picked;
-    }
-  }
-
-  Future<void> selectEndDate(BuildContext context) async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: endDate.value ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-
-    if (pickedDate != null) {
-      endDate.value = pickedDate;
-    }
-  }
-
-  Future<void> selectStartDate(BuildContext context) async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: startDate.value ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-
-    if (pickedDate != null) {
-      startDate.value = pickedDate;
+      isStartDate ? startDate.value = picked : endDate.value = picked;
     }
   }
 
   Future<void> saveRoutine() async {
     try {
       final routineId = _uuid.v4();
-      final localIconPath = await saveIconLocally(routineId);
+      final iconPath = await _saveLocalIcon(routineId);
 
       final newRoutine = CustomRoutine(
         id: routineId,
         name: nameController.text.trim(),
         description: descController.text.trim(),
         time: selectedTime.value,
-        userId: StorageService.instance.fetch(AppUtils.userId),
+        userId: _userId,
         createdDate: DateTime.now(),
-        localIconPath: localIconPath ?? '',
-        startDate: startDate.value!,
+        localIconPath: iconPath ?? '',
+        startDate: startDate.value,
         endDate: endDate.value,
         isCompleted: false,
         completionProgress: 0.0,
@@ -126,252 +102,138 @@ class RoutineController extends GetxController {
         imagePath: '',
       );
 
-      await _firestore
-          .collection('users')
-          .doc(newRoutine.userId)
-          .collection('routines')
-          .doc(routineId)
-          .set(newRoutine.toMap());
-
+      await _userRoutines.doc(routineId).set(newRoutine.toMap());
       routines.add(newRoutine);
-      updateFilteredRoutines();
-      await NotificationService().scheduleCustomRoutines();
-
+      _filterRoutines();
+      await _notificationService.scheduleCustomRoutines();
+      _showSuccess('Routine created successfully!');
       Get.off(() => const LayoutScreen());
-      Get.showSnackbar(GetSnackBar(
-        message: 'Routine created successfully!',
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.green[400]!,
-        snackPosition: SnackPosition.TOP,
-        borderRadius: 8,
-        margin: const EdgeInsets.all(16),
-      ));
     } catch (e) {
-      Get.snackbar('Error', 'Failed to save routine: ${e.toString()}');
+      _showError('Failed to save routine', e);
     }
-  }
-
-  void updateFilteredRoutines() {
-    filteredRoutines.value = routines.where((routine) {
-      final selected = selectedDate.value;
-      final selectedDateAtMidnight =
-          DateTime(selected.year, selected.month, selected.day);
-
-      final startDate = routine.startDate;
-      final startDateAtMidnight =
-          DateTime(startDate.year, startDate.month, startDate.day);
-
-      final endDate = routine.endDate;
-      DateTime? endDateAtMidnight;
-      if (endDate != null) {
-        endDateAtMidnight = DateTime(endDate.year, endDate.month, endDate.day);
-      }
-
-      if (endDateAtMidnight == null) {
-        return _isSameDate(startDateAtMidnight, selectedDateAtMidnight);
-      } else {
-        return selectedDateAtMidnight.isAfter(
-                startDateAtMidnight.subtract(const Duration(days: 1))) &&
-            selectedDateAtMidnight
-                .isBefore(endDateAtMidnight.add(const Duration(days: 1)));
-      }
-    }).toList();
-  }
-
-  bool isDateCompleted(CustomRoutine routine) {
-    return routine.completionDates
-        .any((d) => _isSameDate(d, selectedDate.value));
-  }
-
-  void changeDate(int days) {
-    selectedDate.value = selectedDate.value.add(Duration(days: days));
-  }
-
-  int get completedRoutinesCount => filteredRoutines
-      .where((r) =>
-          r.completionDates.any((d) => _isSameDate(d, selectedDate.value)))
-      .length;
-
-  @override
-  void onInit() {
-    ever(selectedDate, (_) => updateFilteredRoutines());
-    super.onInit();
-  }
-
-  bool _isSameDate(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   Future<void> fetchRoutines() async {
     try {
-      isLoading(true);
-      final userId = StorageService.instance.fetch(AppUtils.userId);
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('routines')
-          .orderBy('createdDate')
-          .get();
-
-      routines.assignAll(
-        snapshot.docs.map((doc) => CustomRoutine.fromMap(doc.data())).toList(),
-      );
-      updateFilteredRoutines();
+      isLoading.value = true;
+      final snapshot = await _userRoutines.orderBy('createdDate').get();
+      routines.assignAll(snapshot.docs
+          .map((d) => CustomRoutine.fromMap(d.data() as Map<String, dynamic>)));
+      _filterRoutines();
     } finally {
-      isLoading(false);
+      isLoading.value = false;
     }
   }
 
   Future<void> toggleRoutineCompletion(String routineId) async {
     try {
-      final userId = StorageService.instance.fetch(AppUtils.userId);
-      if (userId == null) throw 'User not logged in';
-
       final index = routines.indexWhere((r) => r.id == routineId);
       if (index == -1) return;
 
-      final oldRoutine = routines[index];
-      final selectedDateDay = DateTime(
-        selectedDate.value.year,
-        selectedDate.value.month,
-        selectedDate.value.day,
-      );
+      final updated = routines[index].toggleCompletion(selectedDate.value);
+      await _userRoutines.doc(routineId).update(updated.toMap());
+      routines[index] = updated;
 
-      List<DateTime> newDates = List.from(oldRoutine.completionDates);
-      final isDateCompleted =
-          newDates.any((d) => _isSameDate(d, selectedDateDay));
-      isDateCompleted
-          ? newDates.removeWhere((d) => _isSameDate(d, selectedDateDay))
-          : newDates.add(selectedDateDay);
-
-      final progress = _calculateProgress(newDates);
-      final updatedRoutine = oldRoutine.copyWith(
-        completionDates: newDates,
-        completionProgress: progress,
-      );
-
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('routines')
-          .doc(routineId)
-          .update(updatedRoutine.toMap());
-
-      routines[index] = updatedRoutine;
-      updateFilteredRoutines();
-
-      await _updateCompletedDays(userId);
+      await _updateUserCompletedDays();
+      _filterRoutines();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to toggle completion: ${e.toString()}');
-    }
-  }
-
-  double _calculateProgress(List<DateTime> dates) {
-    if (dates.isEmpty) return 0.0;
-    final now = DateTime.now();
-    final thisMonthDates =
-        dates.where((d) => d.month == now.month && d.year == now.year).length;
-    final totalDays = DateUtils.getDaysInMonth(now.year, now.month);
-    return thisMonthDates / totalDays;
-  }
-
-  Future<void> _updateCompletedDays(String userId) async {
-    final userRef = _firestore.collection('users').doc(userId);
-    final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate.value);
-    final hasAnyCompleted = filteredRoutines.any((routine) =>
-        routine.completionDates.any((d) => _isSameDate(d, selectedDate.value)));
-
-    try {
-      if (hasAnyCompleted) {
-        await userRef.update({
-          'completedDays': FieldValue.arrayUnion([formattedDate])
-        });
-      } else {
-        await userRef.update({
-          'completedDays': FieldValue.arrayRemove([formattedDate])
-        });
-      }
-    } on FirebaseException catch (e) {
-      if (e.code == 'not-found') {
-        await userRef.set({
-          'completedDays': hasAnyCompleted ? [formattedDate] : [],
-        }, SetOptions(merge: true));
-      }
-    }
-  }
-
-  Future<void> addCustomRoutine({
-    required String name,
-    required String description,
-    required TimeOfDay time,
-    String imagePath = '',
-    String localIconPath = '',
-    required DateTime startDate,
-    DateTime? endDate,
-  }) async {
-    try {
-      final userId = StorageService.instance.fetch(AppUtils.userId);
-      final docRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('routines')
-          .doc();
-
-      final newRoutine = CustomRoutine(
-        id: docRef.id,
-        name: name,
-        description: description,
-        time: time,
-        userId: userId,
-        createdDate: DateTime.now(),
-        imagePath: imagePath,
-        localIconPath: localIconPath,
-        isCompleted: false,
-        completionProgress: 0.0,
-        completionDates: [],
-        startDate: startDate,
-        endDate: endDate,
-      );
-
-      await docRef.set(newRoutine.toMap());
-      routines.add(newRoutine);
-      updateFilteredRoutines();
-      await NotificationService().scheduleCustomRoutines();
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to save routine: ${e.toString()}');
+      _showError('Failed to toggle completion', e);
     }
   }
 
   Future<void> deleteRoutine(String id) async {
     try {
       final routine = routines.firstWhere((r) => r.id == id);
-      if (routine.localIconPath.isNotEmpty) {
-        final file = File(routine.localIconPath);
-        if (await file.exists()) await file.delete();
-      }
-
-      final userId = StorageService.instance.fetch(AppUtils.userId);
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('routines')
-          .doc(id)
-          .delete();
-
+      await _userRoutines.doc(id).delete();
+      await _notificationService.cancelRoutineNotifications(routine);
       routines.removeWhere((r) => r.id == id);
-      updateFilteredRoutines();
-      final endDate = routine.endDate;
-      if (endDate == null) {
-        await notificationsPlugin.cancel(routine.id.hashCode);
-      } else {
-        final dates =
-            NotificationService().getDatesInRange(routine.startDate, endDate);
-        for (final date in dates) {
-          await notificationsPlugin.cancel(routine.id.hashCode + date.hashCode);
-        }
-      }
+      _filterRoutines();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete routine: ${e.toString()}');
+      _showError('Failed to delete routine', e);
     }
   }
+
+  void updateSelectedDate(int days) =>
+      selectedDate.value = selectedDate.value.add(Duration(days: days));
+
+  bool isDateCompleted(CustomRoutine routine) => routine.completionDates
+      .any((d) => DateUtils.isSameDay(d, selectedDate.value));
+
+  int get completedCount =>
+      filteredRoutines.where((r) => isDateCompleted(r)).length;
+
+  // Private methods
+  Future<String?> _saveLocalIcon(String routineId) async {
+    if (localIcon.value == null) return null;
+
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final iconDir = Directory('${directory.path}/routine_icons');
+      if (!await iconDir.exists()) await iconDir.create(recursive: true);
+
+      final path = '${iconDir.path}/$routineId.png';
+      await localIcon.value!.copy(path);
+      return path;
+    } catch (e) {
+      _showError('Failed to save icon', e);
+      return null;
+    }
+  }
+
+  void _filterRoutines() {
+    filteredRoutines.value = routines.where((routine) {
+      final selected = selectedDate.value;
+      final start = DateTime(routine.startDate.year, routine.startDate.month,
+          routine.startDate.day);
+      final end = routine.endDate != null
+          ? DateTime(routine.endDate!.year, routine.endDate!.month,
+              routine.endDate!.day)
+          : null;
+
+      return end == null
+          ? DateUtils.isSameDay(start, selected)
+          : selected.isAfter(start.subtract(1.days)) &&
+              selected.isBefore(end.add(1.days));
+    }).toList();
+  }
+
+  Future<void> _updateUserCompletedDays() async {
+    final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate.value);
+    final hasCompleted = filteredRoutines.any((r) => isDateCompleted(r));
+
+    try {
+      await _firestore.collection('users').doc(_userId).update({
+        'completedDays': FieldValue.arrayUnion([formattedDate])
+      });
+    } on FirebaseException catch (e) {
+      if (e.code == 'not-found') {
+        await _firestore.collection('users').doc(_userId).set({
+          'completedDays': hasCompleted ? [formattedDate] : [],
+        }, SetOptions(merge: true));
+      }
+    }
+  }
+
+  void _showSuccess(String message) => Get.showSnackbar(
+        GetSnackBar(
+          message: message,
+          duration: 2.seconds,
+          backgroundColor: Colors.green[400]!,
+          snackPosition: SnackPosition.TOP,
+          borderRadius: 8,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+
+  void _showError(String message, dynamic e) => Get.snackbar(
+        'Error',
+        '$message: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red[100],
+      );
+}
+
+class DateUtils {
+  static bool isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }

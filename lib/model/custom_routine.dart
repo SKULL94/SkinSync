@@ -104,4 +104,28 @@ class CustomRoutine {
         startDate: startDate,
         endDate: endDate);
   }
+
+  CustomRoutine toggleCompletion(DateTime date) {
+    final newDates = List<DateTime>.from(completionDates);
+    final dateDay = DateTime(date.year, date.month, date.day);
+
+    if (newDates.any((d) => DateUtils.isSameDay(d, dateDay))) {
+      newDates.removeWhere((d) => DateUtils.isSameDay(d, dateDay));
+    } else {
+      newDates.add(dateDay);
+    }
+
+    return copyWith(
+      completionDates: newDates,
+      completionProgress: _calculateProgress(newDates),
+    );
+  }
+
+  double _calculateProgress(List<DateTime> dates) {
+    if (dates.isEmpty) return 0.0;
+    final now = DateTime.now();
+    final monthlyCount =
+        dates.where((d) => d.month == now.month && d.year == now.year).length;
+    return monthlyCount / DateUtils.getDaysInMonth(now.year, now.month);
+  }
 }

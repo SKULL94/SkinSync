@@ -41,7 +41,7 @@ class StreakProgressCard extends StatelessWidget {
           ),
           SizedBox(height: getHeight(context, 12)),
           Obx(() => Text(
-                '${routineController.completedRoutinesCount}',
+                '${routineController.completedCount}',
                 style: TextStyle(
                   fontSize: getResponsiveFontSize(context, 32),
                   fontWeight: FontWeight.bold,

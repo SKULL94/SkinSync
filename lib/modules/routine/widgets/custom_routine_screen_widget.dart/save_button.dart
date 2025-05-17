@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:skin_sync/utils/mediaquery.dart';
 
 class CustomRoutineSaveButton extends StatelessWidget {
-  const CustomRoutineSaveButton({super.key, required this.saveRoutine});
+  const CustomRoutineSaveButton({
+    super.key,
+    required this.onPressed,
+  });
 
-  final VoidCallback saveRoutine;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +28,7 @@ class CustomRoutineSaveButton extends StatelessWidget {
           backgroundColor: Theme.of(context).primaryColor,
           foregroundColor: Colors.white,
         ),
-        onPressed: saveRoutine,
+        onPressed: onPressed,
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:skin_sync/model/custom_routine.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_10y.dart' as tz;
@@ -15,7 +16,7 @@ class NotificationService {
 
   Future<void> initialize() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     DarwinInitializationSettings iosSettings =
         const DarwinInitializationSettings(
@@ -149,7 +150,7 @@ class NotificationService {
       body,
       scheduledDate,
       platformDetails,
-      androidScheduleMode: AndroidScheduleMode.alarmClock,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
       matchDateTimeComponents: DateTimeComponents.time,
@@ -174,9 +175,20 @@ class NotificationService {
       body,
       tzScheduledDate,
       platformDetails,
-      androidScheduleMode: AndroidScheduleMode.alarmClock,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
     );
+  }
+
+  Future<void> cancelRoutineNotifications(CustomRoutine routine) async {
+    if (routine.endDate == null) {
+      await notificationsPlugin.cancel(routine.id.hashCode);
+    } else {
+      final dates = getDatesInRange(routine.startDate, routine.endDate!);
+      for (final date in dates) {
+        await notificationsPlugin.cancel(routine.id.hashCode + date.hashCode);
+      }
+    }
   }
 }

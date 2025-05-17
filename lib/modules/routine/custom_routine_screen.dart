@@ -12,8 +12,8 @@ import 'package:skin_sync/utils/mediaquery.dart';
 
 class CreateRoutineScreen extends StatelessWidget {
   CreateRoutineScreen({super.key});
-  final controller = Get.put(RoutineController());
-  final _formKey = GlobalKey<FormState>();
+  final RoutineController controller = Get.find<RoutineController>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -53,26 +53,27 @@ class CreateRoutineScreen extends StatelessWidget {
                 SizedBox(height: getHeight(context, 30)),
                 Obx(() => CustomRoutineStartDateSelector(
                       startDate: controller.startDate.value,
-                      isEnabled: controller.startDate.value != null,
-                      onToggle: (value) => value
-                          ? controller.selectStartDate(context)
-                          : controller.startDate.value = null,
-                      onDateChanged: () => controller.selectStartDate(context),
+                      onDateSelected: () =>
+                          controller.selectDate(context, isStartDate: true),
                     )),
                 SizedBox(height: getHeight(context, 30)),
                 Obx(() => CustomRoutineEndDateSelector(
-                      startDate: controller.endDate.value,
+                      endDate: controller.endDate.value,
                       isEnabled: controller.endDate.value != null,
                       onToggle: (value) => value
-                          ? controller.selectEndDate(
-                              context,
-                            )
+                          ? controller.selectDate(context, isStartDate: false)
                           : controller.endDate.value = null,
-                      onDateChanged: () => controller.selectEndDate(context),
+                      onDateSelected: () =>
+                          controller.selectDate(context, isStartDate: false),
                     )),
                 SizedBox(height: getHeight(context, 40)),
                 CustomRoutineSaveButton(
-                    saveRoutine: () => controller.saveRoutine())
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      controller.saveRoutine();
+                    }
+                  },
+                )
               ],
             ),
           ),

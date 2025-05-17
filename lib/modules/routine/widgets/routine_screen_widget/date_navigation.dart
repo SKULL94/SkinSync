@@ -32,7 +32,7 @@ class RoutineScreenDateNavigation extends StatelessWidget {
                         fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    'Completed: ${controller.completedRoutinesCount}',
+                    'Completed: ${controller.completedCount}',
                     style: TextStyle(
                         color: Colors.green[700],
                         fontWeight: FontWeight.w500,

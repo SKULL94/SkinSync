@@ -13,7 +13,6 @@ void main() async {
   );
   await GetStorage.init();
   await NotificationService().initialize();
-  await NotificationService().scheduleCustomRoutines();
 
   runApp(const MyApp());
 }
