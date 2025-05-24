@@ -1,4 +1,6 @@
 SkinSync -
+
+
 Your AI-Powered Skincare Companion
 
 📱 Overview
@@ -12,6 +14,8 @@ SkinSync revolutionizes skincare management by combining habit tracking with AI-
 - Share the skin analysis result with friends.👥
 
 **✨ Key Features**
+
+
 **Core Functionality - Feature	Description**
 - Custom Routine Creation- Create your daily skin care routine and get reminded by the app!
 - 📸 AI Skin Analysis	- Instant analysis using dermatology-trained ML model
