@@ -2,7 +2,9 @@ SkinSync -
 Your AI-Powered Skincare Companion
 
 📱 Overview
-- SkinSync revolutionizes skincare management by combining habit tracking with AI-powered analysis. Our mobile solution helps users:
+
+
+SkinSync revolutionizes skincare management by combining habit tracking with AI-powered analysis. Our mobile solution helps users:
 
 - Build consistent skincare routines through gamified streaks 🏆
 - Receive instant AI analysis of skin conditions 🤖
