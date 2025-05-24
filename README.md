@@ -30,7 +30,7 @@ SkinSync revolutionizes skincare management by combining habit tracking with AI-
 Current Implementation
 Model Type: **Convolutional Neural Network (CNN)**
 
-Training Dataset:** HAM10000 (10,000+ dermatoscopic images)**
+Training Dataset: **HAM10000 (10,000+ dermatoscopic images)**
 
 **Classes Detected:**
 
@@ -58,13 +58,13 @@ Multi-Factor Analysis
 8. Preavailable Skin Care Routine template from the popular and most rated skin care routine (categorized by gender, age, and lifestyle)
 
 🛠️ Technical Stack
-Core Technologies
-Category- Technologies
-Framework	- Flutter 3.13
-Backend	- Firebase (Auth, Firestore, Storage)
-ML	- TensorFlow Lite, TF-Lite Flutter
-State	- GetX
-Analytics	- Firebase Analytics, Crashlytics
+- Core Technologies
+- Category- Technologies
+- Framework	- Flutter 3.13
+- Backend	- Firebase (Auth, Firestore, Storage)
+- ML	- TensorFlow Lite, TF-Lite Flutter
+- State	- GetX
+- Analytics	- Firebase Analytics, Crashlytics
 
 Key Dependencies
 - tflite_flutter: ML model execution
@@ -73,8 +73,9 @@ Key Dependencies
 - camera: Real-time skin analysis
 
 Authentication: 
-Phone: +91 72504 97748  
-OTP: 123456  
+- Phone: +91 72504 97748  
+- OTP: 123456  
+
 Note: Dummy authentication for development purposes only
 
 🤝 Contribution Guidelines
