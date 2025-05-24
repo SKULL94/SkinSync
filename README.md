@@ -11,12 +11,12 @@ SkinSync revolutionizes skincare management by combining habit tracking with AI-
 
 **✨ Key Features**
 **Core Functionality - Feature	Description**
-Custom Routine Creation- Create your daily skin care routine and get reminded by the app!\n
-📸 AI Skin Analysis	- Instant analysis using dermatology-trained ML model\n
-🔄 Daily Streaks - Snapchat-style streak tracking for routine consistency (In Development)\n
-🌐 Social Sharing	- Share results via social media with custom-generated reports\n
-🗃️ Analysis History	- Cloud-synced storage of all skin assessments (In Development)\n
-📊 Progress Tracking - Visual charts showing skin health improvements over time (In Development)\n
+- Custom Routine Creation- Create your daily skin care routine and get reminded by the app!
+- 📸 AI Skin Analysis	- Instant analysis using dermatology-trained ML model
+- 🔄 Daily Streaks - Snapchat-style streak tracking for routine consistency (In Development)
+- 🌐 Social Sharing	- Share results via social media with custom-generated reports
+- 🗃️ Analysis History	- Cloud-synced storage of all skin assessments (In Development)
+- 📊 Progress Tracking - Visual charts showing skin health improvements over time (In Development)
 
 **Advanced Capabilities**
 - Smart Image Recognition
