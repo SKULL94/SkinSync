@@ -38,7 +38,7 @@ dependencies:
   cloud_firestore: ^4.14.0
   firebase_core: ^2.24.2
   get: ^4.6.6
-  image_picker: ^1.0.2
+  image_picker: ^1.1.2
   permission_handler: ^12.0.0
   cached_network_image: ^3.2.2
   get_storage: ^2.1.1
@@ -55,6 +55,12 @@ dependencies:
   lottie: ^3.3.1
   flex_color_scheme: ^8.2.0
   flutter_native_splash: ^2.4.6
+  flutter_secure_storage: ^9.2.4
+  sentry_flutter: ^8.14.2
+  tflite_flutter: ^0.11.0
+  image: ^4.5.4
+  share_plus: ^10.0.0
+  sqflite: ^2.4.2
 
 
 dependency_overrides:
@@ -104,6 +110,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/models/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

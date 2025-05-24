@@ -106,11 +106,11 @@ class CustomRoutine {
   }
 
   CustomRoutine toggleCompletion(DateTime date) {
-    final newDates = List<DateTime>.from(completionDates);
-    final dateDay = DateTime(date.year, date.month, date.day);
+    final List<DateTime> newDates = List<DateTime>.from(completionDates);
+    final DateTime dateDay = DateTime(date.year, date.month, date.day);
 
-    if (newDates.any((d) => DateUtils.isSameDay(d, dateDay))) {
-      newDates.removeWhere((d) => DateUtils.isSameDay(d, dateDay));
+    if (newDates.any((d) => _isSameDay(d, dateDay))) {
+      newDates.removeWhere((d) => _isSameDay(d, dateDay));
     } else {
       newDates.add(dateDay);
     }
@@ -121,10 +121,14 @@ class CustomRoutine {
     );
   }
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   double _calculateProgress(List<DateTime> dates) {
     if (dates.isEmpty) return 0.0;
-    final now = DateTime.now();
-    final monthlyCount =
+    final DateTime now = DateTime.now();
+    final int monthlyCount =
         dates.where((d) => d.month == now.month && d.year == now.year).length;
     return monthlyCount / DateUtils.getDaysInMonth(now.year, now.month);
   }

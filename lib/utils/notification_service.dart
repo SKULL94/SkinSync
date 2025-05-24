@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/model/custom_routine.dart';
@@ -31,82 +32,110 @@ class NotificationService {
 
     await notificationsPlugin.initialize(initializationSettings);
     tz.initializeTimeZones();
+
+    await _setupNotificationChannels();
+  }
+
+  Future<void> _setupNotificationChannels() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'routine_channel',
+      'Routine Reminders',
+      importance: Importance.max,
+      playSound: true,
+    );
+
+    await notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+  }
+
+  Future<void> safeSchedule(Future<void> Function() callback) async {
+    try {
+      await callback();
+    } on PlatformException catch (e) {
+      debugPrint("Notification Error: ${e.message}");
+      await Future.delayed(const Duration(seconds: 1));
+      await callback();
+    }
   }
 
   Future<void> scheduleCustomRoutines() async {
-    try {
-      if (Get.isRegistered<RoutineController>()) {
-        final controller = Get.find<RoutineController>();
-        final routines = controller.routines;
+    await safeSchedule(() async {
+      try {
+        if (Get.isRegistered<RoutineController>()) {
+          final controller = Get.find<RoutineController>();
+          final routines = controller.routines;
 
-        AndroidNotificationDetails androidDetails =
-            const AndroidNotificationDetails(
-          'routine_channel',
-          'Routine Reminders',
-          importance: Importance.high,
-          priority: Priority.high,
-          enableVibration: true,
-        );
-        NotificationDetails notificationDetails =
-            NotificationDetails(android: androidDetails);
+          AndroidNotificationDetails androidDetails =
+              const AndroidNotificationDetails(
+            'routine_channel',
+            'Routine Reminders',
+            importance: Importance.high,
+            priority: Priority.high,
+            enableVibration: true,
+          );
+          NotificationDetails notificationDetails =
+              NotificationDetails(android: androidDetails);
 
-        for (final routine in routines) {
-          final startDate = routine.startDate;
-          final endDate = routine.endDate;
-          final time = routine.time;
+          for (final routine in routines) {
+            final startDate = routine.startDate;
+            final endDate = routine.endDate;
+            final time = routine.time;
 
-          if (endDate == null) {
-            final now = DateTime.now();
-            final todayRoutineTime = DateTime(
-              startDate.year,
-              startDate.month,
-              startDate.day,
-              time.hour,
-              time.minute,
-            );
+            if (endDate == null) {
+              final now = DateTime.now();
+              final todayRoutineTime = DateTime(
+                startDate.year,
+                startDate.month,
+                startDate.day,
+                time.hour,
+                time.minute,
+              );
 
-            if (todayRoutineTime.isAfter(now)) {
-              await _scheduleSingleNotification(
-                id: routine.id.hashCode + startDate.hashCode,
+              if (todayRoutineTime.isAfter(now)) {
+                await _scheduleSingleNotification(
+                  id: routine.id.hashCode + startDate.hashCode,
+                  title: '⏰ ${routine.name} Time!',
+                  body: routine.description,
+                  scheduledDate: todayRoutineTime,
+                  platformDetails: notificationDetails,
+                );
+              }
+
+              await scheduleRepeatingDaily(
+                hour: time.hour,
+                minutes: time.minute,
+                id: routine.id.hashCode,
                 title: '⏰ ${routine.name} Time!',
                 body: routine.description,
-                scheduledDate: todayRoutineTime,
+                startDate: startDate.add(const Duration(days: 1)),
                 platformDetails: notificationDetails,
               );
-            }
-
-            await scheduleRepeatingDaily(
-              hour: time.hour,
-              minutes: time.minute,
-              id: routine.id.hashCode,
-              title: '⏰ ${routine.name} Time!',
-              body: routine.description,
-              startDate: startDate.add(const Duration(days: 1)),
-              platformDetails: notificationDetails,
-            );
-          } else {
-            final dates = getDatesInRange(startDate, endDate);
-            for (final date in dates) {
-              await _scheduleSingleNotification(
-                id: routine.id.hashCode + date.hashCode,
-                title: '⏰ ${routine.name} Time!',
-                body: routine.description,
-                scheduledDate: DateTime(
-                  date.year,
-                  date.month,
-                  date.day,
-                  time.hour,
-                  time.minute,
-                ),
-                platformDetails: notificationDetails,
-              );
+            } else {
+              final dates = getDatesInRange(startDate, endDate);
+              for (final date in dates) {
+                await _scheduleSingleNotification(
+                  id: routine.id.hashCode + date.hashCode,
+                  title: '⏰ ${routine.name} Time!',
+                  body: routine.description,
+                  scheduledDate: DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    time.hour,
+                    time.minute,
+                  ),
+                  platformDetails: notificationDetails,
+                );
+              }
             }
           }
         }
+      } catch (e) {
+        debugPrint("Error scheduling routines: $e");
       }
-    } catch (e) {
-      debugPrint("Error scheduling routines: $e");
-    }
+    });
   }
 
   List<DateTime> getDatesInRange(DateTime startDate, DateTime endDate) {

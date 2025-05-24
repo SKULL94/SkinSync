@@ -6,4 +6,6 @@ class AppRoutes {
   static const String routineRoute = "/routine";
   static const String streaksRoute = "/streaks";
   static const String createRoutineRoute = '/create-routine';
+  static const String skinAnalysisRoute = '/skin-analysis';
+  static const String historyRoute = '/history';
 }

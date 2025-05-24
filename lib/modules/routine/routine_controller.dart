@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:skin_sync/model/custom_routine.dart';
 import 'package:skin_sync/modules/layout/layout_screen.dart';
@@ -16,6 +15,7 @@ class RoutineController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final NotificationService _notificationService = NotificationService();
   final Uuid _uuid = const Uuid();
+  final RxBool isImageLoading = false.obs;
 
   final RxList<CustomRoutine> routines = <CustomRoutine>[].obs;
   final RxList<CustomRoutine> filteredRoutines = <CustomRoutine>[].obs;
@@ -36,20 +36,34 @@ class RoutineController extends GetxController {
 
   @override
   void onInit() {
-    selectedDate.listen((_) => _filterRoutines());
     super.onInit();
+    selectedDate.listen((_) => _filterRoutines());
   }
 
-  Future<void> pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    localIcon.value = pickedFile != null ? File(pickedFile.path) : null;
+  Future<XFile?> pickImage(ImageSource source) async {
+    isImageLoading.value = true;
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (pickedFile != null) {
+        localIcon.value = File(pickedFile.path);
+        return pickedFile;
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to pick image: ${e.toString()}");
+    } finally {
+      isImageLoading.value = false;
+    }
+    return null;
   }
 
   Future<void> selectTime(BuildContext context) async {
-    final picked = await showTimePicker(
+    final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: selectedTime.value,
       builder: (context, child) => Theme(
@@ -116,7 +130,8 @@ class RoutineController extends GetxController {
   Future<void> fetchRoutines() async {
     try {
       isLoading.value = true;
-      final snapshot = await _userRoutines.orderBy('createdDate').get();
+      final QuerySnapshot<Object?> snapshot =
+          await _userRoutines.orderBy('createdDate').get();
       routines.assignAll(snapshot.docs
           .map((d) => CustomRoutine.fromMap(d.data() as Map<String, dynamic>)));
       _filterRoutines();
@@ -127,14 +142,14 @@ class RoutineController extends GetxController {
 
   Future<void> toggleRoutineCompletion(String routineId) async {
     try {
-      final index = routines.indexWhere((r) => r.id == routineId);
+      final int index = routines.indexWhere((r) => r.id == routineId);
       if (index == -1) return;
 
-      final updated = routines[index].toggleCompletion(selectedDate.value);
+      final CustomRoutine updated =
+          routines[index].toggleCompletion(selectedDate.value);
       await _userRoutines.doc(routineId).update(updated.toMap());
       routines[index] = updated;
-
-      await _updateUserCompletedDays();
+      // await _updateUserCompletedDays();
       _filterRoutines();
     } catch (e) {
       _showError('Failed to toggle completion', e);
@@ -143,7 +158,7 @@ class RoutineController extends GetxController {
 
   Future<void> deleteRoutine(String id) async {
     try {
-      final routine = routines.firstWhere((r) => r.id == id);
+      final CustomRoutine routine = routines.firstWhere((r) => r.id == id);
       await _userRoutines.doc(id).delete();
       await _notificationService.cancelRoutineNotifications(routine);
       routines.removeWhere((r) => r.id == id);
@@ -153,16 +168,19 @@ class RoutineController extends GetxController {
     }
   }
 
-  void updateSelectedDate(int days) =>
-      selectedDate.value = selectedDate.value.add(Duration(days: days));
+  // void updateSelectedDate(int days) {
+  //   selectedDate.value = selectedDate.value.add(Duration(days: days));
+  // }
 
-  bool isDateCompleted(CustomRoutine routine) => routine.completionDates
-      .any((d) => DateUtils.isSameDay(d, selectedDate.value));
+  bool isDateCompleted(CustomRoutine routine) {
+    return routine.completionDates
+        .any((d) => DateUtils.isSameDay(d, selectedDate.value));
+  }
 
-  int get completedCount =>
-      filteredRoutines.where((r) => isDateCompleted(r)).length;
+  int get completedCount {
+    return filteredRoutines.where((r) => isDateCompleted(r)).length;
+  }
 
-  // Private methods
   Future<String?> _saveLocalIcon(String routineId) async {
     if (localIcon.value == null) return null;
 
@@ -197,22 +215,23 @@ class RoutineController extends GetxController {
     }).toList();
   }
 
-  Future<void> _updateUserCompletedDays() async {
-    final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate.value);
-    final hasCompleted = filteredRoutines.any((r) => isDateCompleted(r));
+  // Future<void> _updateUserCompletedDays() async {
+  //   final String formattedDate =
+  //       DateFormat('yyyy-MM-dd').format(selectedDate.value);
+  //   final bool hasCompleted = filteredRoutines.any((r) => isDateCompleted(r));
 
-    try {
-      await _firestore.collection('users').doc(_userId).update({
-        'completedDays': FieldValue.arrayUnion([formattedDate])
-      });
-    } on FirebaseException catch (e) {
-      if (e.code == 'not-found') {
-        await _firestore.collection('users').doc(_userId).set({
-          'completedDays': hasCompleted ? [formattedDate] : [],
-        }, SetOptions(merge: true));
-      }
-    }
-  }
+  //   try {
+  //     await _firestore.collection('users').doc(_userId).update({
+  //       'completedDays': FieldValue.arrayUnion([formattedDate])
+  //     });
+  //   } on FirebaseException catch (e) {
+  //     if (e.code == 'not-found') {
+  //       await _firestore.collection('users').doc(_userId).set({
+  //         'completedDays': hasCompleted ? [formattedDate] : [],
+  //       }, SetOptions(merge: true));
+  //     }
+  //   }
+  // }
 
   void _showSuccess(String message) => Get.showSnackbar(
         GetSnackBar(

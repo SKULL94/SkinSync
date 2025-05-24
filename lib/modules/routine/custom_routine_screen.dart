@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/build_form_fields.dart';
 import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/build_icon_upload.dart';
@@ -38,7 +39,8 @@ class CreateRoutineScreen extends StatelessWidget {
                 SizedBox(height: getHeight(context, 30)),
                 Obx(() => IconUploadSection(
                       localIcon: controller.localIcon.value,
-                      onPickIcon: controller.pickImage,
+                      onPickIcon: () =>
+                          controller.pickImage(ImageSource.camera),
                     )),
                 SizedBox(height: getHeight(context, 30)),
                 CustomRoutineFormField(
