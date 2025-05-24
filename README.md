@@ -1,4 +1,4 @@
-SkinSync 🌟
+SkinSync -
 Your AI-Powered Skincare Companion
 
 📱 Overview
