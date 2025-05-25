@@ -10,7 +10,9 @@ class AnalysisResultsSection extends GetView<SkincareAnalysisController> {
     return Expanded(
       child: Obx(() {
         if (controller.results.isEmpty) {
-          return const Center(child: Text("Analysis results will appear here"));
+          return const Center(
+              child:
+                  Text("Valid Skin Image Analysis results will appear here"));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),

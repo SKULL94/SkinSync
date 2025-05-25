@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:skin_sync/custom_snackbar.dart';
 import 'package:skin_sync/model/skin_analysis_history.dart';
 import 'package:skin_sync/utils/sqflite_database.dart';
 import 'package:skin_sync/utils/storage.dart';
@@ -32,7 +33,7 @@ class HistoryController extends GetxController {
           .delete();
       histories.removeWhere((h) => h.id == id);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete history: ${e.toString()}');
+      showErrorSnackbar('Error', 'Failed to delete history: ${e.toString()}');
     }
   }
 
@@ -54,7 +55,7 @@ class HistoryController extends GetxController {
       await batch.commit();
       histories.clear();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to clear history: ${e.toString()}');
+      showErrorSnackbar('Error: Failed to clear History', e.toString());
     }
   }
 }

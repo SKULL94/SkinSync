@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:skin_sync/custom_snackbar.dart';
 import 'package:skin_sync/modules/routine/custom_routine_screen.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:skin_sync/modules/routine/widgets/routine_screen_widget/build_routine_list.dart';
@@ -53,7 +54,7 @@ class RoutineScreen extends GetView<RoutineController> {
           ],
         );
       } catch (e) {
-        Get.snackbar("Error", "Failed to show menu: ${e.toString()}");
+        showErrorSnackbar("Error", "Failed to show menu: ${e.toString()}");
       }
     });
   }

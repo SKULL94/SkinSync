@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:skin_sync/custom_snackbar.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
 import 'package:skin_sync/routes/app_routes.dart';
 import 'package:skin_sync/utils/app_utils.dart';
@@ -49,7 +50,7 @@ class AuthController extends GetxController {
 
   Future<void> verifyPhoneNumber() async {
     if (phoneNumber.value.isEmpty) {
-      Get.snackbar('Error', 'Please enter a valid phone number');
+      showErrorSnackbar('Error', 'Please enter a valid phone number');
       return;
     }
     isLoading(true);
@@ -63,7 +64,7 @@ class AuthController extends GetxController {
           isLoading(false);
         },
         verificationFailed: (e) {
-          Get.snackbar('Error', 'Verification failed: ${e.message}');
+          showErrorSnackbar('Error', 'Verification failed: ${e.message}');
           isLoading(false);
         },
         codeSent: (verificationId, [forceResendingToken]) {
@@ -76,7 +77,7 @@ class AuthController extends GetxController {
         },
       );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to verify phone number: $e');
+      showErrorSnackbar('Error', 'Failed to verify phone number: $e');
       isLoading(false);
     }
   }
@@ -91,7 +92,7 @@ class AuthController extends GetxController {
       final userCredential = await auth.signInWithCredential(credential);
       await handleSuccessfulAuth(userCredential.user!.uid);
     } on FirebaseAuthException catch (e) {
-      Get.snackbar('Error', 'Invalid OTP: ${e.message}');
+      showErrorSnackbar('Error', 'Invalid OTP: ${e.message}');
     } finally {
       isLoading(false);
     }
@@ -99,7 +100,7 @@ class AuthController extends GetxController {
 
   Future<void> handleSuccessfulAuth(String userId) async {
     StorageService.instance.save(AppUtils.userId, userId);
-    Get.snackbar('Success', 'Authentication successful');
+    showErrorSnackbar('Success', 'Authentication successful');
     await checkExistingRoutines(userId);
   }
 

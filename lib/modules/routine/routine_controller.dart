@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:skin_sync/custom_snackbar.dart';
 import 'package:skin_sync/model/custom_routine.dart';
 import 'package:skin_sync/modules/layout/layout_screen.dart';
 import 'package:skin_sync/utils/app_utils.dart';
@@ -55,7 +56,7 @@ class RoutineController extends GetxController {
         return pickedFile;
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to pick image: ${e.toString()}");
+      showErrorSnackbar("Error: Failed to pick image", e.toString());
     } finally {
       isImageLoading.value = false;
     }
@@ -244,12 +245,8 @@ class RoutineController extends GetxController {
         ),
       );
 
-  void _showError(String message, dynamic e) => Get.snackbar(
-        'Error',
-        '$message: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red[100],
-      );
+  void _showError(String message, dynamic e) =>
+      showErrorSnackbar('Error', e.toString());
 }
 
 class DateUtils {

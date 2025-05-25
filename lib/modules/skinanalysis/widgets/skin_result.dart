@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:skin_sync/utils/mediaquery.dart';
 
 class ResultTile extends StatelessWidget {
   final Map<String, dynamic> result;
@@ -10,8 +11,8 @@ class ResultTile extends StatelessWidget {
     final Color riskColor = result['riskColor'];
     return ListTile(
       leading: Container(
-        width: 24,
-        height: 24,
+        width: getWidth(context, 24),
+        height: getHeight(context, 24),
         decoration: BoxDecoration(
           color: riskColor.withValues(alpha: 0.2),
           shape: BoxShape.circle,
@@ -27,7 +28,7 @@ class ResultTile extends StatelessWidget {
         style: TextStyle(color: riskColor),
       ),
       trailing: CircleAvatar(
-        backgroundColor: riskColor.withOpacity(0.1),
+        backgroundColor: riskColor.withValues(alpha: 0.1),
         child: Text(
           '${(result['confidence'] * 100).toStringAsFixed(0)}%',
           style: TextStyle(color: riskColor),
