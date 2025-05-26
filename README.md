@@ -4,41 +4,48 @@ Your AI-Powered Skincare Companion
 
 📱 Overview
 
-SkinSync revolutionizes skincare management by combining habit tracking with AI-powered analysis. Our mobile solution helps users:
+SkinSync revolutionizes skincare management by combining habit tracking with AI-powered analysis. 
 
-Build consistent skincare routines through gamified streaks 🏆
-Receive instant AI analysis of skin conditions 🤖
-Create a Custom Routine with a detailed name and description, and get notified at the time and date
-Share the skin analysis result with friends.👥
+Our mobile solution helps users:
+
+- Build consistent skincare routines through gamified streaks 🏆
+- Receive instant AI analysis of skin conditions 🤖
+- Create a Custom Routine with a detailed name and description, and get notified at the time and date
+- Share the skin analysis result with friends.👥
+
+
 ✨ Key Features
 
 Core Functionality - Feature Description
 
-Custom Routine Creation- Create your daily skin care routine and get reminded by the app!
-📸 AI Skin Analysis - Instant analysis using dermatology-trained ML model
-🔄 Daily Streaks - Snapchat-style streak tracking for routine consistency (In Development)
-🌐 Social Sharing - Share results via social media with custom-generated reports
-🗃️ Analysis History - Cloud-synced storage of all skin assessments (In Development)
-📊 Progress Tracking - Visual charts showing skin health improvements over time (In Development)
-Advanced Capabilities
+- Custom Routine Creation- Create your daily skin care routine and get reminded by the app!
+- 📸 AI Skin Analysis - Instant analysis using dermatology-trained ML model
+- 🔄 Daily Streaks - Snapchat-style streak tracking for routine consistency (In Development)
+- 🌐 Social Sharing - Share results via social media with custom-generated reports
+- 🗃️ Analysis History - Cloud-synced storage of all skin assessments (In Development)
+- 📊 Progress Tracking - Visual charts showing skin health improvements over time (In Development)
 
-Smart Image Recognition
-Automatic skin region detection
-Quality validation for analysis-ready images
-EXIF data sanitization for privacy
-AI-Powered Insights
-Real-time risk assessment matrix
+
+Advanced Capabilities
+- Smart Image Recognition
+- Automatic skin region detection
+- Quality validation for analysis-ready images
+- EXIF data sanitization for privacy
+- AI-Powered Insights
+- Real-time risk assessment matrix
+
+
 🤖 AI Model Overview Current Implementation Model Type: Convolutional Neural Network (CNN)
 
-Training Dataset: **HAM10000 (10,000+ dermatoscopic images)**
+- Training Dataset: **HAM10000 (10,000+ dermatoscopic images)**
 
 **Classes Detected:**
+- Melanocytic nevi (Benign)
+- Melanoma (Malignant)
+- Benign keratosis
+- Basal cell carcinoma
+- Actinic keratoses
 
-Melanocytic nevi (Benign)
-Melanoma (Malignant)
-Benign keratosis
-Basal cell carcinoma
-Actinic keratoses
 Technical Specs:
 - Input: 224x224 RGB images
 - Architecture: MobileNetV2 (Optimised for mobile)
@@ -52,15 +59,15 @@ Inference Time: <200ms (SD835)
 Future Roadmap Multi-Factor Analysis
 
 Skin type detection (Dry/Oily/Combination)
-Acne severity scoring
-Pigmentation analysis
-Wrinkle detection
-Personalised Care
-Product recommendations based on analysis
-Routine optimisation engine (based on Skin Condition)
-Preavailable Skin Care Routine template from the popular and most rated skin care routine (categorized by gender, age, and lifestyle)
-🛠️ Technical Stack
+- Acne severity scoring
+- Pigmentation analysis
+- Wrinkle detection
+- Personalised Care
+- Product recommendations based on analysis
+- Routine optimisation engine (based on Skin Condition)
+- Pre- available Skin Care Routine template from the popular and most rated skin care routine (categorized by gender, age, and lifestyle)
 
+🛠️ Technical Stack
 Core Technologies
 Category- Technologies
 Framework - Flutter 3.13
