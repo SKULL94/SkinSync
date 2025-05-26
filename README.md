@@ -53,10 +53,10 @@ Technical Specs:
 - Inference Time: <200ms (SD835)
 
 Input: 224x224 RGB images
-Architecture: MobileNetV2 (Optimised for mobile)
-Accuracy: 85% on validation set
-Inference Time: <200ms (SD835)
-Future Roadmap Multi-Factor Analysis
+- Architecture: MobileNetV2 (Optimised for mobile)
+- Accuracy: 85% on validation set
+- Inference Time: <200ms (SD835)
+- Future Roadmap Multi-Factor Analysis
 
 Skin type detection (Dry/Oily/Combination)
 - Acne severity scoring
@@ -69,20 +69,21 @@ Skin type detection (Dry/Oily/Combination)
 
 🛠️ Technical Stack
 Core Technologies
-Category- Technologies
-Framework - Flutter 3.13
-Backend - Firebase (Auth, Firestore, Storage)
-ML - TensorFlow Lite, TF-Lite Flutter
-State - GetX
-Analytics - Firebase Analytics, Crashlytics
-Key Dependencies
+1. Category- Technologies
+2. Framework - Flutter 3.13
+3. Backend - Firebase (Auth, Firestore, Storage)
+4. ML - TensorFlow Lite, TF-Lite Flutter
+5. State - GetX
+6. Analytics - Firebase Analytics, Crashlytics
 
-tflite_flutter: ML model execution
-image_picker: Camera/Gallery integration
-share_plus: Social media sharing
-camera: Real-time skin analysis
+**Key Dependencies**
+- tflite_flutter: ML model execution
+- image_picker: Camera/Gallery integration
+- share_plus: Social media sharing
+- camera: Real-time skin analysis
+
+  
 Authentication:
-
 Phone: +91 72504 97748
 OTP: 123456
 Note: Dummy authentication for development purposes only
