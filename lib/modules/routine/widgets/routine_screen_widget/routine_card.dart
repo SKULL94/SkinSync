@@ -48,7 +48,9 @@ class RoutineScreenRoutineCard extends StatelessWidget {
             ],
           ));
         },
-        onDismissed: (_) => controller.deleteRoutine(routine.id),
+        onDismissed: (_) {
+          controller.deleteRoutine(routine.id);
+        },
         child: InkWell(
           borderRadius: BorderRadius.circular(getWidth(context, 15)),
           onTap: () => controller.toggleRoutineCompletion(routine.id),

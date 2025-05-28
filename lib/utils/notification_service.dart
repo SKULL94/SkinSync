@@ -14,6 +14,7 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+  final controller = Get.find<RoutineController>();
 
   Future<void> initialize() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -63,72 +64,69 @@ class NotificationService {
   Future<void> scheduleCustomRoutines() async {
     await safeSchedule(() async {
       try {
-        if (Get.isRegistered<RoutineController>()) {
-          final controller = Get.find<RoutineController>();
-          final routines = controller.routines;
+        final routines = controller.routines;
 
-          AndroidNotificationDetails androidDetails =
-              const AndroidNotificationDetails(
-            'routine_channel',
-            'Routine Reminders',
-            importance: Importance.high,
-            priority: Priority.high,
-            enableVibration: true,
-          );
-          NotificationDetails notificationDetails =
-              NotificationDetails(android: androidDetails);
+        AndroidNotificationDetails androidDetails =
+            const AndroidNotificationDetails(
+          'routine_channel',
+          'Routine Reminders',
+          importance: Importance.high,
+          priority: Priority.high,
+          enableVibration: true,
+        );
+        NotificationDetails notificationDetails =
+            NotificationDetails(android: androidDetails);
 
-          for (final routine in routines) {
-            final startDate = routine.startDate;
-            final endDate = routine.endDate;
-            final time = routine.time;
+        for (final routine in routines) {
+          final startDate = routine.startDate;
+          final endDate = routine.endDate;
+          final time = routine.time;
 
-            if (endDate == null) {
-              final now = DateTime.now();
-              final todayRoutineTime = DateTime(
-                startDate.year,
-                startDate.month,
-                startDate.day,
-                time.hour,
-                time.minute,
-              );
+          if (endDate == null) {
+            final now = DateTime.now();
+            final todayRoutineTime = DateTime(
+              startDate.year,
+              startDate.month,
+              startDate.day,
+              time.hour,
+              time.minute,
+            );
 
-              if (todayRoutineTime.isAfter(now)) {
-                await _scheduleSingleNotification(
-                  id: routine.id.hashCode + startDate.hashCode,
-                  title: '⏰ ${routine.name} Time!',
-                  body: routine.description,
-                  scheduledDate: todayRoutineTime,
-                  platformDetails: notificationDetails,
-                );
-              }
-
-              await scheduleRepeatingDaily(
-                hour: time.hour,
-                minutes: time.minute,
-                id: routine.id.hashCode,
+            if (todayRoutineTime.isAfter(now)) {
+              await _scheduleSingleNotification(
+                id: routine.id.hashCode + startDate.hashCode,
                 title: '⏰ ${routine.name} Time!',
                 body: routine.description,
-                startDate: startDate.add(const Duration(days: 1)),
+                scheduledDate: todayRoutineTime,
                 platformDetails: notificationDetails,
               );
-            } else {
-              final dates = getDatesInRange(startDate, endDate);
-              for (final date in dates) {
-                await _scheduleSingleNotification(
-                  id: routine.id.hashCode + date.hashCode,
-                  title: '⏰ ${routine.name} Time!',
-                  body: routine.description,
-                  scheduledDate: DateTime(
-                    date.year,
-                    date.month,
-                    date.day,
-                    time.hour,
-                    time.minute,
-                  ),
-                  platformDetails: notificationDetails,
-                );
-              }
+            }
+
+            await scheduleRepeatingDaily(
+              hour: time.hour,
+              minutes: time.minute,
+              id: routine.id.hashCode,
+              title: '⏰ ${routine.name} Time!',
+              body: routine.description,
+              startDate: startDate.add(const Duration(days: 1)),
+              platformDetails: notificationDetails,
+            );
+          } else {
+            final dates = getDatesInRange(startDate, endDate);
+            for (final date in dates) {
+              await _scheduleSingleNotification(
+                id: routine.id.hashCode + date.hashCode,
+                title: '⏰ ${routine.name} Time!',
+                body: routine.description,
+                scheduledDate: DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                  time.hour,
+                  time.minute,
+                ),
+                platformDetails: notificationDetails,
+              );
             }
           }
         }
@@ -212,8 +210,14 @@ class NotificationService {
 
   Future<void> cancelRoutineNotifications(CustomRoutine routine) async {
     if (routine.endDate == null) {
+      // Cancel the repeating daily notification
       await notificationsPlugin.cancel(routine.id.hashCode);
+      // Cancel the initial single notification (if it exists)
+      await notificationsPlugin.cancel(
+        routine.id.hashCode + routine.startDate.hashCode,
+      );
     } else {
+      // Cancel all date-specific notifications in the range
       final dates = getDatesInRange(routine.startDate, routine.endDate!);
       for (final date in dates) {
         await notificationsPlugin.cancel(routine.id.hashCode + date.hashCode);

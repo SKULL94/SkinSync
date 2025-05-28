@@ -33,6 +33,7 @@ class SkincareAnalysisController extends GetxController {
     super.onInit();
   }
 
+  // initializing the TFLite model
   Future<void> _initializeModel() async {
     try {
       await _tfLiteRepo.initialize();
@@ -42,11 +43,11 @@ class SkincareAnalysisController extends GetxController {
     }
   }
 
+  // Analyzing the image uploaded
   Future<void> _analyzeImage(String path) async {
     isLoading.value = true;
     try {
       await _initializeModel();
-      // final correctedFile = await _correctImageOrientation(imageFile);
 
       // We are adding human skin check
       final imageFile = File(path);

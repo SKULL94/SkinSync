@@ -15,6 +15,7 @@ class AuthController extends GetxController {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final RoutineController routineController = Get.find<RoutineController>();
 
   final RxBool isLogin = true.obs;
   final RxBool showPhoneAuth = false.obs;
@@ -106,7 +107,6 @@ class AuthController extends GetxController {
 
   Future<void> checkExistingRoutines(String userId) async {
     try {
-      final routineController = Get.find<RoutineController>();
       await routineController.fetchRoutines();
       Get.offAllNamed(AppRoutes.layoutRoute);
     } catch (e) {

@@ -30,13 +30,9 @@ class TFLiteRepository {
 
   Future<List<List<double>>> analyzeImage(String imagePath) async {
     if (_interpreter == null) throw Exception('Interpreter not initialized!');
-
     final input = preprocessImage(imagePath).reshape([1, 224, 224, 3]);
-
     final output = List<double>.filled(1 * 5, 0.0).reshape([1, 5]);
-
     _interpreter!.run(input, output);
-
     return output.cast<List<double>>();
   }
 
