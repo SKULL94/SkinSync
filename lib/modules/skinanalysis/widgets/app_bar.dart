@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:skin_sync/modules/skinanalysis/skincare_analysis_controller.dart';
+import 'package:skin_sync/modules/skinanalysis/controller/skincare_analysis_controller.dart';
 
 class SkincareAppBar extends GetView<SkincareAnalysisController>
     implements PreferredSizeWidget {

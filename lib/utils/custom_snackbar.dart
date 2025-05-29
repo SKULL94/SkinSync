@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-void showErrorSnackbar(String title, String message) {
+void showCustomSnackbar(String title, String message) {
   final isDarkMode = Get.isDarkMode;
 
   Get.snackbar(

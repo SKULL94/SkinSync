@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:share_plus/share_plus.dart';
-import 'package:skin_sync/custom_snackbar.dart';
+import 'package:skin_sync/utils/custom_snackbar.dart';
 import 'package:skin_sync/model/skin_analysis_history.dart';
 import 'package:skin_sync/utils/sqflite_database.dart';
 import 'package:skin_sync/utils/storage.dart';
-import '../../model/tflite/tflite_repository.dart';
+import '../../../model/tflite/tflite_repository.dart';
 
 class SkincareAnalysisController extends GetxController {
   final TFLiteRepository _tfLiteRepo = TFLiteRepository();
@@ -24,13 +24,12 @@ class SkincareAnalysisController extends GetxController {
 
   @override
   void onInit() {
-    _initializeModel();
-    final imagePath = Get.parameters['imagePath'];
-    if (imagePath != null) {
-      selectedImage.value = File(imagePath);
-      _analyzeImage(imagePath);
-    }
     super.onInit();
+  }
+
+  Future<void> setImageAndAnalyze(File imageFile) async {
+    selectedImage.value = imageFile;
+    await _analyzeImage(imageFile.path);
   }
 
   // initializing the TFLite model
@@ -39,7 +38,7 @@ class SkincareAnalysisController extends GetxController {
       await _tfLiteRepo.initialize();
       isModelReady.value = true;
     } catch (e) {
-      showErrorSnackbar("Error", "Failed to load AI model: ${e.toString()}");
+      showCustomSnackbar("Error", "Failed to load AI model: ${e.toString()}");
     }
   }
 
@@ -61,7 +60,7 @@ class SkincareAnalysisController extends GetxController {
       final labels = await _tfLiteRepo.loadLabels();
       results.value = parseResults(modelOutput, labels);
     } catch (e) {
-      showErrorSnackbar("Error", e.toString());
+      showCustomSnackbar("Error", e.toString());
     }
     isLoading.value = false;
   }
@@ -240,9 +239,9 @@ class SkincareAnalysisController extends GetxController {
           .doc(history.id.toString())
           .set(history.toMap());
 
-      showErrorSnackbar('Success', 'Analysis saved successfully!');
+      showCustomSnackbar('Success', 'Analysis saved successfully!');
     } catch (e) {
-      showErrorSnackbar(
+      showCustomSnackbar(
         'Error',
         'Failed to save analysis: ${e.toString()}',
       );
@@ -259,7 +258,7 @@ class SkincareAnalysisController extends GetxController {
         sharePositionOrigin: Rect.largest,
       );
     } catch (e) {
-      showErrorSnackbar("Error", "Sharing failed: ${e.toString()}");
+      showCustomSnackbar("Error", "Sharing failed: ${e.toString()}");
     }
   }
 

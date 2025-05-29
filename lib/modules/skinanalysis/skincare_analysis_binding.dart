@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'skincare_analysis_controller.dart';
+import 'controller/skincare_analysis_controller.dart';
 
 class SkincareAnalysisBinding implements Bindings {
   @override
