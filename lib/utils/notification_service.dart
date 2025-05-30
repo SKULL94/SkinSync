@@ -14,7 +14,6 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
-  final controller = Get.find<RoutineController>();
 
   Future<void> initialize() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -64,6 +63,7 @@ class NotificationService {
   Future<void> scheduleCustomRoutines() async {
     await safeSchedule(() async {
       try {
+        final RoutineController controller = Get.find();
         final routines = controller.routines;
 
         AndroidNotificationDetails androidDetails =

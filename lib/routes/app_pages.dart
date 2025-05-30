@@ -32,6 +32,7 @@ class AppPages {
         name: AppRoutes.layoutRoute,
         page: () => const LayoutScreen(),
         bindings: [
+          SkincareAnalysisBinding(),
           LayoutBinding(),
           RoutineBinding(),
           StreaksBinding(),

@@ -26,8 +26,7 @@ class RoutineController extends GetxController {
   // Dependencies
   // ==============================
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final NotificationService _notificationService =
-      Get.find<NotificationService>();
+  final NotificationService _notificationService = NotificationService();
   final Uuid _uuid = const Uuid();
 
   // ==============================

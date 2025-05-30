@@ -15,7 +15,6 @@ import 'package:skin_sync/utils/storage.dart';
 
 class RoutineScreen extends GetView<RoutineController> {
   RoutineScreen({super.key});
-
   final DateFormat dateFormat = DateFormat('EEE, MMM d');
   final GlobalKey _cameraIconKey = GlobalKey();
   final SkincareAnalysisController controllerClass = Get.find();
