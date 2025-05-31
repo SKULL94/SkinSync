@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class MenuPositionHelper {
   static RelativeRect calculatePosition({
     required GlobalKey key,
     required BuildContext context,
-    double horizontalOffset = -30,
-    double verticalOffset = 10,
   }) {
     final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.hasSize) {
@@ -14,15 +12,13 @@ class MenuPositionHelper {
 
     final offset = renderBox.localToGlobal(Offset.zero);
     final buttonSize = renderBox.size;
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenSize = MediaQuery.of(context).size;
 
     return RelativeRect.fromLTRB(
-      offset.dx + horizontalOffset,
-      offset.dy + buttonSize.height + verticalOffset,
-      screenWidth - (offset.dx + buttonSize.width - horizontalOffset),
-      screenHeight - (offset.dy + buttonSize.height + verticalOffset),
+      offset.dx - 100, // Left position (centered under icon)
+      offset.dy + buttonSize.height + 8, // Position below icon
+      screenSize.width - (offset.dx + buttonSize.width + 100), // Right position
+      screenSize.height - offset.dy - buttonSize.height - 8, // Bottom position
     );
   }
 }

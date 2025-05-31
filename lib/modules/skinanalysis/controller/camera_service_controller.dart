@@ -1,22 +1,20 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:skin_sync/modules/skinanalysis/skin_care_analysis_loading.dart';
 import 'package:skin_sync/modules/skinanalysis/utils/menu_position_helper.dart';
-import 'package:skin_sync/routes/app_routes.dart';
 import 'package:skin_sync/utils/custom_snackbar.dart';
 import 'skincare_analysis_controller.dart';
 
 class CameraServiceController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   final RxBool isImageLoading = false.obs;
-  final GlobalKey cameraIconKey = GlobalKey();
   final SkincareAnalysisController controller = Get.find();
 
-  void showImageSourceMenu(BuildContext context) {
+  void showImageSourceMenu(BuildContext context, GlobalKey key) {
     try {
       final position = MenuPositionHelper.calculatePosition(
-        key: cameraIconKey,
+        key: key,
         context: context,
       );
 
@@ -47,38 +45,30 @@ class CameraServiceController extends GetxController {
     required ImageSource source,
   }) {
     return PopupMenuItem(
-      height: 40,
-      onTap: () => _handleImageSelection(source),
-      child: Row(
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 12),
-          Text(label,
+      height: 45,
+      onTap: () async {
+        Get.to(() => SkinAnalysisLoadingScreen(source: source));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 22),
+            const SizedBox(width: 15),
+            Text(
+              label,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w500,
-              )),
-        ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _handleImageSelection(ImageSource source) async {
-    Get.dialog(const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false);
-
-    try {
-      final pickedFile = await _pickImage(source);
-      if (pickedFile != null) {
-        controller.setImageAndAnalyze(File(pickedFile.path));
-        Get.toNamed(AppRoutes.skinAnalysisRoute);
-      }
-    } finally {
-      if (Get.isDialogOpen == true) Get.back();
-    }
-  }
-
-  Future<XFile?> _pickImage(ImageSource source) async {
+  Future<XFile?> pickImage(ImageSource source) async {
     try {
       isImageLoading.value = true;
       return await _picker.pickImage(
@@ -88,8 +78,7 @@ class CameraServiceController extends GetxController {
         maxHeight: 1200,
       );
     } catch (e) {
-      showCustomSnackbar("Error", "Image selection failed: ${e.toString()}");
-      return null;
+      rethrow;
     } finally {
       isImageLoading.value = false;
     }

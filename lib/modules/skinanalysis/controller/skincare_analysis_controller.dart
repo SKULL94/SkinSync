@@ -1,10 +1,9 @@
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:share_plus/share_plus.dart';
+import 'package:skin_sync/supabase_services.dart';
 import 'package:skin_sync/utils/custom_snackbar.dart';
 import 'package:skin_sync/model/skin_analysis_history.dart';
 import 'package:skin_sync/utils/sqflite_database.dart';
@@ -19,17 +18,20 @@ class SkincareAnalysisController extends GetxController {
   final RxBool isModelReady = false.obs;
   final RxBool isImageLoading = false.obs;
 
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   @override
   void onInit() {
     super.onInit();
   }
 
   Future<void> setImageAndAnalyze(File imageFile) async {
+    isLoading.value = true;
     selectedImage.value = imageFile;
-    await _analyzeImage(imageFile.path);
+    try {
+      await _analyzeImage(imageFile.path);
+    } catch (e) {
+      showCustomSnackbar("Error", e.toString());
+      isLoading.value = false;
+    }
   }
 
   // initializing the TFLite model
@@ -215,29 +217,34 @@ class SkincareAnalysisController extends GetxController {
         throw Exception('User not authenticated');
       }
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final storageRef = _storage.ref('users/$userId/analysis/$timestamp.jpg');
-      final uploadTask = storageRef.putFile(imageFile);
-      final snapshot = await uploadTask.whenComplete(() {});
+      // Upload image to Supabase Storage
+      final imageBytes = await imageFile.readAsBytes();
+      final filePath = 'users/$userId/analysis/$timestamp.jpg';
+      await SupabaseService.client.storage
+          .from('skin_images')
+          .uploadBinary(filePath, imageBytes);
 
-      if (snapshot.state != TaskState.success) {
-        throw Exception('Upload failed with state: ${snapshot.state}');
-      }
-      final imageUrl = await storageRef.getDownloadURL();
+      // Get public URL
+      final imageUrl = SupabaseService.client.storage
+          .from('skin_images')
+          .getPublicUrl(filePath);
+
+      // Create history object
       final history = SkinAnalysisHistory(
         imageUrl: imageUrl,
         results: results.map((r) => r as Map<String, dynamic>).toList(),
         date: DateTime.now(),
+        id: userId,
       );
 
+      // Save to local database
       final dbHelper = DatabaseHelper.instance;
       await dbHelper.insertAnalysis(history);
 
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('skinAnalysis')
-          .doc(history.id.toString())
-          .set(history.toMap());
+      // Save to Supabase Database
+      await SupabaseService.client
+          .from('skin_analysis')
+          .upsert(history.toMap());
 
       showCustomSnackbar('Success', 'Analysis saved successfully!');
     } catch (e) {

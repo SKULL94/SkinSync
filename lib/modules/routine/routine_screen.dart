@@ -44,7 +44,8 @@ class RoutineScreen extends GetView<RoutineController> {
                     ),
                   )
                 : Icon(Icons.camera_alt)),
-            onPressed: () => cameraService.showImageSourceMenu(context),
+            onPressed: () =>
+                cameraService.showImageSourceMenu(context, _cameraIconKey),
             tooltip: 'Analyze Skin',
             splashRadius: 24,
           ),
