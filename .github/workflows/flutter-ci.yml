@@ -1,0 +1,38 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.2'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Analyzer (errors only)
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      # - name: Run Tests
+      #   run: flutter test
+
+      - name: Build Split APKs (per ABI)
+        run: flutter build apk --split-per-abi
+
+      - name: Upload Split APKs as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: split-apks
+          path: build/app/outputs/flutter-apk/*.apk

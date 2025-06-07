@@ -1,0 +1,31 @@
+flutter_native_splash:
+  android: true
+  ios: true
+  web: false
+
+  # This sets the full background image (covers entire screen)
+  background_image: 'assets/images/app_logo.jpg'
+
+  # You must remove `color` if using `background_image` (they are mutually exclusive)
+  # Do not use `image` or `branding` if you want the image to fill the whole screen.
+
+  # Dark mode support (optional)
+  # background_image_dark: 'assets/images/app_logo_dark.jpg'
+
+  android_12:
+    # Android 12+ only supports a centered image, not full-screen background
+    # So you need to handle it differently:
+    
+    # Use a center icon (optional; required if you don't want default launcher icon)
+    image: 'assets/images/app_logo.jpg'
+
+    # Set background color (you can't use background_image here)
+    color: "#ffffff" # Match this to the dominant color of your splash image
+    
+    # Optional icon background color (if your image has transparent parts)
+    icon_background_color: "#ffffff"
+
+    # Optional dark mode
+    # image_dark: 'assets/images/app_logo_dark.jpg'
+    # color_dark: "#000000"
+    # icon_background_color_dark: "#000000"
