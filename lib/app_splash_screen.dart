@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:skin_sync/model/tflite/tflite_repository.dart';
-import 'package:skin_sync/services/notification_service.dart';
-import 'package:skin_sync/services/sqflite_database.dart';
-import 'package:skin_sync/services/supabase_services.dart';
+import 'package:skin_sync/utils/app_utils.dart';
 
 class AppSplashScreen extends StatefulWidget {
   const AppSplashScreen({super.key});
@@ -19,16 +18,14 @@ class _AppSplashScreenState extends State<AppSplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    await Future.wait([
-      SupabaseService.init(),
-      NotificationService().initialize(),
-      DatabaseHelper.instance.database,
-    ]);
-    TFLiteRepository().initialize().then((_) {
-      debugPrint("TFLite initialized");
-    });
+    await TFLiteRepository().initialize();
+    debugPrint("TFLite initialized");
 
-    // Get.put(ConnectivityService());
+    final nextRoute = AppUtils.checkUser();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.offAllNamed(nextRoute);
+    });
   }
 
   @override

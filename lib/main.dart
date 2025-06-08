@@ -7,24 +7,26 @@ import 'package:skin_sync/app.dart';
 import 'package:skin_sync/services/firebase_options.dart';
 import 'package:skin_sync/services/firestore_queue.dart';
 import 'package:skin_sync/services/internet_service.dart';
+import 'package:skin_sync/services/notification_service.dart';
+import 'package:skin_sync/services/sqflite_database.dart';
+import 'package:skin_sync/services/supabase_services.dart';
 import 'package:workmanager/workmanager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
 
-  await Future.wait([
-    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-    Workmanager().initialize(
-      FirestoreQueueService.callbackDispatcher,
-      isInDebugMode: false,
-    ),
-  ]);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Workmanager().initialize(FirestoreQueueService.callbackDispatcher,
+      isInDebugMode: false);
 
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
+  await SupabaseService.init();
+  await DatabaseHelper.instance.database;
+  await NotificationService().initialize();
 
   Get.put(ConnectivityService());
 
