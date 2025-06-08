@@ -60,10 +60,7 @@ class RoutineController extends GetxController {
         return pickedFile;
       }
     } catch (e) {
-      showCustomSnackbar(
-        "Error",
-        "Failed to pick image: $e",
-      );
+      showCustomSnackbar("Error", "Failed to pick image: $e");
     } finally {
       isImageLoading.value = false;
     }
@@ -116,35 +113,29 @@ class RoutineController extends GetxController {
         time: selectedTime.value,
         userId: _userId!,
         createdDate: DateTime.now(),
+        imagePath: '',
         localIconPath: iconPath ?? '',
         startDate: startDate.value,
         endDate: endDate.value,
-        isCompleted: false,
-        completionProgress: 0.0,
         completionDates: [],
-        imagePath: '',
       );
 
       routines.add(newRoutine);
       _filterRoutines();
       await _notificationService.scheduleCustomRoutines();
       _showSuccess('Routine created successfully!');
+      //check for navigation stack
       Get.toNamed(AppRoutes.layoutRoute);
 
       final firestoreQueue = FirestoreQueueService();
-      final routineMap = {
-        ...newRoutine.toMap(),
-        'id': routineId,
-      };
+      final routineMap = newRoutine.toMap();
       firestoreQueue.addToQueue(
         'set',
         'users/$_userId/routines',
         routineId,
         routineMap,
       );
-      await _userRoutines
-          .doc(routineId)
-          .set(routineMap, SetOptions(merge: true));
+      await _userRoutines.doc(routineId).set(routineMap);
     } catch (e) {
       showCustomSnackbar('Error', "Failed to save routine: $e");
     }
@@ -157,21 +148,19 @@ class RoutineController extends GetxController {
       isLoading.value = true;
       final query = _userRoutines.orderBy('createdDate');
 
-      // Get cached data first
       final cachedSnapshot =
           await query.get(const GetOptions(source: Source.cache));
       if (cachedSnapshot.docs.isNotEmpty) {
         _processSnapshot(cachedSnapshot);
       }
 
-      // Then get server data
       final serverSnapshot =
           await query.get(const GetOptions(source: Source.server));
       if (serverSnapshot.docs.isNotEmpty) {
         _processSnapshot(serverSnapshot);
       }
     } catch (e) {
-      print("Error fetching routines: $e");
+      debugPrint("Error fetching routines: $e");
     } finally {
       isLoading.value = false;
     }
@@ -190,51 +179,48 @@ class RoutineController extends GetxController {
       final int index = routines.indexWhere((r) => r.id == routineId);
       if (index == -1) return;
 
-      final CustomRoutine updated =
-          routines[index].toggleCompletion(selectedDate.value);
-
-      // Update local state immediately
+      final updated = routines[index].toggleCompletion(selectedDate.value);
       routines[index] = updated;
       _filterRoutines();
 
-      // Add to Firestore queue instead of direct update
       final firestoreQueue = FirestoreQueueService();
       firestoreQueue.addToQueue(
-        'update', // Operation type
-        'users/$_userId/routines', // Collection path
-        routineId, // Document ID
+        'update',
+        'users/$_userId/routines',
+        routineId,
         {
           'completionDates': updated.completionDates
               .map((d) => Timestamp.fromDate(d))
               .toList(),
-          'completionProgress': updated.completionProgress,
-        }, // Only changed fields
+        },
       );
     } catch (e) {
-      showCustomSnackbar('Error', "'Failed to toggle completion': $e");
+      showCustomSnackbar('Error', "Failed to toggle completion: $e");
     }
   }
+
+  // double get overallProgress {
+  //   if (filteredRoutines.isEmpty) return 0.0;
+  //   final totalProgress = filteredRoutines.fold(
+  //       0.0, (sum, routine) => sum + routine.completionProgress);
+  //   return totalProgress / filteredRoutines.length;
+  // }
 
   Future<void> deleteRoutine(String id) async {
     if (_userId == null) return;
     try {
-      final CustomRoutine routine = routines.firstWhere((r) => r.id == id);
+      final routine = routines.firstWhere((r) => r.id == id);
       await _userRoutines.doc(id).delete();
       await _notificationService.cancelRoutineNotifications(routine);
       routines.removeWhere((r) => r.id == id);
       _filterRoutines();
     } catch (e) {
-      showCustomSnackbar('Error', "Failed to delete routine $e");
+      showCustomSnackbar('Error', "Failed to delete routine: $e");
     }
   }
 
-  // void updateSelectedDate(int days) {
-  //   selectedDate.value = selectedDate.value.add(Duration(days: days));
-  // }
-
   bool isDateCompleted(CustomRoutine routine) {
-    return routine.completionDates
-        .any((d) => DateUtils.isSameDay(d, selectedDate.value));
+    return routine.isCompletedOnDate(selectedDate.value);
   }
 
   int get completedCount {
@@ -269,29 +255,15 @@ class RoutineController extends GetxController {
           : null;
 
       return end == null
-          ? DateUtils.isSameDay(start, selected)
-          : selected.isAfter(start.subtract(1.days)) &&
-              selected.isBefore(end.add(1.days));
+          ? _isSameDay(start, selected)
+          : selected.isAfter(start.subtract(const Duration(days: 1))) &&
+              selected.isBefore(end.add(const Duration(days: 1)));
     }).toList();
   }
 
-  // Future<void> _updateUserCompletedDays() async {
-  //   final String formattedDate =
-  //       DateFormat('yyyy-MM-dd').format(selectedDate.value);
-  //   final bool hasCompleted = filteredRoutines.any((r) => isDateCompleted(r));
-
-  //   try {
-  //     await _firestore.collection('users').doc(_userId).update({
-  //       'completedDays': FieldValue.arrayUnion([formattedDate])
-  //     });
-  //   } on FirebaseException catch (e) {
-  //     if (e.code == 'not-found') {
-  //       await _firestore.collection('users').doc(_userId).set({
-  //         'completedDays': hasCompleted ? [formattedDate] : [],
-  //       }, SetOptions(merge: true));
-  //     }
-  //   }
-  // }
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
 
   void _showSuccess(String message) => Get.showSnackbar(
         GetSnackBar(
@@ -303,12 +275,4 @@ class RoutineController extends GetxController {
           margin: const EdgeInsets.all(16),
         ),
       );
-
-  // void showCustomSnackbar(String message, dynamic e) =>
-  //     showCustomSnackbar('Error', e.toString());
-}
-
-class DateUtils {
-  static bool isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
 }

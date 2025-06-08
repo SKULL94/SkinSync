@@ -3,6 +3,10 @@ import 'package:get_storage/get_storage.dart';
 import 'package:workmanager/workmanager.dart';
 
 class FirestoreQueueService {
+  FirestoreQueueService._internal();
+  static final FirestoreQueueService instance =
+      FirestoreQueueService._internal();
+  factory FirestoreQueueService() => instance;
   static const _queueKey = 'firestore_queue';
   final _storage = GetStorage();
   final _firestore = FirebaseFirestore.instance;
@@ -101,12 +105,12 @@ class FirestoreQueueService {
     );
   }
 
-  static void initialize() {
-    Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: false,
-    );
-  }
+  // static void initialize() {
+  //   Workmanager().initialize(
+  //     callbackDispatcher,
+  //     isInDebugMode: false,
+  //   );
+  // }
 
   static void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {

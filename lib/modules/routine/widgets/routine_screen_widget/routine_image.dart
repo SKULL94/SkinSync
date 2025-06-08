@@ -12,7 +12,7 @@ class RoutineScreenRoutineImage extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: CachedNetworkImage(
-        imageUrl: routine.imagePath,
+        imageUrl: routine.imagePath ?? "",
         width: double.infinity,
         height: getHeight(context, 150),
         fit: BoxFit.cover,

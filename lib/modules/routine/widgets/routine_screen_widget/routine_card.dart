@@ -103,7 +103,7 @@ class RoutineScreenRoutineCard extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: getHeight(context, 12)),
-                      if (routine.imagePath.isNotEmpty)
+                      if ((routine.imagePath?.isNotEmpty ?? false))
                         RoutineScreenRoutineImage(routine: routine),
                       SizedBox(height: getHeight(context, 12)),
                       Row(
