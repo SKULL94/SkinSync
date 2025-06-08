@@ -65,5 +65,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'skin-sync-ff3ba.firebasestorage.app',
     iosBundleId: 'com.example.urbanCulture',
   );
-
 }

@@ -7,7 +7,7 @@ plugins {
 
 android {
     compileSdk = flutter.compileSdkVersion
-    namespace = "com.example.skin_sync"
+    namespace = "com.zeeshan.skinsync"
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.skin_sync"
+        applicationId = "com.zeeshan.skinsync"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

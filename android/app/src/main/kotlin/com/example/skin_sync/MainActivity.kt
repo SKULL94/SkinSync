@@ -1,4 +1,4 @@
-package com.example.skin_sync
+package com.zeeshan.skinsync
 
 import io.flutter.embedding.android.FlutterActivity
 

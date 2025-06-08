@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:share_plus/share_plus.dart';
+import 'package:skin_sync/modules/history/skin_analysis_history_controller.dart';
 import 'package:skin_sync/services/supabase_services.dart';
 import 'package:skin_sync/utils/app_constants.dart';
 import 'package:skin_sync/utils/custom_snackbar.dart';
@@ -183,6 +184,9 @@ class SkincareAnalysisController extends GetxController {
 
       final dbHelper = DatabaseHelper.instance;
       final localId = await dbHelper.insertAnalysis(placeholderHistory);
+      if (Get.isRegistered<HistoryController>()) {
+        Get.find<HistoryController>().loadHistories();
+      }
 
       showCustomSnackbar('Success', 'Analysis saved! Syncing in background');
       isSaving.value = false;

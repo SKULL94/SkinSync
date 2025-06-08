@@ -46,7 +46,7 @@ class SkincareAnalysisScreen extends GetView<SkincareAnalysisController> {
         return Stack(
           children: [
             if (controller.selectedImage.value == null)
-              const Center(child: Text("No image selected"))
+              const Center(child: CircularProgressIndicator())
             else
               Column(
                 children: [
@@ -63,10 +63,10 @@ class SkincareAnalysisScreen extends GetView<SkincareAnalysisController> {
                     children: [
                       CircularProgressIndicator(),
                       SizedBox(height: 16),
-                      Text(
-                        'Saving analysis...',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      // Text(
+                      //   'Saving analysis...',
+                      //   style: TextStyle(color: Colors.white),
+                      // ),
                     ],
                   ),
                 ),
