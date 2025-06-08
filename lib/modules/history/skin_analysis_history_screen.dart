@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_state_manager/src/simple/get_view.dart';
@@ -39,8 +37,8 @@ class HistoryScreen extends GetView<HistoryController> {
               return ListTile(
                 leading: isPlaceholder
                     ? const Icon(Icons.hourglass_top, size: 50)
-                    : Image.file(
-                        File(history.imageUrl),
+                    : Image.network(
+                        history.imageUrl,
                         width: 50,
                         height: 50,
                       ),

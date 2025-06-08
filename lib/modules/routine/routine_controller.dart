@@ -129,7 +129,7 @@ class RoutineController extends GetxController {
       _filterRoutines();
       await _notificationService.scheduleCustomRoutines();
       _showSuccess('Routine created successfully!');
-      Get.to(AppRoutes.layoutRoute);
+      Get.toNamed(AppRoutes.layoutRoute);
 
       final firestoreQueue = FirestoreQueueService();
       final routineMap = {
