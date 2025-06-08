@@ -1,4 +1,3 @@
-// import 'package:skin_sync/model/routine.dart';
 import 'package:skin_sync/routes/app_routes.dart';
 import 'package:skin_sync/utils/app_constants.dart';
 import 'package:skin_sync/services/storage.dart';
