@@ -65,6 +65,7 @@ dependencies:
   workmanager: ^0.6.0
 
 
+
 dependency_overrides:
       win32: ^5.5.4
       flutter_plugin_android_lifecycle: ^2.0.27

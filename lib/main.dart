@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,19 +14,15 @@ import 'package:workmanager/workmanager.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await Workmanager().initialize(FirestoreQueueService.callbackDispatcher,
-      isInDebugMode: false);
-
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  await NotificationService().init();
+  await Workmanager().initialize(
+    FirestoreQueueService.callbackDispatcher,
+    isInDebugMode: false,
   );
+
   await SupabaseService.init();
   await DatabaseHelper.instance.database;
-  await NotificationService().initialize();
-
   Get.put(ConnectivityService());
 
   runApp(const MyApp());

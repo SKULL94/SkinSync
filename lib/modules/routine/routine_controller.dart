@@ -8,22 +8,23 @@ import 'package:path_provider/path_provider.dart';
 import 'package:skin_sync/model/custom_routine.dart';
 import 'package:skin_sync/routes/app_routes.dart';
 import 'package:skin_sync/services/firestore_queue.dart';
+import 'package:skin_sync/services/notification_service.dart';
 import 'package:skin_sync/utils/app_constants.dart';
 import 'package:skin_sync/utils/custom_snackbar.dart';
 import 'package:skin_sync/services/image_service.dart';
-import 'package:skin_sync/services/notification_service.dart';
 import 'package:skin_sync/services/storage.dart';
 import 'package:uuid/uuid.dart';
 
 class RoutineController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final NotificationService _notificationService = NotificationService();
+  // final NotificationService _notificationService = NotificationService();
   final Uuid _uuid = const Uuid();
   final RxBool isImageLoading = false.obs;
 
   final RxList<CustomRoutine> routines = <CustomRoutine>[].obs;
   final RxList<CustomRoutine> filteredRoutines = <CustomRoutine>[].obs;
   final RxBool isLoading = false.obs;
+  final NotificationService notificationService = Get.find();
 
   // Form controllers
   final TextEditingController nameController = TextEditingController();
@@ -43,6 +44,13 @@ class RoutineController extends GetxController {
     super.onInit();
     selectedDate.listen((_) => _filterRoutines());
     fetchRoutines();
+    _rescheduleAllNotifications();
+  }
+
+  Future<void> _rescheduleAllNotifications() async {
+    for (final routine in routines) {
+      await notificationService.scheduleCustomRoutine(routine);
+    }
   }
 
   Future<XFile?> pickImage(ImageSource source) async {
@@ -112,20 +120,21 @@ class RoutineController extends GetxController {
         description: descController.text.trim(),
         time: selectedTime.value,
         userId: _userId!,
-        createdDate: DateTime.now(),
+        createdDate: DateTime.now().toLocal(),
         imagePath: '',
         localIconPath: iconPath ?? '',
-        startDate: startDate.value,
-        endDate: endDate.value,
+        startDate: startDate.value.toLocal(),
+        endDate: endDate.value?.toLocal(),
         completionDates: [],
       );
 
       routines.add(newRoutine);
       _filterRoutines();
-      await _notificationService.scheduleCustomRoutines();
+      // final notificationService = Get.find<NotificationService>();
+      // await notificationService.scheduleCustomRoutines(routines.toList());
       _showSuccess('Routine created successfully!');
       //check for navigation stack
-      Get.toNamed(AppRoutes.layoutRoute);
+      Get.offNamed(AppRoutes.layoutRoute);
 
       final firestoreQueue = FirestoreQueueService();
       final routineMap = newRoutine.toMap();
@@ -136,6 +145,7 @@ class RoutineController extends GetxController {
         routineMap,
       );
       await _userRoutines.doc(routineId).set(routineMap);
+      await notificationService.scheduleCustomRoutine(newRoutine);
     } catch (e) {
       showCustomSnackbar('Error', "Failed to save routine: $e");
     }
@@ -159,6 +169,7 @@ class RoutineController extends GetxController {
       if (serverSnapshot.docs.isNotEmpty) {
         _processSnapshot(serverSnapshot);
       }
+      // await NotificationService().scheduleCustomRoutines(routines.toList());
     } catch (e) {
       debugPrint("Error fetching routines: $e");
     } finally {
@@ -209,11 +220,12 @@ class RoutineController extends GetxController {
   Future<void> deleteRoutine(String id) async {
     if (_userId == null) return;
     try {
-      final routine = routines.firstWhere((r) => r.id == id);
+      // final routine = routines.firstWhere((r) => r.id == id);
       await _userRoutines.doc(id).delete();
-      await _notificationService.cancelRoutineNotifications(routine);
+
       routines.removeWhere((r) => r.id == id);
       _filterRoutines();
+      await notificationService.cancelNotification(int.parse(id));
     } catch (e) {
       showCustomSnackbar('Error', "Failed to delete routine: $e");
     }
