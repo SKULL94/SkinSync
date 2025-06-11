@@ -1,7 +1,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:skin_sync/app_splash_screen.dart';
+import 'package:skin_sync/modules/splash/app_splash_screen.dart';
 import 'package:skin_sync/utils/app_constants.dart';
 import 'package:skin_sync/services/storage.dart';
 import 'routes/app_pages.dart';
