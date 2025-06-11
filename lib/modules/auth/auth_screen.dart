@@ -134,7 +134,7 @@ class AuthScreen extends StatelessWidget {
                                 ? 'Sign in to continue your skincare journey'
                                 : 'Start your personalized skincare routine',
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               fontSize: getResponsiveFontSize(context, 16),
                             ),
                             textAlign: TextAlign.center,

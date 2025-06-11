@@ -220,12 +220,17 @@ class RoutineController extends GetxController {
   Future<void> deleteRoutine(String id) async {
     if (_userId == null) return;
     try {
+      final idString = id.toString();
+      if (idString.contains('-')) {
+        await _userRoutines.doc(idString).delete();
+        routines.removeWhere((r) => r.id == idString);
+        _filterRoutines();
+      }
+      final notificationId = int.tryParse(idString);
+      if (notificationId != null) {
+        await notificationService.cancelNotification(notificationId);
+      }
       // final routine = routines.firstWhere((r) => r.id == id);
-      await _userRoutines.doc(id).delete();
-
-      routines.removeWhere((r) => r.id == id);
-      _filterRoutines();
-      await notificationService.cancelNotification(int.parse(id));
     } catch (e) {
       showCustomSnackbar('Error', "Failed to delete routine: $e");
     }

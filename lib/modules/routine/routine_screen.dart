@@ -29,18 +29,16 @@ class RoutineScreen extends GetView<RoutineController> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Welcome, $userName 👋',
+          'Welcome, $userName',
           style: TextStyle(
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600, // Increased weight for professionalism
             fontSize: CustomAppBar.appBarFontSize,
           ),
         ),
-        surfaceTintColor: Theme.of(context).colorScheme.surface,
+        centerTitle: false,
+        surfaceTintColor: Colors.transparent, // More modern appearance
         actions: [
-          CameraButton(
-            controller: controller,
-            cameraService: cameraService,
-          ),
+          CameraButton(controller: controller, cameraService: cameraService),
           SizedBox(width: getWidth(context, 8)),
           const ThemeToggleButton(),
         ],
@@ -53,14 +51,23 @@ class RoutineScreen extends GetView<RoutineController> {
             dateFormat: _dateFormat,
           ),
           Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return const RoutineScreenLoadingState();
-              }
-              return controller.filteredRoutines.isEmpty
-                  ? const RoutineScreenEmptyState()
-                  : RoutineScreenRoutineList(controller: controller);
-            }),
+            child: Container(
+              decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.1),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24))),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const RoutineScreenLoadingState();
+                }
+                return controller.filteredRoutines.isEmpty
+                    ? const RoutineScreenEmptyState()
+                    : RoutineScreenRoutineList(controller: controller);
+              }),
+            ),
           ),
         ],
       ),

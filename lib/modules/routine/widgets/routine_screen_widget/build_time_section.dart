@@ -10,16 +10,28 @@ class RoutineScreenTimeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: getHeight(context, 8)),
+      padding: const EdgeInsets.only(top: 24, bottom: 12),
       child: Row(
         children: [
-          Icon(icon, size: getHeight(context, 20), color: Colors.amber[700]),
-          SizedBox(width: getWidth(context, 8)),
-          Text(title,
-              style: TextStyle(
-                  fontSize: getResponsiveFontSize(context, 16),
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5)),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon,
+                size: 20, color: Theme.of(context).colorScheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: getResponsiveFontSize(context, 18),
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
         ],
       ),
     );

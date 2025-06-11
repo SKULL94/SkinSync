@@ -67,9 +67,11 @@ class RoutineScreenRoutineList extends StatelessWidget {
       );
 
       return ListView.separated(
-        padding: EdgeInsets.symmetric(
-          vertical: getHeight(context, 16),
-          horizontal: getHeight(context, 16),
+        padding: EdgeInsets.only(
+          top: getHeight(context, 16),
+          left: getHeight(context, 16),
+          right: getHeight(context, 16),
+          bottom: getHeight(context, 150),
         ),
         itemCount: totalItems,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
