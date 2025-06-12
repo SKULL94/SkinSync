@@ -13,54 +13,52 @@ class IconUploadSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         children: [
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                )
+              ],
             ),
             child: GestureDetector(
               onTap: onPickIcon,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey[200]!, width: 2),
-                ),
+              child: CircleAvatar(
+                radius: 60,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
                 child: localIcon != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(60),
                         child: Image.file(
                           localIcon!,
                           width: 120,
                           height: 120,
-                          cacheWidth: 240,
-                          cacheHeight: 240,
                           fit: BoxFit.cover,
                         ),
                       )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_a_photo_rounded,
-                              size: 32, color: Colors.grey[400]),
-                          const SizedBox(height: 8),
-                          Text('Add Icon',
-                              style: TextStyle(
-                                  color: Colors.grey[500], fontSize: 13)),
-                        ],
+                    : Icon(
+                        Icons.add_a_photo_rounded,
+                        size: 32,
+                        color: theme.primaryColor,
                       ),
               ),
             ),
           ),
           if (localIcon != null)
-            TextButton(
+            TextButton.icon(
+              icon: Icon(Icons.edit, size: 18),
+              label: const Text('Change Icon'),
               onPressed: onPickIcon,
-              child: const Text('Change Icon',
-                  style: TextStyle(color: Colors.blue, fontSize: 14)),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.primaryColor,
+              ),
             ),
         ],
       ),

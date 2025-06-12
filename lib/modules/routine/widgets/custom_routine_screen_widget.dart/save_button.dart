@@ -11,22 +11,36 @@ class CustomRoutineSaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
+    final theme = Theme.of(context);
+    return Container(
+      margin: EdgeInsets.only(top: getHeight(context, 20)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primaryColor.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
       child: ElevatedButton.icon(
         icon: Icon(Icons.check_circle_outline_rounded,
             size: getWidth(context, 24)),
         label: Text('Save Routine',
             style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: getResponsiveFontSize(context, 16))),
+                fontWeight: FontWeight.w600,
+                fontSize: getResponsiveFontSize(context, 17))),
         style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: getHeight(context, 16)),
+          padding: EdgeInsets.symmetric(
+              horizontal: getWidth(context, 100),
+              vertical: getHeight(context, 18)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(getWidth(context, 12)),
+            borderRadius: BorderRadius.circular(16),
           ),
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
+          backgroundColor: theme.primaryColor,
+          foregroundColor: theme.colorScheme.onPrimary,
+          elevation: 0,
         ),
         onPressed: onPressed,
       ),

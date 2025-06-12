@@ -130,12 +130,8 @@ class RoutineController extends GetxController {
 
       routines.add(newRoutine);
       _filterRoutines();
-      // final notificationService = Get.find<NotificationService>();
-      // await notificationService.scheduleCustomRoutines(routines.toList());
       _showSuccess('Routine created successfully!');
-      //check for navigation stack
       Get.offNamed(AppRoutes.layoutRoute);
-
       final firestoreQueue = FirestoreQueueService();
       final routineMap = newRoutine.toMap();
       firestoreQueue.addToQueue(
@@ -169,7 +165,6 @@ class RoutineController extends GetxController {
       if (serverSnapshot.docs.isNotEmpty) {
         _processSnapshot(serverSnapshot);
       }
-      // await NotificationService().scheduleCustomRoutines(routines.toList());
     } catch (e) {
       debugPrint("Error fetching routines: $e");
     } finally {
@@ -209,13 +204,6 @@ class RoutineController extends GetxController {
       showCustomSnackbar('Error', "Failed to toggle completion: $e");
     }
   }
-
-  // double get overallProgress {
-  //   if (filteredRoutines.isEmpty) return 0.0;
-  //   final totalProgress = filteredRoutines.fold(
-  //       0.0, (sum, routine) => sum + routine.completionProgress);
-  //   return totalProgress / filteredRoutines.length;
-  // }
 
   Future<void> deleteRoutine(String id) async {
     if (_userId == null) return;

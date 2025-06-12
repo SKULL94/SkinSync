@@ -14,17 +14,52 @@ class CustomRoutineStartDateSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(Icons.calendar_today, size: getWidth(context, 24)),
-      title: Text(
-        'Start Date: ${DateFormat('MMM d, y').format(startDate)}',
-        style: TextStyle(fontSize: getResponsiveFontSize(context, 14)),
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.all(getWidth(context, 16)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
       ),
-      trailing: IconButton(
-        icon: Icon(Icons.edit_calendar, size: getWidth(context, 24)),
-        onPressed: onDateSelected,
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.calendar_today, color: theme.primaryColor),
+          ),
+          SizedBox(width: getWidth(context, 16)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Start Date',
+                  style: TextStyle(
+                    fontSize: getResponsiveFontSize(context, 13),
+                    color: theme.textTheme.titleMedium?.color
+                        ?.withValues(alpha: 0.7),
+                  )),
+              SizedBox(height: getHeight(context, 4)),
+              Text(DateFormat('MMM d, y').format(startDate),
+                  style: TextStyle(
+                    fontSize: getResponsiveFontSize(context, 16),
+                    fontWeight: FontWeight.w500,
+                  )),
+            ],
+          ),
+          const Spacer(),
+          FilledButton.tonalIcon(
+            onPressed: onDateSelected,
+            icon: Icon(Icons.edit, size: 18),
+            label: Text('Edit'),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.surface,
+            ),
+          ),
+        ],
       ),
-      contentPadding: EdgeInsets.symmetric(horizontal: getWidth(context, 4)),
     );
   }
 }

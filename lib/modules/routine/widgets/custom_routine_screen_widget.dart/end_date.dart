@@ -18,31 +18,76 @@ class CustomRoutineEndDateSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SwitchListTile(
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: getWidth(context, 4)),
-          title: Text(
-            'Set End Date',
-            style: TextStyle(fontSize: getResponsiveFontSize(context, 16)),
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.all(getWidth(context, 16)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.calendar_today, color: theme.primaryColor),
+              ),
+              SizedBox(width: getWidth(context, 16)),
+              Text('Set End Date',
+                  style: TextStyle(
+                    fontSize: getResponsiveFontSize(context, 16),
+                  )),
+              const Spacer(),
+              Switch(
+                value: isEnabled,
+                onChanged: onToggle,
+                activeColor: theme.primaryColor,
+              ),
+            ],
           ),
-          value: isEnabled,
-          onChanged: onToggle,
-        ),
-        if (isEnabled && endDate != null)
-          ListTile(
-            leading: Icon(Icons.calendar_today, size: getWidth(context, 24)),
-            title: Text(
-              'End Date: ${DateFormat('MMM d, y').format(endDate!)}',
-              style: TextStyle(fontSize: getResponsiveFontSize(context, 14)),
+          if (isEnabled && endDate != null) ...[
+            SizedBox(height: getHeight(context, 12)),
+            Padding(
+              padding: const EdgeInsets.only(left: 56.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('End Date',
+                      style: TextStyle(
+                        fontSize: getResponsiveFontSize(context, 13),
+                        color: theme.textTheme.titleMedium?.color
+                            ?.withValues(alpha: 0.7),
+                      )),
+                  SizedBox(height: getHeight(context, 4)),
+                  Text(DateFormat('MMM d, y').format(endDate!),
+                      style: TextStyle(
+                        fontSize: getResponsiveFontSize(context, 16),
+                        fontWeight: FontWeight.w500,
+                      )),
+                  SizedBox(height: getHeight(context, 8)),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.tonalIcon(
+                      onPressed: onDateSelected,
+                      icon: Icon(Icons.edit, size: 18),
+                      label: Text('Edit Date'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.surface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            trailing: IconButton(
-              icon: Icon(Icons.edit_calendar, size: getWidth(context, 24)),
-              onPressed: onDateSelected,
-            ),
-          ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 }

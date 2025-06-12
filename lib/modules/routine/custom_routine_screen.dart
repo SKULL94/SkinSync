@@ -19,6 +19,7 @@ class CreateRoutineScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -28,7 +29,7 @@ class CreateRoutineScreen extends StatelessWidget {
             fontSize: CustomAppBar.appBarFontSize,
           ),
         ),
-        surfaceTintColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: theme.colorScheme.surface,
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -44,29 +45,29 @@ class CreateRoutineScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const CustomRoutineHeader(),
-                    SizedBox(height: getHeight(context, 30)),
+                    SizedBox(height: getHeight(context, 24)),
                     Obx(() => IconUploadSection(
                           localIcon: controller.localIcon.value,
                           onPickIcon: () =>
                               controller.pickImage(ImageSource.camera),
                         )),
-                    SizedBox(height: getHeight(context, 30)),
+                    SizedBox(height: getHeight(context, 24)),
                     CustomRoutineFormField(
                         controller: controller.nameController,
                         descController: controller.descController,
                         isTablet: isTablet(context)),
-                    SizedBox(height: getHeight(context, 30)),
+                    SizedBox(height: getHeight(context, 24)),
                     Obx(() => CustomRoutineTimeSelector(
                           onSelectTime: () => controller.selectTime(context),
                           selectedTime: controller.selectedTime.value,
                         )),
-                    SizedBox(height: getHeight(context, 30)),
+                    SizedBox(height: getHeight(context, 16)),
                     Obx(() => CustomRoutineStartDateSelector(
                           startDate: controller.startDate.value,
                           onDateSelected: () =>
                               controller.selectDate(context, isStartDate: true),
                         )),
-                    SizedBox(height: getHeight(context, 30)),
+                    SizedBox(height: getHeight(context, 16)),
                     Obx(() => CustomRoutineEndDateSelector(
                           endDate: controller.endDate.value,
                           isEnabled: controller.endDate.value != null,
@@ -77,7 +78,7 @@ class CreateRoutineScreen extends StatelessWidget {
                           onDateSelected: () => controller.selectDate(context,
                               isStartDate: false),
                         )),
-                    SizedBox(height: getHeight(context, 40)),
+                    SizedBox(height: getHeight(context, 24)),
                     CustomRoutineSaveButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {

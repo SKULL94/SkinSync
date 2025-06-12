@@ -15,6 +15,7 @@ class CustomRoutineFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         TextFormField(
@@ -29,16 +30,17 @@ class CustomRoutineFormField extends StatelessWidget {
             floatingLabelBehavior: FloatingLabelBehavior.always,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Colors.grey[400]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[400]!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+              borderSide: BorderSide(color: theme.primaryColor, width: 2.0),
             ),
           ),
-          style: TextStyle(fontSize: getResponsiveFontSize(context, 15)),
-          validator: (value) => value!.isEmpty ? 'Required field' : null,
         ),
         SizedBox(height: getHeight(context, 20)),
         TextFormField(
@@ -54,15 +56,17 @@ class CustomRoutineFormField extends StatelessWidget {
             floatingLabelBehavior: FloatingLabelBehavior.always,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Colors.grey[400]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[400]!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+              borderSide: BorderSide(color: theme.primaryColor, width: 2.0),
             ),
           ),
-          style: TextStyle(fontSize: getResponsiveFontSize(context, 15)),
         ),
       ],
     );

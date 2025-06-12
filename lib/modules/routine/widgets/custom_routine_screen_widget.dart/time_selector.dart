@@ -10,43 +10,51 @@ class CustomRoutineTimeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onSelectTime,
-      child: Container(
-        padding: EdgeInsets.all(getWidth(context, 16)),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(getWidth(context, 15)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.access_time_rounded,
-                color: Theme.of(context).primaryColor,
-                size: getWidth(context, 24)),
-            SizedBox(width: getWidth(context, 15)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Routine Time',
-                    style: TextStyle(
-                        fontSize: getResponsiveFontSize(context, 13))),
-                SizedBox(height: getHeight(context, 4)),
-                Text(selectedTime.format(context),
-                    style: TextStyle(
-                      fontSize: getResponsiveFontSize(context, 16),
-                      fontWeight: FontWeight.w500,
-                    )),
-              ],
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.all(getWidth(context, 16)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            const Spacer(),
-            Text(
-              'Change',
-              style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: getResponsiveFontSize(context, 14)),
+            child: Icon(Icons.access_time_rounded, color: theme.primaryColor),
+          ),
+          SizedBox(width: getWidth(context, 16)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Routine Time',
+                  style: TextStyle(
+                    fontSize: getResponsiveFontSize(context, 13),
+                    color: theme.textTheme.titleMedium?.color
+                        ?.withValues(alpha: 0.7),
+                  )),
+              SizedBox(height: getHeight(context, 4)),
+              Text(selectedTime.format(context),
+                  style: TextStyle(
+                    fontSize: getResponsiveFontSize(context, 16),
+                    fontWeight: FontWeight.w500,
+                  )),
+            ],
+          ),
+          const Spacer(),
+          FilledButton.tonalIcon(
+            onPressed: onSelectTime,
+            icon: Icon(Icons.edit, size: 18),
+            label: Text('Change'),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.surface,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
