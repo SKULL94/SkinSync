@@ -20,7 +20,7 @@ class NotificationService {
     await _configureLocalTimeZone();
 
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings();
@@ -32,13 +32,13 @@ class NotificationService {
 
     await _notificationsPlugin.initialize(settings);
 
-    // Create notification channel for Android
     await _createNotificationChannel();
   }
 
   Future<void> _configureLocalTimeZone() async {
     tz.initializeTimeZones();
-    tz.setLocalLocation(tz.local);
+    final tz.Location india = tz.getLocation('Asia/Kolkata');
+    tz.setLocalLocation(india);
   }
 
   Future<void> _createNotificationChannel() async {
@@ -87,6 +87,15 @@ class NotificationService {
     );
   }
 
+  Future<void> cancelRoutineNotifications(CustomRoutine routine) async {
+    final dates = _getNotificationDates(routine);
+
+    for (final date in dates) {
+      final id = _generateNotificationId(routine.id, date);
+      await cancelNotification(id);
+    }
+  }
+
   Future<void> cancelNotification(int id) async {
     await _notificationsPlugin.cancel(id);
   }
@@ -112,7 +121,6 @@ class NotificationService {
   }
 
   Future<void> scheduleCustomRoutine(CustomRoutine routine) async {
-    // Cancel any existing notifications for this routine
     await _cancelRoutineNotifications(routine.id);
 
     final dates = _getNotificationDates(routine);
@@ -131,8 +139,6 @@ class NotificationService {
   }
 
   Future<void> _cancelRoutineNotifications(String routineId) async {
-    // In a real app, you'd store notification IDs to cancel them specifically
-    // For simplicity, we'll cancel all and reschedule
     await cancelAllNotifications();
   }
 
