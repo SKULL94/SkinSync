@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    compileSdk = 35
+    compileSdk = 36
     namespace = "com.zeeshan.skinsync"
     ndkVersion = "27.0.12077973"
 

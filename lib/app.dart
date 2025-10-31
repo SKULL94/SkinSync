@@ -20,17 +20,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return MaterialApp.router(
       theme: FlexThemeData.light(
           scheme: FlexScheme.bahamaBlue, useMaterial3: true),
       darkTheme:
           FlexThemeData.dark(scheme: FlexScheme.damask, useMaterial3: true),
       themeMode: themeMode,
-      navigatorKey: Get.key,
+      // navigatorKey: Get.key,
       debugShowCheckedModeBanner: false,
       title: 'Daily Skin Care Routine App',
-      getPages: AppPages.pages,
-      home: AppSplashScreen(),
+      routerConfig: appRouter,
+      // getPages: AppPages.pages,
+      // home: AppSplashScreen(),
     );
   }
 }

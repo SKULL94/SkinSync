@@ -8,7 +8,6 @@ import 'package:skin_sync/modules/streaks/widgets/streak_motivation_section.dart
 import 'package:skin_sync/modules/streaks/widgets/streak_progress.dart';
 import 'package:skin_sync/modules/streaks/widgets/streak_type_selector.dart';
 import 'package:skin_sync/routes/app_routes.dart';
-import 'package:skin_sync/utils/app_bar.dart';
 import 'package:skin_sync/utils/mediaquery.dart';
 
 class StreaksScreen extends StatelessWidget {
@@ -27,7 +26,7 @@ class StreaksScreen extends StatelessWidget {
           'Streaks',
           style: TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: CustomAppBar.appBarFontSize,
+            fontSize: getResponsiveFontSize(context, 18),
           ),
         ),
         surfaceTintColor: Theme.of(context).colorScheme.surface,

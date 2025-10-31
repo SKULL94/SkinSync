@@ -16,7 +16,7 @@ class RoutineScreenProgressIndicator extends StatelessWidget {
         CircularProgressIndicator(
           value: routine.completionProgress,
           strokeWidth: 3,
-          color: Theme.of(Get.context!).primaryColor,
+          color: Theme.of(context).primaryColor,
           backgroundColor: Colors.grey[200],
         ),
         Icon(
@@ -24,7 +24,7 @@ class RoutineScreenProgressIndicator extends StatelessWidget {
               ? Icons.self_improvement_rounded
               : Icons.checklist_rounded,
           size: getHeight(context, 22),
-          color: Theme.of(Get.context!).primaryColor,
+          color: Theme.of(context).primaryColor,
         ),
       ],
     );

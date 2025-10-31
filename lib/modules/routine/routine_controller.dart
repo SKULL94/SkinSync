@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:skin_sync/model/custom_routine.dart';
+import 'package:skin_sync/routes/app_pages.dart';
 import 'package:skin_sync/routes/app_routes.dart';
 import 'package:skin_sync/services/firestore_queue.dart';
 import 'package:skin_sync/services/notification_service.dart';
@@ -131,7 +132,7 @@ class RoutineController extends GetxController {
       routines.add(newRoutine);
       _filterRoutines();
       _showSuccess('Routine created successfully!');
-      Get.offNamed(AppRoutes.layoutRoute);
+      appRouter.go(AppRoutes.routineRoute);
       final firestoreQueue = FirestoreQueueService();
       final routineMap = newRoutine.toMap();
       firestoreQueue.addToQueue(

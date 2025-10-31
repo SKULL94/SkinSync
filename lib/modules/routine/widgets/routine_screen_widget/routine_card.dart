@@ -16,24 +16,35 @@ class RoutineScreenRoutineCard extends StatelessWidget {
 
   final RoutineController controller;
   final CustomRoutine routine;
-
-  Future<bool> _confirmDelete() async {
-    return await Get.dialog(
-      AlertDialog(
-        title: const Text("Delete Routine?"),
-        content: const Text("Are you sure you want to delete this routine?"),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Get.back(result: true),
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+  Future<bool> _confirmDelete(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Delete Routine?"),
+          content: const Text("Are you sure you want to delete this routine?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
     );
+
+    return result ?? false; // default to false if dismissed
   }
 
   @override
@@ -57,7 +68,7 @@ class RoutineScreenRoutineCard extends StatelessWidget {
           child:
               const Icon(Icons.delete_forever, color: Colors.white, size: 30),
         ),
-        confirmDismiss: (_) => _confirmDelete(),
+        confirmDismiss: (_) => _confirmDelete(context),
         onDismissed: (_) => controller.deleteRoutine(routine.id),
         child: Container(
           decoration: BoxDecoration(
@@ -165,7 +176,7 @@ class RoutineScreenRoutineCard extends StatelessWidget {
                             ),
                           ),
                         Text(
-                          routine.time.format(Get.context!),
+                          routine.time.format(context),
                           style: TextStyle(
                             fontSize: getResponsiveFontSize(context, 16),
                             fontWeight: FontWeight.w600,
@@ -187,7 +198,7 @@ class RoutineScreenRoutineCard extends StatelessWidget {
                       color: routineCardTheme.colorScheme.onSurface
                           .withValues(alpha: 0.4)),
                   onPressed: () async {
-                    final shouldDelete = await _confirmDelete();
+                    final shouldDelete = await _confirmDelete(context);
                     if (shouldDelete) {
                       controller.deleteRoutine(routine.id);
                     }

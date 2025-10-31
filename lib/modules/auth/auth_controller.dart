@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
+import 'package:skin_sync/routes/app_pages.dart';
 import 'package:skin_sync/utils/app_constants.dart';
 import 'package:skin_sync/utils/custom_snackbar.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
@@ -30,7 +32,6 @@ class AuthController extends GetxController {
 
   @override
   void dispose() {
-    // Disposing all controllers in one place
     phoneController.dispose();
     otpController.dispose();
     emailController.dispose();
@@ -55,7 +56,7 @@ class AuthController extends GetxController {
 
   Future<void> verifyPhoneNumber() async {
     if (phoneNumber.value.isEmpty) {
-      showCustomSnackbar('Error', 'Please enter a valid phone number');
+      // showCustomSnackbar('Error', 'Please enter a valid phone number');
       return;
     }
     isLoading(true);
@@ -68,7 +69,7 @@ class AuthController extends GetxController {
           isLoading(false);
         },
         verificationFailed: (e) {
-          showCustomSnackbar('Error', 'Verification failed: ${e.message}');
+          // showCustomSnackbar('Error', 'Verification failed: ${e.message}');
           isLoading(false);
         },
         codeSent: (verificationId, [forceResendingToken]) {
@@ -108,22 +109,25 @@ class AuthController extends GetxController {
 
   Future<void> handleSuccessfulAuth(String userId) async {
     StorageService.instance.save(AppConstants.userId, userId);
-    showCustomSnackbar('Success', 'Authentication successful');
     await checkExistingRoutines(userId);
   }
 
   Future<void> checkExistingRoutines(String userId) async {
     try {
       if (userId.isEmpty) {
-        Get.offAllNamed(AppRoutes.layoutRoute);
+        // Use Get.context for navigation since we're in a controller
+        appRouter.go(AppRoutes.authRoute);
         return;
       }
 
       await routineController.fetchRoutines();
+
+      // Navigate to layout route using GoRouter
+      appRouter.go(AppRoutes.layoutRoute);
     } catch (e) {
-      showCustomSnackbar('Error', "Message: $e");
-    } finally {
-      Get.offAllNamed(AppRoutes.layoutRoute);
+      // showCustomSnackbar('Error', "Message: $e");
+      // Navigate back to auth on error
+      appRouter.go(AppRoutes.authRoute);
     }
   }
 }

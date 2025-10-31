@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/model/tflite/tflite_repository.dart';
+import 'package:skin_sync/routes/app_pages.dart';
 import 'package:skin_sync/utils/app_utils.dart';
 
 class AppSplashScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class _AppSplashScreenState extends State<AppSplashScreen> {
     final nextRoute = AppUtils.checkUser();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.offAllNamed(nextRoute);
+      appRouter.go(nextRoute);
     });
   }
 

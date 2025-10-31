@@ -9,7 +9,6 @@ import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.d
 import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/save_button.dart';
 import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/start_date.dart';
 import 'package:skin_sync/modules/routine/widgets/custom_routine_screen_widget.dart/time_selector.dart';
-import 'package:skin_sync/utils/app_bar.dart';
 import 'package:skin_sync/utils/mediaquery.dart';
 
 class CreateRoutineScreen extends StatelessWidget {
@@ -26,7 +25,7 @@ class CreateRoutineScreen extends StatelessWidget {
           'Create New Routine',
           style: TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: CustomAppBar.appBarFontSize,
+            fontSize: getResponsiveFontSize(context, 18),
           ),
         ),
         surfaceTintColor: theme.colorScheme.surface,

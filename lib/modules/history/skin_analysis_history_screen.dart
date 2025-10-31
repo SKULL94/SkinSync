@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_state_manager/src/simple/get_view.dart';
 import 'package:skin_sync/modules/history/skin_analysis_history_controller.dart';
-import 'package:skin_sync/utils/app_bar.dart';
 import 'package:skin_sync/utils/app_constants.dart';
+import 'package:skin_sync/utils/mediaquery.dart';
 
 class HistoryScreen extends GetView<HistoryController> {
   const HistoryScreen({super.key});
@@ -17,7 +17,7 @@ class HistoryScreen extends GetView<HistoryController> {
           'Analysis History',
           style: TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: CustomAppBar.appBarFontSize,
+            fontSize: getResponsiveFontSize(context, 18),
           ),
         ),
         surfaceTintColor: Theme.of(context).colorScheme.surface,

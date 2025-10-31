@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/routine/custom_routine_screen.dart';
 import 'package:skin_sync/modules/routine/routine_controller.dart';
+import 'package:skin_sync/routes/app_pages.dart';
+import 'package:skin_sync/routes/app_routes.dart';
 
 class CustomFloatingActionButton extends StatelessWidget {
   final RoutineController controller;
@@ -23,8 +25,9 @@ class CustomFloatingActionButton extends StatelessWidget {
       return FloatingActionButton.extended(
         icon: const Icon(Icons.add_task_rounded),
         label: const Text("New Routine"),
-        onPressed:
-            isPastDate ? null : () => Get.to(() => CreateRoutineScreen()),
+        onPressed: isPastDate
+            ? null
+            : () => appRouter.go(AppRoutes.createRoutineRoute),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       );
     });

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skin_sync/modules/skin-analysis/controller/skincare_analysis_controller.dart';
-import 'package:skin_sync/utils/app_bar.dart';
+import 'package:skin_sync/utils/mediaquery.dart';
 
 class SkincareAppBar extends GetView<SkincareAnalysisController>
     implements PreferredSizeWidget {
@@ -14,7 +14,7 @@ class SkincareAppBar extends GetView<SkincareAnalysisController>
         'Skin Analysis',
         style: TextStyle(
           fontWeight: FontWeight.w500,
-          fontSize: CustomAppBar.appBarFontSize,
+          fontSize: getResponsiveFontSize(context, 18),
         ),
       ),
       surfaceTintColor: Theme.of(context).colorScheme.surface,
