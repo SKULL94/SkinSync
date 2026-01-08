@@ -34,35 +34,65 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
+
+  # State Management - BLoC
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Functional Programming
+  dartz: ^0.10.1
+
+  # Dependency Injection
+  get_it: ^8.0.2
+
+  # Firebase
   firebase_auth: ^4.16.0
   cloud_firestore: ^4.14.0
   firebase_core: ^2.24.2
-  get: ^4.6.6
-  image_picker: ^1.1.2
-  permission_handler: ^12.0.0
-  cached_network_image: ^3.2.2
-  get_storage: ^2.1.1
-  pinput: ^4.0.0
   firebase_storage: ^11.6.9
-  intl: ^0.19.0
-  fl_chart: ^0.66.2
-  intl_phone_field: ^3.2.0
-  flutter_local_notifications: ^18.0.1
-  timezone: ^0.9.1
-  supabase_flutter: ^2.8.4
-  uuid: ^4.5.1
-  path_provider: ^2.1.5
-  lottie: ^3.3.1
-  flex_color_scheme: ^8.3.1
-  flutter_native_splash: ^2.4.6
-  sentry_flutter: ^8.14.2
-  tflite_flutter: ^0.11.0
+
+  # Image & Media
+  image_picker: ^1.1.2
+  cached_network_image: ^3.2.2
   image: ^4.5.4
   share_plus: ^10.0.0
+
+  # Local Storage
+  shared_preferences: ^2.3.4
   sqflite: ^2.4.2
+  path_provider: ^2.1.5
+
+  # Permissions
+  permission_handler: ^12.0.0
+
+  # UI Components
+  pinput: ^4.0.0
+  intl_phone_field: ^3.2.0
+  fl_chart: ^0.66.2
+  lottie: ^3.3.1
+  flex_color_scheme: ^8.4.0
+  flutter_native_splash: ^2.4.6
+
+  # Date & Time
+  intl: ^0.19.0
+  timezone: ^0.9.1
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+
+  # Backend
+  supabase_flutter: ^2.8.4
+
+  # ML
+  tflite_flutter: ^0.11.0
+
+  # Utilities
+  uuid: ^4.5.1
   connectivity_plus: ^6.1.4
-  flutter_lints: ^5.0.0
   workmanager: ^0.6.0
+  sentry_flutter: ^8.14.2
+
+  # Navigation
   go_router: ^16.3.0
 
 
@@ -75,6 +105,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: "^0.14.3"
+  mockito: ^5.4.4
+  build_runner: ^2.4.13
+  bloc_test: ^9.1.7
 
 flutter_launcher_icons:
   android: "launcher_icon"
@@ -83,12 +116,6 @@ flutter_launcher_icons:
   min_sdk_android: 21 # android min sdk min:16, default 21
 
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
