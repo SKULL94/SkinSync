@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
-import 'package:skin_sync/features/routine/presentation/bloc/routine_bloc.dart';
+import 'package:skin_sync/features/home-screen/presentation/bloc/routine_bloc.dart';
 import 'package:skin_sync/core/utils/mediaquery.dart';
 
 class CreateRoutinePage extends StatefulWidget {
@@ -43,8 +43,7 @@ class _CreateRoutinePageState extends State<CreateRoutinePage> {
         surfaceTintColor: theme.colorScheme.surface,
       ),
       body: BlocConsumer<RoutineBloc, RoutineState>(
-        listenWhen: (previous, current) =>
-            previous.status != current.status,
+        listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status == RoutineStatus.created) {
             SnackbarHelper.showSuccess(context, 'Routine created successfully');

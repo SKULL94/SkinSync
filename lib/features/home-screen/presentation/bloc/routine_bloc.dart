@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skin_sync/core/constants/app_constants.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
-import 'package:skin_sync/features/routine/domain/entities/routine_entity.dart';
-import 'package:skin_sync/features/routine/domain/usecases/create_routine.dart';
-import 'package:skin_sync/features/routine/domain/usecases/delete_routine.dart';
-import 'package:skin_sync/features/routine/domain/usecases/get_routines.dart';
-import 'package:skin_sync/features/routine/domain/usecases/toggle_routine_completion.dart';
+import 'package:skin_sync/features/home-screen/domain/entities/routine_entity.dart';
+import 'package:skin_sync/features/home-screen/domain/usecases/create_routine.dart';
+import 'package:skin_sync/features/home-screen/domain/usecases/delete_routine.dart';
+import 'package:skin_sync/features/home-screen/domain/usecases/get_routines.dart';
+import 'package:skin_sync/features/home-screen/domain/usecases/toggle_routine_completion.dart';
 import 'package:skin_sync/core/services/notification_service.dart';
 
 part 'routine_event.dart';

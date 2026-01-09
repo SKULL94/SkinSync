@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:skin_sync/core/error/failures.dart';
-import 'package:skin_sync/features/routine/domain/entities/routine_entity.dart';
+import 'package:skin_sync/features/home-screen/domain/entities/routine_entity.dart';
 
 abstract class RoutineRepository {
   Future<Either<Failure, List<RoutineEntity>>> getRoutines(String userId);
@@ -22,5 +22,6 @@ abstract class RoutineRepository {
     required DateTime date,
     required List<DateTime> completionDates,
   });
-  Future<Either<Failure, String>> saveLocalIcon(String routineId, File iconFile);
+  Future<Either<Failure, String>> saveLocalIcon(
+      String routineId, File iconFile);
 }

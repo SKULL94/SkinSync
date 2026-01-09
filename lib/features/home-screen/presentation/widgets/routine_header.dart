@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/utils/mediaquery.dart';
-import 'package:skin_sync/features/routine/presentation/bloc/routine_bloc.dart';
+import 'package:skin_sync/features/home-screen/presentation/bloc/routine_bloc.dart';
 import 'package:skin_sync/features/streaks/presentation/bloc/streaks_bloc.dart';
 
 class RoutineHeader extends StatelessWidget {
@@ -51,8 +51,8 @@ class RoutineHeader extends StatelessWidget {
             Text(
               '${_getGreeting()},',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer
-                    .withValues(alpha: 0.8),
+                color:
+                    theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
               ),
             ),
             Text(
@@ -66,8 +66,8 @@ class RoutineHeader extends StatelessWidget {
             Text(
               today,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer
-                    .withValues(alpha: 0.7),
+                color:
+                    theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
               ),
             ),
             SizedBox(height: getHeight(context, 20)),
@@ -163,7 +163,7 @@ class RoutineHeader extends StatelessWidget {
     return BlocBuilder<StreaksBloc, StreaksState>(
       builder: (context, state) {
         return GestureDetector(
-          onTap: () => context.push(AppRoutes.skinAnalysisRoute),
+          onTap: () => context.push(AppRoutes.streaksRoute),
           child: Container(
             padding: EdgeInsets.all(getWidth(context, 16)),
             decoration: BoxDecoration(

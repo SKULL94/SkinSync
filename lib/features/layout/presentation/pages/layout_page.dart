@@ -4,8 +4,8 @@ import 'package:skin_sync/core/constants/string_const.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/history/presentation/pages/history_page.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
-import 'package:skin_sync/features/routine/presentation/bloc/routine_bloc.dart';
-import 'package:skin_sync/features/routine/presentation/pages/routine_page.dart';
+import 'package:skin_sync/features/home-screen/presentation/bloc/routine_bloc.dart';
+import 'package:skin_sync/features/home-screen/presentation/pages/routine_page.dart';
 import 'package:skin_sync/features/streaks/presentation/bloc/streaks_bloc.dart';
 import 'package:skin_sync/features/streaks/presentation/pages/streaks_page.dart';
 

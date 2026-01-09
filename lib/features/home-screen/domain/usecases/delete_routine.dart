@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:skin_sync/core/error/failures.dart';
 import 'package:skin_sync/core/usecases/usecase.dart';
-import 'package:skin_sync/features/routine/domain/repositories/routine_repository.dart';
+import 'package:skin_sync/features/home-screen/domain/repositories/routine_repository.dart';
 
 class DeleteRoutine implements UseCase<void, DeleteRoutineParams> {
   final RoutineRepository repository;

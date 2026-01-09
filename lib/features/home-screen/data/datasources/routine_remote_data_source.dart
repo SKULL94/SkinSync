@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:skin_sync/core/error/exceptions.dart';
-import 'package:skin_sync/features/routine/data/models/routine_model.dart';
+import 'package:skin_sync/features/home-screen/data/models/routine_model.dart';
 
 abstract class RoutineRemoteDataSource {
   Future<List<RoutineModel>> getRoutines(String userId);

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:skin_sync/features/routine/domain/entities/routine_entity.dart';
+import 'package:skin_sync/features/home-screen/domain/entities/routine_entity.dart';
 
 class RoutineModel extends RoutineEntity {
   const RoutineModel({

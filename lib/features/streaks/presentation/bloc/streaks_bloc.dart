@@ -1,8 +1,10 @@
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/app_constants.dart';
+import 'package:skin_sync/core/error/failures.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/features/streaks/domain/entities/streak_entity.dart';
 import 'package:skin_sync/features/streaks/domain/usecases/get_completed_days.dart';
@@ -32,7 +34,7 @@ class StreaksBloc extends Bloc<StreaksEvent, StreaksState> {
 
     emit(state.copyWith(status: StreaksStatus.loading));
 
-    final result = await getCompletedDays(
+    final Either<Failure, List<String>> result = await getCompletedDays(
       GetCompletedDaysParams(userId: _userId!),
     );
 
@@ -42,8 +44,9 @@ class StreaksBloc extends Bloc<StreaksEvent, StreaksState> {
         errorMessage: failure.message,
       )),
       (completedDays) {
-        final dailyCompletion = _buildDailyCompletion(completedDays);
-        final streak = _calculateStreak(
+        final Map<String, int> dailyCompletion =
+            _buildDailyCompletion(completedDays);
+        final int streak = _calculateStreak(
           completedDays,
           dailyCompletion,
           state.streakType,
@@ -74,7 +77,7 @@ class StreaksBloc extends Bloc<StreaksEvent, StreaksState> {
   }
 
   Map<String, int> _buildDailyCompletion(List<String> completedDays) {
-    final completionMap = <String, int>{};
+    final Map<String, int> completionMap = {};
     for (final date in completedDays) {
       completionMap[date] = (completionMap[date] ?? 0) + 1;
     }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:skin_sync/core/error/exceptions.dart';
 
 abstract class StreaksRemoteDataSource {
@@ -13,23 +14,48 @@ class StreaksRemoteDataSourceImpl implements StreaksRemoteDataSource {
   @override
   Future<List<String>> getCompletedDays(String userId) async {
     try {
-      final userSnapshot = await firestore
+      final routineSnapshot = await firestore
           .collection('users')
           .doc(userId)
+          .collection('routines')
           .get();
 
-      if (!userSnapshot.exists) {
+      if (routineSnapshot.docs.isEmpty) {
         return [];
       }
 
-      final data = userSnapshot.data();
-      if (data == null || !data.containsKey('completedDays')) {
-        return [];
+      // Count completions per date across all routines
+      final Map<String, int> dateCompletionCount = {};
+      final int totalRoutines = routineSnapshot.docs.length;
+      final dateFormat = DateFormat('yyyy-MM-dd');
+
+      for (final doc in routineSnapshot.docs) {
+        final data = doc.data();
+        final List<dynamic>? completionDates = data['completionDates'];
+
+        if (completionDates != null) {
+          for (final timestamp in completionDates) {
+            final date = (timestamp as Timestamp).toDate();
+            final dateKey = dateFormat.format(date);
+
+            dateCompletionCount[dateKey] =
+                (dateCompletionCount[dateKey] ?? 0) + 1;
+          }
+        }
       }
 
-      return List<String>.from(data['completedDays'] ?? []);
+      // A day is "completed" only if ALL routines were done that day
+      final completedDays = dateCompletionCount.entries
+          .where((entry) => entry.value >= totalRoutines)
+          .map((entry) => entry.key)
+          .toList()
+        ..sort();
+
+      return completedDays;
     } catch (e) {
-      throw ServerException(message: 'Failed to fetch completed days: $e');
+      throw ServerException(
+        message: 'Failed to fetch completed days: $e',
+      );
     }
   }
 }

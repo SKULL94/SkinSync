@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:skin_sync/core/error/exceptions.dart';
 import 'package:skin_sync/core/error/failures.dart';
 import 'package:skin_sync/core/services/network_info.dart';
-import 'package:skin_sync/features/routine/data/datasources/routine_local_data_source.dart';
-import 'package:skin_sync/features/routine/data/datasources/routine_remote_data_source.dart';
-import 'package:skin_sync/features/routine/data/models/routine_model.dart';
-import 'package:skin_sync/features/routine/domain/entities/routine_entity.dart';
-import 'package:skin_sync/features/routine/domain/repositories/routine_repository.dart';
+import 'package:skin_sync/features/home-screen/data/datasources/routine_local_data_source.dart';
+import 'package:skin_sync/features/home-screen/data/datasources/routine_remote_data_source.dart';
+import 'package:skin_sync/features/home-screen/data/models/routine_model.dart';
+import 'package:skin_sync/features/home-screen/domain/entities/routine_entity.dart';
+import 'package:skin_sync/features/home-screen/domain/repositories/routine_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class RoutineRepositoryImpl implements RoutineRepository {

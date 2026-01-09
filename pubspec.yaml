@@ -94,6 +94,8 @@ dependencies:
 
   # Navigation
   go_router: ^16.3.0
+  back_button_interceptor: ^8.0.4
+  lifecycle: ^0.10.0
 
 
 

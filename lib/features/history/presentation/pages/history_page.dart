@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:skin_sync/core/constants/string_const.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
 import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
@@ -17,7 +18,7 @@ class HistoryPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Analysis History',
+          StringConst.kAnalysisHistory,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: getResponsiveFontSize(context, 18),
@@ -38,18 +39,17 @@ class HistoryPage extends StatelessWidget {
         ],
       ),
       body: BlocConsumer<HistoryBloc, HistoryState>(
-        listenWhen: (previous, current) =>
-            previous.status != current.status,
+        listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status == HistoryStatus.failure &&
               state.errorMessage != null) {
             SnackbarHelper.showError(context, state.errorMessage!);
           }
           if (state.status == HistoryStatus.deleted) {
-            SnackbarHelper.showSuccess(context, 'Analysis deleted');
+            SnackbarHelper.showSuccess(context, StringConst.kAnalysisDeleted);
           }
           if (state.status == HistoryStatus.deletedAll) {
-            SnackbarHelper.showSuccess(context, 'All history cleared');
+            SnackbarHelper.showSuccess(context, StringConst.kAllHistoryCleared);
           }
         },
         builder: (context, state) {
@@ -86,14 +86,14 @@ class HistoryPage extends StatelessWidget {
           ),
           SizedBox(height: getHeight(context, 16)),
           Text(
-            'No analysis history',
+            StringConst.kNoAnalysisHistory,
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           SizedBox(height: getHeight(context, 8)),
           Text(
-            'Your past skin analyses will appear here',
+            StringConst.kPastAnalysesAppear,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.outline,
             ),
@@ -210,19 +210,19 @@ class HistoryPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Analysis'),
-        content: const Text('Are you sure you want to delete this analysis?'),
+        title: const Text(StringConst.kDeleteAnalysis),
+        content: const Text(StringConst.kDeleteAnalysisConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text(StringConst.kCancel),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<HistoryBloc>().add(HistoryDeleteRequested(id));
             },
-            child: const Text('Delete'),
+            child: const Text(StringConst.kDelete),
           ),
         ],
       ),
@@ -233,21 +233,23 @@ class HistoryPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear All History'),
+        title: const Text(StringConst.kClearAllHistory),
         content: const Text(
-          'Are you sure you want to delete all analysis history? This cannot be undone.',
+          StringConst.kClearAllHistoryConfirm,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text(StringConst.kCancel),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<HistoryBloc>().add(const HistoryDeleteAllRequested());
+              context
+                  .read<HistoryBloc>()
+                  .add(const HistoryDeleteAllRequested());
             },
-            child: const Text('Delete All'),
+            child: const Text(StringConst.kDeleteAll),
           ),
         ],
       ),

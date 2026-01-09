@@ -5,7 +5,7 @@ class AppConstants {
       'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
   static const String userId = 'USER_ID';
-  static const String userName = 'USER_NAME';
+  static const String userName = 'Zeeshan';
 
   static const String theme = 'theme';
   static const String darkTheme = 'dark';

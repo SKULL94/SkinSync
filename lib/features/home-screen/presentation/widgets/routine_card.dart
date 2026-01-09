@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:skin_sync/features/routine/domain/entities/routine_entity.dart';
+import 'package:skin_sync/features/home-screen/domain/entities/routine_entity.dart';
 import 'package:skin_sync/core/utils/mediaquery.dart';
 
 class RoutineCard extends StatelessWidget {
@@ -43,9 +43,8 @@ class RoutineCard extends StatelessWidget {
                       routine.name,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        decoration: isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
+                        decoration:
+                            isCompleted ? TextDecoration.lineThrough : null,
                       ),
                     ),
                     if (routine.description.isNotEmpty) ...[
@@ -116,9 +115,7 @@ class RoutineCard extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isCompleted
-            ? theme.colorScheme.primary
-            : Colors.transparent,
+        color: isCompleted ? theme.colorScheme.primary : Colors.transparent,
         border: Border.all(
           color: isCompleted
               ? theme.colorScheme.primary

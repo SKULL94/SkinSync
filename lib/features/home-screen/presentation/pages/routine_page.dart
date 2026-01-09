@@ -5,15 +5,16 @@ import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/app_constants.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
-import 'package:skin_sync/features/routine/presentation/bloc/routine_bloc.dart';
-import 'package:skin_sync/features/routine/presentation/widgets/routine_card.dart';
-import 'package:skin_sync/features/routine/presentation/widgets/routine_date_navigation.dart';
-import 'package:skin_sync/features/routine/presentation/widgets/routine_empty_state.dart';
-import 'package:skin_sync/features/routine/presentation/widgets/routine_header.dart';
+import 'package:skin_sync/features/home-screen/presentation/bloc/routine_bloc.dart';
+import 'package:skin_sync/features/home-screen/presentation/widgets/routine_card.dart';
+import 'package:skin_sync/features/home-screen/presentation/widgets/routine_date_navigation.dart';
+import 'package:skin_sync/features/home-screen/presentation/widgets/routine_empty_state.dart';
+import 'package:skin_sync/features/home-screen/presentation/widgets/routine_header.dart';
 import 'package:skin_sync/features/settings/presentation/widgets/theme_selector_dialog.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/utils/mediaquery.dart';
+import 'package:skin_sync/features/streaks/presentation/bloc/streaks_bloc.dart';
 
 class RoutinePage extends StatelessWidget {
   const RoutinePage({super.key});
@@ -24,13 +25,12 @@ class RoutinePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final storageService = sl<StorageService>();
     final userName =
-        storageService.fetch<String>(AppConstants.userName) ?? 'User';
+        storageService.fetch<String>(AppConstants.userName) ?? 'Zeeshan';
     final theme = Theme.of(context);
 
     return Scaffold(
       body: BlocConsumer<RoutineBloc, RoutineState>(
-        listenWhen: (previous, current) =>
-            previous.status != current.status,
+        listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status == RoutineStatus.failure &&
               state.errorMessage != null) {
@@ -124,6 +124,9 @@ class RoutinePage extends StatelessWidget {
           onToggleCompletion: () {
             context.read<RoutineBloc>().add(
                   RoutineCompletionToggled(routine.id),
+                );
+            context.read<StreaksBloc>().add(
+                  const StreaksLoadRequested(),
                 );
           },
           onDelete: () {
