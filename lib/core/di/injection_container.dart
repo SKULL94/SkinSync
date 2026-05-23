@@ -24,15 +24,6 @@ import 'package:skin_sync/features/history/domain/usecases/get_histories.dart';
 import 'package:skin_sync/features/history/domain/usecases/sync_histories.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
-import 'package:skin_sync/features/home-screen/data/datasources/routine_local_data_source.dart';
-import 'package:skin_sync/features/home-screen/data/datasources/routine_remote_data_source.dart';
-import 'package:skin_sync/features/home-screen/data/repositories/routine_repository_impl.dart';
-import 'package:skin_sync/features/home-screen/domain/repositories/routine_repository.dart';
-import 'package:skin_sync/features/home-screen/domain/usecases/create_routine.dart';
-import 'package:skin_sync/features/home-screen/domain/usecases/delete_routine.dart';
-import 'package:skin_sync/features/home-screen/domain/usecases/get_routines.dart';
-import 'package:skin_sync/features/home-screen/domain/usecases/toggle_routine_completion.dart';
-import 'package:skin_sync/features/home-screen/presentation/bloc/routine_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/data/datasources/skin_analysis_local_data_source.dart';
 import 'package:skin_sync/features/skin_analysis/data/datasources/skin_analysis_remote_data_source.dart';
 import 'package:skin_sync/features/skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
@@ -40,11 +31,6 @@ import 'package:skin_sync/features/skin_analysis/domain/repositories/skin_analys
 import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_image.dart';
 import 'package:skin_sync/features/skin_analysis/domain/usecases/save_analysis.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
-import 'package:skin_sync/features/streaks/data/datasources/streaks_remote_data_source.dart';
-import 'package:skin_sync/features/streaks/data/repositories/streaks_repository_impl.dart';
-import 'package:skin_sync/features/streaks/domain/repositories/streaks_repository.dart';
-import 'package:skin_sync/features/streaks/domain/usecases/get_completed_days.dart';
-import 'package:skin_sync/features/streaks/presentation/bloc/streaks_bloc.dart';
 import 'package:skin_sync/features/settings/presentation/bloc/theme_bloc.dart';
 
 final sl = GetIt.instance;
@@ -72,14 +58,8 @@ Future<void> init() async {
   // Features - Auth
   _initAuth();
 
-  // Features - Routine
-  _initRoutine();
-
   // Features - Skin Analysis
   _initSkinAnalysis();
-
-  // Features - Streaks
-  _initStreaks();
 
   // Features - History
   _initHistory();
@@ -119,43 +99,6 @@ void _initAuth() {
   );
 }
 
-void _initRoutine() {
-  // Bloc
-  sl.registerFactory(
-    () => RoutineBloc(
-      getRoutines: sl(),
-      createRoutine: sl(),
-      deleteRoutine: sl(),
-      toggleRoutineCompletion: sl(),
-      storageService: sl(),
-      notificationService: sl(),
-    ),
-  );
-
-  // Use cases
-  sl.registerLazySingleton(() => GetRoutines(sl()));
-  sl.registerLazySingleton(() => CreateRoutine(sl()));
-  sl.registerLazySingleton(() => DeleteRoutine(sl()));
-  sl.registerLazySingleton(() => ToggleRoutineCompletion(sl()));
-
-  // Repository
-  sl.registerLazySingleton<RoutineRepository>(
-    () => RoutineRepositoryImpl(
-      remoteDataSource: sl(),
-      localDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
-
-  // Data sources
-  sl.registerLazySingleton<RoutineRemoteDataSource>(
-    () => RoutineRemoteDataSourceImpl(firestore: sl()),
-  );
-  sl.registerLazySingleton<RoutineLocalDataSource>(
-    () => RoutineLocalDataSourceImpl(),
-  );
-}
-
 void _initSkinAnalysis() {
   // Bloc
   sl.registerFactory(
@@ -185,32 +128,6 @@ void _initSkinAnalysis() {
   );
   sl.registerLazySingleton<SkinAnalysisRemoteDataSource>(
     () => SkinAnalysisRemoteDataSourceImpl(),
-  );
-}
-
-void _initStreaks() {
-  // Bloc
-  sl.registerFactory(
-    () => StreaksBloc(
-      getCompletedDays: sl(),
-      storageService: sl(),
-    ),
-  );
-
-  // Use cases
-  sl.registerLazySingleton(() => GetCompletedDays(sl()));
-
-  // Repository
-  sl.registerLazySingleton<StreaksRepository>(
-    () => StreaksRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
-
-  // Data sources
-  sl.registerLazySingleton<StreaksRemoteDataSource>(
-    () => StreaksRemoteDataSourceImpl(firestore: sl()),
   );
 }
 

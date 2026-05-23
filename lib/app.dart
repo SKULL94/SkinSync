@@ -4,10 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skin_sync/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
-import 'package:skin_sync/features/home-screen/presentation/bloc/routine_bloc.dart';
 import 'package:skin_sync/features/settings/presentation/bloc/theme_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
-import 'package:skin_sync/features/streaks/presentation/bloc/streaks_bloc.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_router.dart';
 
@@ -21,14 +19,8 @@ class MyApp extends StatelessWidget {
         BlocProvider<AuthBloc>(
           create: (_) => sl<AuthBloc>(),
         ),
-        BlocProvider<RoutineBloc>(
-          create: (_) => sl<RoutineBloc>(),
-        ),
         BlocProvider<SkinAnalysisBloc>(
           create: (_) => sl<SkinAnalysisBloc>(),
-        ),
-        BlocProvider<StreaksBloc>(
-          create: (_) => sl<StreaksBloc>(),
         ),
         BlocProvider<HistoryBloc>(
           create: (_) => sl<HistoryBloc>(),
