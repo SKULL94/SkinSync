@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skin_sync/core/constants/app_constants.dart';
+import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/features/auth/domain/usecases/send_otp.dart';
 import 'package:skin_sync/features/auth/domain/usecases/verify_otp.dart';
@@ -12,11 +13,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SendOtp sendOtp;
   final VerifyOtp verifyOtp;
   final StorageService storageService;
+  final UserRepository userRepository;
 
   AuthBloc({
     required this.sendOtp,
     required this.verifyOtp,
     required this.storageService,
+    required this.userRepository,
   }) : super(const AuthState()) {
     on<AuthPhoneNumberChanged>(_onPhoneNumberChanged);
     on<AuthSendOtpRequested>(_onSendOtpRequested);
@@ -87,17 +90,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       smsCode: state.otp,
     ));
 
-    result.fold(
-      (failure) => emit(state.copyWith(
+    await result.fold(
+      (failure) async => emit(state.copyWith(
         status: AuthStatus.failure,
         errorMessage: failure.message,
       )),
-      (user) {
-        storageService.save(AppConstants.userId, user.uid);
-        emit(state.copyWith(
-          status: AuthStatus.authenticated,
-          userId: user.uid,
-        ));
+      (user) async {
+        await storageService.save(AppConstants.userId, user.uid);
+
+        // Check if user has a profile in Supabase
+        final profile = await userRepository.getCurrentUserProfile();
+        final hasProfile = profile != null && profile.firstName != null;
+
+        if (hasProfile) {
+          // Existing user with profile - sync to local storage
+          await storageService.save('onboarding_completed', true);
+          await storageService.save('user_name', profile.firstName);
+          if (profile.gender != null) {
+            await storageService.save('user_gender', profile.gender);
+          }
+          emit(state.copyWith(
+            status: AuthStatus.authenticatedWithProfile,
+            userId: user.uid,
+          ));
+        } else {
+          // New user or user without profile
+          emit(state.copyWith(
+            status: AuthStatus.authenticatedNoProfile,
+            userId: user.uid,
+          ));
+        }
       },
     );
   }

@@ -33,6 +33,10 @@ import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_image.d
 import 'package:skin_sync/features/skin_analysis/domain/usecases/save_analysis.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
 import 'package:skin_sync/features/settings/presentation/bloc/theme_bloc.dart';
+import 'package:skin_sync/features/home/data/datasources/dashboard_remote_data_source.dart';
+import 'package:skin_sync/features/home/data/repositories/dashboard_repository_impl.dart';
+import 'package:skin_sync/features/home/domain/repositories/dashboard_repository.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -73,6 +77,9 @@ Future<void> init() async {
 
   // Features - Settings
   _initSettings();
+
+  // Features - Dashboard
+  _initDashboard();
 }
 
 void _initAuth() {
@@ -82,6 +89,7 @@ void _initAuth() {
       sendOtp: sl(),
       verifyOtp: sl(),
       storageService: sl(),
+      userRepository: sl(),
     ),
   );
 
@@ -180,5 +188,29 @@ void _initSettings() {
   // Bloc
   sl.registerFactory(
     () => ThemeBloc(storageService: sl()),
+  );
+}
+
+void _initDashboard() {
+  // Bloc
+  sl.registerFactory(
+    () => DashboardBloc(repository: sl()),
+  );
+
+  // Repository
+  sl.registerLazySingleton<DashboardRepository>(
+    () => DashboardRepositoryImpl(
+      remoteDataSource: sl(),
+      userRepository: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<DashboardRemoteDataSource>(
+    () => DashboardRemoteDataSourceImpl(
+      supabaseClient: sl(),
+      userRepository: sl(),
+    ),
   );
 }

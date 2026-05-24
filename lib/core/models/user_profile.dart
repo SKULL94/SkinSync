@@ -14,6 +14,7 @@ class UserProfile extends Equatable {
   final String? skinType;
   final String? fitzpatrickScale;
   final String? knownAllergies;
+  final List<String>? concerns;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -31,6 +32,7 @@ class UserProfile extends Equatable {
     this.skinType,
     this.fitzpatrickScale,
     this.knownAllergies,
+    this.concerns,
     this.createdAt,
     this.updatedAt,
   });
@@ -53,6 +55,9 @@ class UserProfile extends Equatable {
       skinType: map['skin_type'] as String?,
       fitzpatrickScale: map['fitzpatrick_scale'] as String?,
       knownAllergies: map['known_allergies'] as String?,
+      concerns: map['concerns'] != null
+          ? List<String>.from(map['concerns'] as List)
+          : null,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)
           : null,
@@ -79,6 +84,7 @@ class UserProfile extends Equatable {
       if (skinType != null) 'skin_type': skinType,
       if (fitzpatrickScale != null) 'fitzpatrick_scale': fitzpatrickScale,
       if (knownAllergies != null) 'known_allergies': knownAllergies,
+      if (concerns != null) 'concerns': concerns,
     };
   }
 
@@ -110,6 +116,7 @@ class UserProfile extends Equatable {
     String? skinType,
     String? fitzpatrickScale,
     String? knownAllergies,
+    List<String>? concerns,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -127,6 +134,7 @@ class UserProfile extends Equatable {
       skinType: skinType ?? this.skinType,
       fitzpatrickScale: fitzpatrickScale ?? this.fitzpatrickScale,
       knownAllergies: knownAllergies ?? this.knownAllergies,
+      concerns: concerns ?? this.concerns,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -147,6 +155,7 @@ class UserProfile extends Equatable {
         skinType,
         fitzpatrickScale,
         knownAllergies,
+        concerns,
         createdAt,
         updatedAt,
       ];

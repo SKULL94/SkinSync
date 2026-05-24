@@ -18,7 +18,19 @@ class AuthPage extends StatelessWidget {
         if (state.status == AuthStatus.failure && state.errorMessage != null) {
           SnackbarHelper.showError(context, state.errorMessage!);
         }
-        if (state.status == AuthStatus.authenticated) {
+        if (state.status == AuthStatus.authenticatedWithProfile) {
+          // Existing user with profile - go directly to home
+          context.go(AppRoutes.layoutRoute);
+        }
+        if (state.status == AuthStatus.authenticatedNoProfile) {
+          // New user or user without profile
+          if (state.isLogin) {
+            // User tried to sign in but doesn't have profile
+            SnackbarHelper.showInfo(
+              context,
+              'Welcome! Please complete your profile setup.',
+            );
+          }
           context.go(AppRoutes.onboardingRoute);
         }
       },

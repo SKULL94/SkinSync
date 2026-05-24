@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/app_constants.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
+import 'package:skin_sync/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -43,6 +47,42 @@ class _SplashPageState extends State<SplashPage>
     if (!mounted) return;
 
     final storageService = sl<StorageService>();
+    final userRepository = sl<UserRepository>();
+    final supabase = Supabase.instance.client;
+
+    // Check Supabase session first (handles returning users)
+    final session = supabase.auth.currentSession;
+    final supabaseUser = supabase.auth.currentUser;
+
+    if (session != null && supabaseUser != null) {
+      // User is authenticated in Supabase
+      // Save userId to local storage for consistency
+      await storageService.save(AppConstants.userId, supabaseUser.id);
+
+      // Check if user has profile in Supabase (returning user check)
+      final profile = await userRepository.getCurrentUserProfile();
+
+      setState(() {
+        _isLoggedIn = true;
+        _isCheckingAuth = false;
+      });
+
+      if (profile != null && profile.firstName != null) {
+        // Returning user with profile - skip onboarding
+        await storageService.save('onboarding_completed', true);
+        await storageService.save('user_name', profile.firstName);
+        if (profile.gender != null) {
+          await storageService.save('user_gender', profile.gender);
+        }
+        if (mounted) context.go(AppRoutes.layoutRoute);
+      } else {
+        // Authenticated but no profile - needs onboarding
+        if (mounted) context.go(AppRoutes.onboardingRoute);
+      }
+      return;
+    }
+
+    // Fallback to local storage check
     final userId = storageService.fetch<String>(AppConstants.userId);
     final onboardingCompleted = storageService.fetch<bool>('onboarding_completed') ?? false;
 
@@ -51,13 +91,10 @@ class _SplashPageState extends State<SplashPage>
       _isCheckingAuth = false;
     });
 
-    // If logged in, check if onboarding is completed
-    if (_isLoggedIn) {
-      if (onboardingCompleted) {
-        context.go(AppRoutes.layoutRoute);
-      } else {
-        context.go(AppRoutes.onboardingRoute);
-      }
+    if (_isLoggedIn && onboardingCompleted) {
+      context.go(AppRoutes.layoutRoute);
+    } else if (_isLoggedIn) {
+      context.go(AppRoutes.onboardingRoute);
     }
   }
 
@@ -68,10 +105,16 @@ class _SplashPageState extends State<SplashPage>
   }
 
   void _onBeginPressed() {
+    // New user signup flow
+    context.read<AuthBloc>().add(const AuthResetState());
+    context.read<AuthBloc>().add(const AuthToggleAuthType(false));
     context.go(AppRoutes.authRoute);
   }
 
   void _onSignInPressed() {
+    // Existing user sign in flow
+    context.read<AuthBloc>().add(const AuthResetState());
+    context.read<AuthBloc>().add(const AuthToggleAuthType(true));
     context.go(AppRoutes.authRoute);
   }
 

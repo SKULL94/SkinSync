@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,8 @@ import 'package:skin_sync/core/models/user_profile.dart';
 import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
+import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,8 +21,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   UserProfile? _profile;
-  String _userName = '';
-  DateTime? _memberSince;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,60 +31,84 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserProfile() async {
     final userRepository = sl<UserRepository>();
-    final storageService = sl<StorageService>();
-
-    // Try Supabase first
     final profile = await userRepository.getCurrentUserProfile();
 
-    if (profile != null) {
+    if (mounted) {
       setState(() {
         _profile = profile;
-        _userName = profile.fullName.isNotEmpty
-            ? profile.fullName
-            : profile.firstName ?? '';
-        _memberSince = profile.createdAt;
+        _isLoading = false;
       });
-    } else {
-      // Fallback to local storage
-      final name = storageService.fetch<String>('user_name');
-      if (name != null) {
-        setState(() => _userName = name);
-      }
     }
+  }
+
+  Future<void> _updateSkinType(String skinType) async {
+    if (_profile == null) return;
+
+    final userRepository = sl<UserRepository>();
+    final updated = await userRepository.updateFields({'skin_type': skinType});
+
+    if (updated != null && mounted) {
+      setState(() => _profile = updated);
+    }
+  }
+
+  Future<void> _updateConcerns(List<String> concerns) async {
+    if (_profile == null) return;
+
+    final userRepository = sl<UserRepository>();
+    final updated = await userRepository.updateFields({'concerns': concerns});
+
+    if (updated != null && mounted) {
+      setState(() => _profile = updated);
+    }
+  }
+
+  Future<void> _signOut() async {
+    final storageService = sl<StorageService>();
+    await Supabase.instance.client.auth.signOut();
+    await storageService.clearAll();
+    if (mounted) context.go(AppRoutes.splashScreen);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Dark hero ───────────────────────────────────────────
-            _ProfileHero(userName: _userName, memberSince: _memberSince),
-
-            // ── Stats strip ─────────────────────────────────────────
-            const _StatsStrip(),
-
-            // ── Scrollable body ─────────────────────────────────────
+            _ProfileHero(
+              userName: _profile?.fullName ?? _profile?.firstName ?? 'User',
+              memberSince: _profile?.createdAt,
+            ),
+            _StatsStrip(),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: Column(
                 children: [
-                  const _SkinTypeCard(),
+                  _SkinTypeCard(
+                    selectedType: _profile?.skinType,
+                    onTypeChanged: _updateSkinType,
+                  ),
                   const SizedBox(height: 16),
-                  const _ConcernsCard(),
+                  _ConcernsCard(
+                    selectedConcerns: _profile?.concerns ?? [],
+                    onConcernsChanged: _updateConcerns,
+                  ),
                   const SizedBox(height: 16),
                   const _SettingsCard(),
                   const SizedBox(height: 24),
-                  _SignOutButton(
-                    onTap: () {
-                      final storageService = sl<StorageService>();
-                      storageService.clearAll();
-                      context.go(AppRoutes.splashScreen);
-                    },
-                  ),
-                  const SizedBox(height: 108), // nav clearance
+                  _SignOutButton(onTap: _signOut),
+                  const SizedBox(height: 108),
                 ],
               ),
             ),
@@ -93,12 +119,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PROFILE HERO — dark with terracotta + rose radial washes
-// ═══════════════════════════════════════════════════════════════════════════
 class _ProfileHero extends StatelessWidget {
   final String userName;
   final DateTime? memberSince;
+
   const _ProfileHero({required this.userName, this.memberSince});
 
   String _formatMemberSince(DateTime? date) {
@@ -112,10 +136,9 @@ class _ProfileHero extends StatelessWidget {
     final avatarInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
 
     return Container(
-      color: AppColors.ink, // #2A2118
+      color: AppColors.ink,
       child: Stack(
         children: [
-          // Terracotta radial — top right
           Positioned(
             top: -60,
             right: -60,
@@ -133,7 +156,6 @@ class _ProfileHero extends StatelessWidget {
               ),
             ),
           ),
-          // Rose radial — bottom left
           Positioned(
             bottom: -40,
             left: -40,
@@ -151,14 +173,12 @@ class _ProfileHero extends StatelessWidget {
               ),
             ),
           ),
-          // Content
           SafeArea(
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
               child: Row(
                 children: [
-                  // Avatar — 76×76 circle, gradient terral→rosell
                   Container(
                     width: 76,
                     height: 76,
@@ -167,10 +187,7 @@ class _ProfileHero extends StatelessWidget {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFFF0D4C2), // terral
-                          Color(0xFFEDD8D8), // rosell
-                        ],
+                        colors: [Color(0xFFF0D4C2), Color(0xFFEDD8D8)],
                       ),
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.3),
@@ -189,37 +206,31 @@ class _ProfileHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 18),
-                  // Info
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Name — Playfair italic
                         Text(
                           displayName,
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 24,
                             fontWeight: FontWeight.w400,
                             fontStyle: FontStyle.italic,
-                            color: const Color(0xFFF2EDE6), // --bg
+                            color: const Color(0xFFF2EDE6),
                           ),
                         ),
                         const SizedBox(height: 3),
-                        // Joined text
                         Text(
                           _formatMemberSince(memberSince),
                           style: GoogleFonts.dmSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w300,
-                            color:
-                                const Color(0xFFF2EDE6).withValues(alpha: 0.45),
+                            color: const Color(0xFFF2EDE6).withValues(alpha: 0.45),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // Premium badge
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
@@ -240,7 +251,7 @@ class _ProfileHero extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'Premium Plan',
+                                'Free Plan',
                                 style: GoogleFonts.dmSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
@@ -264,25 +275,63 @@ class _ProfileHero extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// STATS STRIP — 3 columns on dark background
-// ═══════════════════════════════════════════════════════════════════════════
 class _StatsStrip extends StatelessWidget {
   const _StatsStrip();
 
+  int _calculateScore(dynamic results) {
+    try {
+      if (results != null && results is List && results.isNotEmpty) {
+        final topConfidence = (results.first['confidence'] as num?)?.toDouble() ?? 0.5;
+        return (50 + (topConfidence * 50)).toInt().clamp(0, 100);
+      }
+    } catch (_) {}
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF3D2E22), // dark-mid
-      child: Row(
-        children: [
-          _StatCell(value: '12', label: 'SCANS'),
-          _StatDivider(),
-          _StatCell(value: '75', label: 'BEST SCORE'),
-          _StatDivider(),
-          _StatCell(value: '+18', label: 'IMPROVEMENT'),
-        ],
-      ),
+    return BlocBuilder<HistoryBloc, HistoryState>(
+      buildWhen: (prev, curr) => prev.histories != curr.histories,
+      builder: (context, state) {
+        final histories = state.histories;
+        final totalScans = histories.length;
+
+        int bestScore = 0;
+        int firstScore = 0;
+        int latestScore = 0;
+
+        if (histories.isNotEmpty) {
+          // Calculate scores
+          for (final h in histories) {
+            final score = _calculateScore(h.results);
+            if (score > bestScore) bestScore = score;
+          }
+
+          // First scan score (oldest)
+          firstScore = _calculateScore(histories.last.results);
+          // Latest scan score
+          latestScore = _calculateScore(histories.first.results);
+        }
+
+        final improvement = totalScans > 1 ? latestScore - firstScore : 0;
+        final improvementText = improvement >= 0 ? '+$improvement' : '$improvement';
+
+        return Container(
+          color: const Color(0xFF3D2E22),
+          child: Row(
+            children: [
+              _StatCell(value: '$totalScans', label: 'SCANS'),
+              _StatDivider(),
+              _StatCell(value: bestScore > 0 ? '$bestScore' : '-', label: 'BEST SCORE'),
+              _StatDivider(),
+              _StatCell(
+                value: totalScans > 1 ? improvementText : '-',
+                label: 'IMPROVEMENT',
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -290,6 +339,7 @@ class _StatsStrip extends StatelessWidget {
 class _StatCell extends StatelessWidget {
   final String value;
   final String label;
+
   const _StatCell({required this.value, required this.label});
 
   @override
@@ -335,24 +385,20 @@ class _StatDivider extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SKIN TYPE CARD — 4 options in a row + Edit button
-// ═══════════════════════════════════════════════════════════════════════════
-class _SkinTypeCard extends StatefulWidget {
-  const _SkinTypeCard();
+class _SkinTypeCard extends StatelessWidget {
+  final String? selectedType;
+  final Function(String) onTypeChanged;
 
-  @override
-  State<_SkinTypeCard> createState() => _SkinTypeCardState();
-}
+  const _SkinTypeCard({
+    required this.selectedType,
+    required this.onTypeChanged,
+  });
 
-class _SkinTypeCardState extends State<_SkinTypeCard> {
-  int _selected = 1; // Combo
-
-  final _types = [
-    {'emoji': '💧', 'label': 'Oily'},
-    {'emoji': '⚖️', 'label': 'Combo'},
-    {'emoji': '🌵', 'label': 'Dry'},
-    {'emoji': '🌸', 'label': 'Normal'},
+  static const _types = [
+    {'key': 'oily', 'emoji': '💧', 'label': 'Oily'},
+    {'key': 'combo', 'emoji': '⚖️', 'label': 'Combo'},
+    {'key': 'dry', 'emoji': '🌵', 'label': 'Dry'},
+    {'key': 'normal', 'emoji': '🌸', 'label': 'Normal'},
   ];
 
   @override
@@ -367,7 +413,6 @@ class _SkinTypeCardState extends State<_SkinTypeCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -393,21 +438,19 @@ class _SkinTypeCardState extends State<_SkinTypeCard> {
             ],
           ),
           const SizedBox(height: 14),
-          // Type pills
           Row(
             children: List.generate(_types.length, (i) {
-              final sel = _selected == i;
+              final type = _types[i];
+              final sel = selectedType == type['key'];
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _selected = i),
+                  onTap: () => onTypeChanged(type['key']!),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: EdgeInsets.only(left: i == 0 ? 0 : 8),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
-                      color: sel
-                          ? const Color(0xFFF0D4C2) // terral
-                          : AppColors.background,
+                      color: sel ? const Color(0xFFF0D4C2) : AppColors.background,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: sel ? AppColors.primary : AppColors.cardBorder,
@@ -416,19 +459,14 @@ class _SkinTypeCardState extends State<_SkinTypeCard> {
                     ),
                     child: Column(
                       children: [
-                        Text(
-                          _types[i]['emoji']!,
-                          style: const TextStyle(fontSize: 22),
-                        ),
+                        Text(type['emoji']!, style: const TextStyle(fontSize: 22)),
                         const SizedBox(height: 6),
                         Text(
-                          _types[i]['label']!,
+                          type['label']!,
                           style: GoogleFonts.dmSans(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: sel
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                            color: sel ? AppColors.primary : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -444,25 +482,22 @@ class _SkinTypeCardState extends State<_SkinTypeCard> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// CONCERNS CARD — tag cloud, toggle on/off
-// ═══════════════════════════════════════════════════════════════════════════
-class _ConcernsCard extends StatefulWidget {
-  const _ConcernsCard();
+class _ConcernsCard extends StatelessWidget {
+  final List<String> selectedConcerns;
+  final Function(List<String>) onConcernsChanged;
 
-  @override
-  State<_ConcernsCard> createState() => _ConcernsCardState();
-}
+  const _ConcernsCard({
+    required this.selectedConcerns,
+    required this.onConcernsChanged,
+  });
 
-class _ConcernsCardState extends State<_ConcernsCard> {
-  final _active = {'Acne', 'Dark spots', 'Pores'};
-  final _all = [
+  static const _allConcerns = [
     'Acne',
     'Dark spots',
     'Pores',
     'Wrinkles',
     'Dryness',
-    'Redness'
+    'Redness',
   ];
 
   @override
@@ -492,7 +527,7 @@ class _ConcernsCardState extends State<_ConcernsCard> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0D4C2), // terral
+                  color: const Color(0xFFF0D4C2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Center(
@@ -505,20 +540,23 @@ class _ConcernsCardState extends State<_ConcernsCard> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _all.map((c) {
-              final sel = _active.contains(c);
+            children: _allConcerns.map((c) {
+              final sel = selectedConcerns.contains(c);
               return GestureDetector(
-                onTap: () => setState(() {
-                  sel ? _active.remove(c) : _active.add(c);
-                }),
+                onTap: () {
+                  final updated = List<String>.from(selectedConcerns);
+                  if (sel) {
+                    updated.remove(c);
+                  } else {
+                    updated.add(c);
+                  }
+                  onConcernsChanged(updated);
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
                   decoration: BoxDecoration(
-                    color: sel
-                        ? const Color(0xFFF0D4C2) // terral
-                        : AppColors.background,
+                    color: sel ? const Color(0xFFF0D4C2) : AppColors.background,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: sel
@@ -544,9 +582,6 @@ class _ConcernsCardState extends State<_ConcernsCard> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SETTINGS CARD — rows with tinted icon pills + chevrons
-// ═══════════════════════════════════════════════════════════════════════════
 class _SettingsCard extends StatelessWidget {
   const _SettingsCard();
 
@@ -638,7 +673,6 @@ class _SettingRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(
           children: [
-            // Tinted icon pill — 34×34 border-radius 10
             Container(
               width: 34,
               height: 34,
@@ -646,9 +680,7 @@ class _SettingRow extends StatelessWidget {
                 color: iconBg,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Center(
-                child: Icon(icon, size: 16, color: iconColor),
-              ),
+              child: Center(child: Icon(icon, size: 16, color: iconColor)),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -675,11 +707,7 @@ class _SettingRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 16,
-              color: AppColors.textTertiary,
-            ),
+            const Icon(Icons.chevron_right, size: 16, color: AppColors.textTertiary),
           ],
         ),
       ),
@@ -687,11 +715,9 @@ class _SettingRow extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SIGN OUT BUTTON — rose-outlined
-// ═══════════════════════════════════════════════════════════════════════════
 class _SignOutButton extends StatelessWidget {
   final VoidCallback onTap;
+
   const _SignOutButton({required this.onTap});
 
   @override

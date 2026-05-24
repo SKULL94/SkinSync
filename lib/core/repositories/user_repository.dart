@@ -91,6 +91,7 @@ class UserRepository {
     String? skinType,
     String? fitzpatrickScale,
     String? knownAllergies,
+    List<String>? concerns,
   }) async {
     try {
       final authUser = _supabaseClient.auth.currentUser;
@@ -109,6 +110,7 @@ class UserRepository {
         if (skinType != null) 'skin_type': skinType,
         if (fitzpatrickScale != null) 'fitzpatrick_scale': fitzpatrickScale,
         if (knownAllergies != null) 'known_allergies': knownAllergies,
+        if (concerns != null) 'concerns': concerns,
       };
 
       final response = await _supabaseClient

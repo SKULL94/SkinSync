@@ -5,46 +5,29 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
-import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
-import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
+import 'package:skin_sync/features/home/domain/entities/dashboard_entity.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_event.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_state.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<DashboardBloc>()..add(const LoadDashboard()),
+      child: const _HomePageContent(),
+    );
+  }
 }
 
-class _HomePageState extends State<HomePage> {
-  String _userName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserName();
-  }
-
-  Future<void> _loadUserName() async {
-    final userRepository = sl<UserRepository>();
-    final storageService = sl<StorageService>();
-
-    // Try Supabase first
-    final profile = await userRepository.getCurrentUserProfile();
-
-    if (profile != null && profile.firstName != null) {
-      setState(() => _userName = profile.firstName!);
-    } else {
-      // Fallback to local storage
-      final name = storageService.fetch<String>('user_name');
-      if (name != null) {
-        setState(() => _userName = name);
-      }
-    }
-  }
+class _HomePageContent extends StatelessWidget {
+  const _HomePageContent();
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +36,7 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
+            context.read<DashboardBloc>().add(const RefreshDashboard());
             context.read<HistoryBloc>().add(const HistoryLoadRequested());
           },
           color: AppColors.primary,
@@ -61,35 +45,35 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Top bar: greeting + avatar ──────────────────────────
+                // Top bar: greeting + avatar
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                   child: _buildHeader(context),
                 ),
                 const SizedBox(height: 20),
 
-                // ── Hero card (dark background, full-width minus padding) ──
+                // Hero card
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: _buildHeroCard(context),
                 ),
                 const SizedBox(height: 14),
 
-                // ── Score strip ─────────────────────────────────────────
+                // Score strip
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: _buildScoreStrip(context),
                 ),
                 const SizedBox(height: 13),
 
-                // ── Disclaimer ──────────────────────────────────────────
+                // Disclaimer
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: _buildDisclaimer(),
                 ),
                 const SizedBox(height: 22),
 
-                // ── Quick Actions ───────────────────────────────────────
+                // Quick Actions
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: _buildSectionHeader('Quick Actions'),
@@ -101,7 +85,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 22),
 
-                // ── Daily Tips ──────────────────────────────────────────
+                // Daily Tips
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Row(
@@ -121,8 +105,8 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildDailyTips(),
-                const SizedBox(height: 108), // bottom nav clearance
+                _buildDailyTips(context),
+                const SizedBox(height: 108),
               ],
             ),
           ),
@@ -131,73 +115,75 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // HEADER
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeader(BuildContext context) {
-    final displayName = _userName.isNotEmpty ? _userName : 'there';
-    final avatarInitial = _userName.isNotEmpty ? _userName[0].toUpperCase() : '?';
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      buildWhen: (prev, curr) => prev.dashboard?.userName != curr.dashboard?.userName,
+      builder: (context, state) {
+        final userName = state.dashboard?.userName ?? 'there';
+        final avatarInitial = userName.isNotEmpty && userName != 'there'
+            ? userName[0].toUpperCase()
+            : '?';
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              _getGreeting(),
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w300,
-                color: AppColors.textTertiary,
-                letterSpacing: 0.3,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getGreeting(),
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                    color: AppColors.textTertiary,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  userName,
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w400,
+                    fontStyle: FontStyle.normal,
+                    color: AppColors.textPrimary,
+                    height: 1,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 3),
-            Text(
-              displayName,
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 26,
-                fontWeight: FontWeight.w400,
-                fontStyle: FontStyle.normal,
-                color: AppColors.textPrimary,
-                height: 1,
-              ),
-            ),
-          ],
-        ),
-        // Avatar circle → navigates to profile
-        GestureDetector(
-          onTap: () =>
-              context.read<LayoutBloc>().add(const LayoutTabChanged(2)),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFFF0D4C2), // --terral
-                  const Color(0xFFEDD8D8), // --rosell
-                ],
-              ),
-              border: Border.all(color: AppColors.cardBorder, width: 2),
-            ),
-            child: Center(
-              child: Text(
-                avatarInitial,
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.primary,
+            GestureDetector(
+              onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(2)),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFF0D4C2),
+                      Color(0xFFEDD8D8),
+                    ],
+                  ),
+                  border: Border.all(color: AppColors.cardBorder, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    avatarInitial,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -208,175 +194,169 @@ class _HomePageState extends State<HomePage> {
     return 'Good evening';
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // HERO CARD — dark with radial glow + dot-grid texture + chip + CTA
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeroCard(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.skinAnalysisRoute),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.ink, // #2A2118
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.15),
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Radial glow — top right, terracotta
-            Positioned(
-              top: -40,
-              right: -40,
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.18),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      buildWhen: (prev, curr) =>
+          prev.dashboard?.heroTitle != curr.dashboard?.heroTitle ||
+          prev.dashboard?.heroSubtitle != curr.dashboard?.heroSubtitle,
+      builder: (context, state) {
+        final heroTitle = state.dashboard?.heroTitle ?? 'How does your\nskin feel today?';
+        final heroSubtitle = state.dashboard?.heroSubtitle ??
+            'Instant AI-powered analysis with\npersonalised recommendations';
+
+        return GestureDetector(
+          onTap: () => context.push(AppRoutes.skinAnalysisRoute),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.ink,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.15),
               ),
             ),
-            // Radial glow — bottom left, rose
-            Positioned(
-              bottom: -60,
-              left: -20,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.rose.withValues(alpha: 0.12),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Dot-grid texture overlay
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: CustomPaint(
-                  painter: _DotGridPainter(),
-                ),
-              ),
-            ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // AI Analysis chip
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -40,
+                  right: -40,
+                  child: Container(
+                    width: 220,
+                    height: 220,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.primary.withValues(alpha: 0.18),
+                          Colors.transparent,
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Pulsing dot
-                        _PulsingDot(),
-                        const SizedBox(width: 7),
-                        Text(
-                          'AI ANALYSIS',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.primary,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                  const SizedBox(height: 14),
-                  // Heading
-                  Text(
-                    'How does your\nskin feel today?',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 27,
-                      fontWeight: FontWeight.w400,
-                      fontStyle: FontStyle.italic,
-                      color: const Color(0xFFF2EDE6), // --bg
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  // Sub-text
-                  Text(
-                    'Instant AI-powered analysis with\npersonalised recommendations',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w300,
-                      color: const Color(0xFFF2EDE6).withValues(alpha: 0.55),
-                      height: 1.65,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  // CTA button
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 10),
+                ),
+                Positioned(
+                  bottom: -60,
+                  left: -20,
+                  child: Container(
+                    width: 180,
+                    height: 180,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.flare_rounded,
-                          size: 13,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Analyse Skin',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.rose.withValues(alpha: 0.12),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: CustomPaint(
+                      painter: _DotGridPainter(),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const _PulsingDot(),
+                            const SizedBox(width: 7),
+                            Text(
+                              'AI ANALYSIS',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.primary,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        heroTitle,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 27,
+                          fontWeight: FontWeight.w400,
+                          fontStyle: FontStyle.italic,
+                          color: const Color(0xFFF2EDE6),
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        heroSubtitle,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300,
+                          color: const Color(0xFFF2EDE6).withValues(alpha: 0.55),
+                          height: 1.65,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.flare_rounded,
+                              size: 13,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Analyse Skin',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // SCORE STRIP
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildScoreStrip(BuildContext context) {
     return BlocBuilder<HistoryBloc, HistoryState>(
       buildWhen: (prev, curr) => prev.histories != curr.histories,
@@ -399,13 +379,11 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Row(
         children: [
-          // Empty ring
           SizedBox(
             width: 68,
             height: 68,
             child: CustomPaint(
-              painter:
-                  _ScoreRingPainter(progress: 0, color: AppColors.cardBorder),
+              painter: _ScoreRingPainter(progress: 0, color: AppColors.cardBorder),
               child: Center(
                 child: Text(
                   '?',
@@ -458,9 +436,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // DISCLAIMER — sage-tinted advisory card
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildDisclaimer() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
@@ -515,9 +490,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // SECTION HEADER
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
@@ -529,9 +501,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // QUICK ACTIONS — 2×2 grid
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildQuickActions(BuildContext context) {
     return Column(
       children: [
@@ -550,13 +519,11 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget:
-                    Icon(Icons.show_chart, size: 18, color: AppColors.rose),
+                iconWidget: Icon(Icons.show_chart, size: 18, color: AppColors.rose),
                 iconBg: const Color(0xFFEDD8D8),
                 label: 'History',
                 sub: 'View progress',
-                onTap: () =>
-                    context.read<LayoutBloc>().add(const LayoutTabChanged(1)),
+                onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(1)),
               ),
             ),
           ],
@@ -582,8 +549,7 @@ class _HomePageState extends State<HomePage> {
                 iconBg: const Color(0xFFF5DCA8),
                 label: 'Profile',
                 sub: 'My details',
-                onTap: () =>
-                    context.read<LayoutBloc>().add(const LayoutTabChanged(2)),
+                onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(2)),
               ),
             ),
           ],
@@ -592,10 +558,40 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // DAILY TIPS — horizontal scroll
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildDailyTips() {
+  Widget _buildDailyTips(BuildContext context) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      buildWhen: (prev, curr) =>
+          prev.visibleTips != curr.visibleTips ||
+          prev.status != curr.status,
+      builder: (context, state) {
+        final tips = state.visibleTips;
+
+        // Show fallback tips if no dynamic tips available
+        if (tips.isEmpty || state.status != DashboardStatus.loaded) {
+          return _buildFallbackTips();
+        }
+
+        return SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            clipBehavior: Clip.none,
+            itemCount: tips.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 11),
+            itemBuilder: (_, i) => _DynamicTipCard(
+              tip: tips[i],
+              onDismiss: () {
+                context.read<DashboardBloc>().add(DismissTip(tipId: tips[i].id));
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFallbackTips() {
     final tips = [
       _TipData(
         icon: Icons.wb_sunny_outlined,
@@ -607,7 +603,7 @@ class _HomePageState extends State<HomePage> {
         icon: Icons.bedtime_outlined,
         iconBg: const Color(0xFFEDD8D8),
         iconColor: AppColors.rose,
-        text: '7–8 hrs sleep powers overnight skin repair',
+        text: '7-8 hrs sleep powers overnight skin repair',
       ),
       _TipData(
         icon: Icons.eco_outlined,
@@ -636,9 +632,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // HELPERS
-  // ─────────────────────────────────────────────────────────────────────────
   int _calculateOverallScore(HistoryEntity analysis) {
     try {
       if (analysis.results.isNotEmpty) {
@@ -651,9 +644,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCORE STRIP CARD
-// ═══════════════════════════════════════════════════════════════════════════
+// Score Strip Card
 class _ScoreStripCard extends StatelessWidget {
   final int score;
   final DateTime lastDate;
@@ -680,7 +671,6 @@ class _ScoreStripCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Left: label + score + trend
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -722,7 +712,6 @@ class _ScoreStripCard extends StatelessWidget {
               ],
             ),
           ),
-          // Right: score ring
           SizedBox(
             width: 68,
             height: 68,
@@ -740,9 +729,7 @@ class _ScoreStripCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// QUICK ACTION CARD
-// ═══════════════════════════════════════════════════════════════════════════
+// Quick Action Card
 class _QuickActionCard extends StatelessWidget {
   final Widget iconWidget;
   final Color iconBg;
@@ -806,9 +793,107 @@ class _QuickActionCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// DAILY TIP CARD
-// ═══════════════════════════════════════════════════════════════════════════
+// Dynamic Tip Card (from BLoC)
+class _DynamicTipCard extends StatelessWidget {
+  final DailyTipEntity tip;
+  final VoidCallback onDismiss;
+
+  const _DynamicTipCard({required this.tip, required this.onDismiss});
+
+  Color _getIconBg() {
+    switch (tip.category) {
+      case 'protection':
+        return const Color(0xFFF0D4C2);
+      case 'hydration':
+        return const Color(0xFFF5DCA8);
+      case 'routine':
+        return const Color(0xFFEDD8D8);
+      case 'skincare':
+        return const Color(0xFFD4E3CC);
+      default:
+        return const Color(0xFFF0D4C2);
+    }
+  }
+
+  Color _getIconColor() {
+    switch (tip.category) {
+      case 'protection':
+        return AppColors.primary;
+      case 'hydration':
+        return AppColors.amber;
+      case 'routine':
+        return AppColors.rose;
+      case 'skincare':
+        return AppColors.sage;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 144,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: _getIconBg(),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Center(
+                  child: Text(
+                    tip.icon,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            tip.title,
+            style: GoogleFonts.dmSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Text(
+              tip.description,
+              style: GoogleFonts.dmSans(
+                fontSize: 10,
+                color: AppColors.textTertiary,
+                height: 1.4,
+                fontWeight: FontWeight.w400,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Fallback Tip Data
 class _TipData {
   final IconData icon;
   final Color iconBg;
@@ -822,6 +907,7 @@ class _TipData {
   });
 }
 
+// Fallback Tip Card
 class _TipCard extends StatelessWidget {
   final _TipData tip;
   const _TipCard({required this.tip});
@@ -870,10 +956,10 @@ class _TipCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PULSING DOT — animated green dot on hero chip
-// ═══════════════════════════════════════════════════════════════════════════
+// Pulsing Dot
 class _PulsingDot extends StatefulWidget {
+  const _PulsingDot();
+
   @override
   State<_PulsingDot> createState() => _PulsingDotState();
 }
@@ -917,11 +1003,9 @@ class _PulsingDotState extends State<_PulsingDot>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCORE RING PAINTER — matches HTML SVG circular progress
-// ═══════════════════════════════════════════════════════════════════════════
+// Score Ring Painter
 class _ScoreRingPainter extends CustomPainter {
-  final double progress; // 0.0 – 1.0
+  final double progress;
   final Color color;
   final Color trackColor;
 
@@ -935,11 +1019,10 @@ class _ScoreRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final radius = (size.width - 6) / 2; // stroke-width 6
+    final radius = (size.width - 6) / 2;
     const strokeWidth = 5.0;
-    const startAngle = -1.5708; // -90°, top
+    const startAngle = -1.5708;
 
-    // Track
     canvas.drawArc(
       Rect.fromCircle(center: Offset(cx, cy), radius: radius),
       0,
@@ -954,15 +1037,14 @@ class _ScoreRingPainter extends CustomPainter {
 
     if (progress <= 0) return;
 
-    // Gradient fill arc — amber → terra, matching HTML linearGradient
     final sweepAngle = 6.2832 * progress;
     final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
     final gradient = SweepGradient(
       startAngle: startAngle,
       endAngle: startAngle + sweepAngle,
       colors: const [
-        Color(0xFFE8A84A), // amber
-        Color(0xFFD4845A), // terra
+        Color(0xFFE8A84A),
+        Color(0xFFD4845A),
       ],
     ).createShader(rect);
 
@@ -984,9 +1066,7 @@ class _ScoreRingPainter extends CustomPainter {
       old.progress != progress || old.color != color;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// DOT GRID PAINTER — matches HTML SVG pattern on hero card (2.5% opacity)
-// ═══════════════════════════════════════════════════════════════════════════
+// Dot Grid Painter
 class _DotGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -997,7 +1077,6 @@ class _DotGridPainter extends CustomPainter {
 
     const step = 28.0;
 
-    // Horizontal lines (top-left grid pattern like SVG pattern path "M28 0L0 0 0 28")
     for (double y = 0; y <= size.height; y += step) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }

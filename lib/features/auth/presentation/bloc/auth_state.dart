@@ -5,6 +5,8 @@ enum AuthStatus {
   loading,
   otpSent,
   authenticated,
+  authenticatedWithProfile,
+  authenticatedNoProfile,
   failure,
 }
 
