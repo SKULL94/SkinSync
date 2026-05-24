@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/services/network_info.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/core/services/notification_service.dart';
@@ -54,6 +55,9 @@ Future<void> init() async {
 
   // Services
   sl.registerLazySingleton(() => NotificationService());
+
+  // Repositories
+  sl.registerLazySingleton(() => UserRepository(supabaseClient: sl()));
 
   // Features - Auth
   _initAuth();

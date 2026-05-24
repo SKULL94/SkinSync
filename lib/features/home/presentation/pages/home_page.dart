@@ -4,13 +4,47 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/di/injection_container.dart';
+import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
+import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final userRepository = sl<UserRepository>();
+    final storageService = sl<StorageService>();
+
+    // Try Supabase first
+    final profile = await userRepository.getCurrentUserProfile();
+
+    if (profile != null && profile.firstName != null) {
+      setState(() => _userName = profile.firstName!);
+    } else {
+      // Fallback to local storage
+      final name = storageService.fetch<String>('user_name');
+      if (name != null) {
+        setState(() => _userName = name);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +135,9 @@ class HomePage extends StatelessWidget {
   // HEADER
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeader(BuildContext context) {
+    final displayName = _userName.isNotEmpty ? _userName : 'there';
+    final avatarInitial = _userName.isNotEmpty ? _userName[0].toUpperCase() : '?';
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -118,7 +155,7 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              'Priya',
+              displayName,
               style: GoogleFonts.playfairDisplay(
                 fontSize: 26,
                 fontWeight: FontWeight.w400,
@@ -150,7 +187,7 @@ class HomePage extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                'P',
+                avatarInitial,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 16,
                   fontWeight: FontWeight.w400,

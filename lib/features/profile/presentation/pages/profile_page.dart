@@ -1,13 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
+import 'package:skin_sync/core/models/user_profile.dart';
+import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  UserProfile? _profile;
+  String _userName = '';
+  DateTime? _memberSince;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final userRepository = sl<UserRepository>();
+    final storageService = sl<StorageService>();
+
+    // Try Supabase first
+    final profile = await userRepository.getCurrentUserProfile();
+
+    if (profile != null) {
+      setState(() {
+        _profile = profile;
+        _userName = profile.fullName.isNotEmpty
+            ? profile.fullName
+            : profile.firstName ?? '';
+        _memberSince = profile.createdAt;
+      });
+    } else {
+      // Fallback to local storage
+      final name = storageService.fetch<String>('user_name');
+      if (name != null) {
+        setState(() => _userName = name);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +59,7 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           children: [
             // ── Dark hero ───────────────────────────────────────────
-            const _ProfileHero(),
+            _ProfileHero(userName: _userName, memberSince: _memberSince),
 
             // ── Stats strip ─────────────────────────────────────────
             const _StatsStrip(),
@@ -55,10 +97,20 @@ class ProfilePage extends StatelessWidget {
 // PROFILE HERO — dark with terracotta + rose radial washes
 // ═══════════════════════════════════════════════════════════════════════════
 class _ProfileHero extends StatelessWidget {
-  const _ProfileHero();
+  final String userName;
+  final DateTime? memberSince;
+  const _ProfileHero({required this.userName, this.memberSince});
+
+  String _formatMemberSince(DateTime? date) {
+    if (date == null) return 'Member';
+    return 'Member since ${DateFormat('MMM yyyy').format(date)}';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final displayName = userName.isNotEmpty ? userName : 'User';
+    final avatarInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
+
     return Container(
       color: AppColors.ink, // #2A2118
       child: Stack(
@@ -127,7 +179,7 @@ class _ProfileHero extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'P',
+                        avatarInitial,
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 28,
                           fontWeight: FontWeight.w400,
@@ -144,7 +196,7 @@ class _ProfileHero extends StatelessWidget {
                       children: [
                         // Name — Playfair italic
                         Text(
-                          'Priya Sharma',
+                          displayName,
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 24,
                             fontWeight: FontWeight.w400,
@@ -155,7 +207,7 @@ class _ProfileHero extends StatelessWidget {
                         const SizedBox(height: 3),
                         // Joined text
                         Text(
-                          'Member since Jan 2026',
+                          _formatMemberSince(memberSince),
                           style: GoogleFonts.dmSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w300,

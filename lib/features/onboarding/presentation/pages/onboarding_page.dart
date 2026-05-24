@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
+import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 
@@ -36,10 +37,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Future<void> _completeSetup() async {
     if (_selectedGender == null) return;
+
     final storageService = sl<StorageService>();
-    await storageService.save('user_name', _nameController.text.trim());
-    await storageService.save('user_gender', _selectedGender);
+    final userRepository = sl<UserRepository>();
+
+    final firstName = _nameController.text.trim();
+    final gender = _selectedGender;
+
+    // Save to local storage (for quick access)
+    await storageService.save('user_name', firstName);
+    await storageService.save('user_gender', gender);
     await storageService.save('onboarding_completed', true);
+
+    // Save to Supabase (for sync across devices)
+    await userRepository.upsertProfile(
+      firstName: firstName,
+      gender: gender,
+    );
+
     if (mounted) context.go(AppRoutes.layoutRoute);
   }
 
