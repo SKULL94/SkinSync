@@ -133,7 +133,7 @@ class StringConst {
   // Dashboard - Disclaimer
   static const String kAdvisoryOnly = 'ADVISORY ONLY';
   static const String kDisclaimerText =
-      'Aura provides AI-powered insights, not medical advice. We are not medical professionals. Please consult a certified dermatologist for skin concerns.';
+      'Skin Sync provides AI-powered insights, not medical advice. We are not medical professionals. Please consult a certified dermatologist for skin concerns.';
 
   // Dashboard - Section Headers
   static const String kQuickActions = 'Quick Actions';

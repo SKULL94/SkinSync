@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
+import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
-import 'package:skin_sync/features/home/domain/entities/dashboard_entity.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_event.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_state.dart';
@@ -31,8 +30,10 @@ class _HomePageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -85,27 +86,13 @@ class _HomePageContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 22),
 
-                // Daily Tips
+                // Upcoming Reminder
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildSectionHeader('Daily Tips'),
-                      Text(
-                        'See all',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: _buildSectionHeader('Upcoming'),
                 ),
                 const SizedBox(height: 12),
-                _buildDailyTips(context),
+                _buildUpcomingReminder(context),
                 const SizedBox(height: 108),
               ],
             ),
@@ -474,7 +461,7 @@ class _HomePageContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Aura provides AI-powered insights, not medical advice. We are not medical professionals. Please consult a certified dermatologist for skin concerns.',
+                  'Skin Sync provides AI-powered insights, not medical advice. We are not medical professionals. Please consult a certified dermatologist for skin concerns.',
                   style: GoogleFonts.dmSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w300,
@@ -519,11 +506,11 @@ class _HomePageContent extends StatelessWidget {
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget: Icon(Icons.show_chart, size: 18, color: AppColors.rose),
+                iconWidget: Icon(Icons.auto_awesome, size: 18, color: AppColors.rose),
                 iconBg: const Color(0xFFEDD8D8),
-                label: 'History',
-                sub: 'View progress',
-                onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(1)),
+                label: 'AI Tips',
+                sub: 'Personalized',
+                onTap: () => context.push(AppRoutes.aiTipsRoute),
               ),
             ),
           ],
@@ -533,23 +520,23 @@ class _HomePageContent extends StatelessWidget {
           children: [
             Expanded(
               child: _QuickActionCard(
-                iconWidget: Icon(Icons.water_drop_outlined,
+                iconWidget: Icon(Icons.show_chart,
                     size: 18, color: AppColors.sage),
                 iconBg: const Color(0xFFD4E3CC),
-                label: 'Hydration',
-                sub: 'Track intake',
-                onTap: () {},
+                label: 'Trends',
+                sub: 'View progress',
+                onTap: () => context.push(AppRoutes.trendsRoute),
               ),
             ),
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget: Icon(Icons.person_outline,
+                iconWidget: Icon(Icons.checklist_outlined,
                     size: 18, color: AppColors.amber),
                 iconBg: const Color(0xFFF5DCA8),
-                label: 'Profile',
-                sub: 'My details',
-                onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(2)),
+                label: 'Routine',
+                sub: 'Daily care',
+                onTap: () => context.push(AppRoutes.routineRoute),
               ),
             ),
           ],
@@ -558,77 +545,116 @@ class _HomePageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildDailyTips(BuildContext context) {
-    return BlocBuilder<DashboardBloc, DashboardState>(
-      buildWhen: (prev, curr) =>
-          prev.visibleTips != curr.visibleTips ||
-          prev.status != curr.status,
+  Widget _buildUpcomingReminder(BuildContext context) {
+    return BlocBuilder<HistoryBloc, HistoryState>(
       builder: (context, state) {
-        final tips = state.visibleTips;
-
-        // Show fallback tips if no dynamic tips available
-        if (tips.isEmpty || state.status != DashboardStatus.loaded) {
-          return _buildFallbackTips();
+        // Calculate days since last scan
+        int daysSinceLastScan = 7;
+        if (state.histories.isNotEmpty) {
+          final lastScan = state.histories.first.date;
+          daysSinceLastScan = DateTime.now().difference(lastScan).inDays;
         }
 
-        return SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            clipBehavior: Clip.none,
-            itemCount: tips.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 11),
-            itemBuilder: (_, i) => _DynamicTipCard(
-              tip: tips[i],
-              onDismiss: () {
-                context.read<DashboardBloc>().add(DismissTip(tipId: tips[i].id));
-              },
+        // Determine reminder message based on last scan
+        String reminderTitle;
+        String reminderSubtitle;
+        IconData reminderIcon;
+        Color reminderColor;
+
+        if (daysSinceLastScan == 0) {
+          reminderTitle = 'Great job!';
+          reminderSubtitle = 'You scanned today. Next scan tomorrow.';
+          reminderIcon = Icons.check_circle_outline;
+          reminderColor = AppColors.sage;
+        } else if (daysSinceLastScan == 1) {
+          reminderTitle = 'Scan reminder';
+          reminderSubtitle = 'Time for your daily skin check';
+          reminderIcon = Icons.access_time;
+          reminderColor = AppColors.amber;
+        } else if (daysSinceLastScan <= 3) {
+          reminderTitle = 'Don\'t forget!';
+          reminderSubtitle = '$daysSinceLastScan days since your last scan';
+          reminderIcon = Icons.notification_important_outlined;
+          reminderColor = AppColors.amber;
+        } else {
+          reminderTitle = 'We miss you!';
+          reminderSubtitle = '$daysSinceLastScan days since your last scan';
+          reminderIcon = Icons.warning_amber_outlined;
+          reminderColor = AppColors.rose;
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.cardBorder),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: reminderColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    reminderIcon,
+                    size: 24,
+                    color: reminderColor,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reminderTitle,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        reminderSubtitle,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (daysSinceLastScan > 0)
+                  GestureDetector(
+                    onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(1)),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'Scan',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildFallbackTips() {
-    final tips = [
-      _TipData(
-        icon: Icons.wb_sunny_outlined,
-        iconBg: const Color(0xFFF0D4C2),
-        iconColor: AppColors.primary,
-        text: 'Apply SPF 30+ every morning before going out',
-      ),
-      _TipData(
-        icon: Icons.bedtime_outlined,
-        iconBg: const Color(0xFFEDD8D8),
-        iconColor: AppColors.rose,
-        text: '7-8 hrs sleep powers overnight skin repair',
-      ),
-      _TipData(
-        icon: Icons.eco_outlined,
-        iconBg: const Color(0xFFD4E3CC),
-        iconColor: AppColors.sage,
-        text: 'Antioxidants fight free radicals and slow ageing',
-      ),
-      _TipData(
-        icon: Icons.water_drop_outlined,
-        iconBg: const Color(0xFFF5DCA8),
-        iconColor: AppColors.amber,
-        text: 'Cold water rinse closes pores after cleansing',
-      ),
-    ];
-
-    return SizedBox(
-      height: 120,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        clipBehavior: Clip.none,
-        itemCount: tips.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 11),
-        itemBuilder: (_, i) => _TipCard(tip: tips[i]),
-      ),
     );
   }
 
@@ -650,15 +676,6 @@ class _ScoreStripCard extends StatelessWidget {
   final DateTime lastDate;
 
   const _ScoreStripCard({required this.score, required this.lastDate});
-
-  String _formatDate() {
-    final now = DateTime.now();
-    final diff = now.difference(lastDate);
-    if (diff.inDays == 0) return 'Today';
-    if (diff.inDays == 1) return 'Yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    return DateFormat('MMM d').format(lastDate);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -788,169 +805,6 @@ class _QuickActionCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// Dynamic Tip Card (from BLoC)
-class _DynamicTipCard extends StatelessWidget {
-  final DailyTipEntity tip;
-  final VoidCallback onDismiss;
-
-  const _DynamicTipCard({required this.tip, required this.onDismiss});
-
-  Color _getIconBg() {
-    switch (tip.category) {
-      case 'protection':
-        return const Color(0xFFF0D4C2);
-      case 'hydration':
-        return const Color(0xFFF5DCA8);
-      case 'routine':
-        return const Color(0xFFEDD8D8);
-      case 'skincare':
-        return const Color(0xFFD4E3CC);
-      default:
-        return const Color(0xFFF0D4C2);
-    }
-  }
-
-  Color _getIconColor() {
-    switch (tip.category) {
-      case 'protection':
-        return AppColors.primary;
-      case 'hydration':
-        return AppColors.amber;
-      case 'routine':
-        return AppColors.rose;
-      case 'skincare':
-        return AppColors.sage;
-      default:
-        return AppColors.primary;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 144,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: _getIconBg(),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Center(
-                  child: Text(
-                    tip.icon,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            tip.title,
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Expanded(
-            child: Text(
-              tip.description,
-              style: GoogleFonts.dmSans(
-                fontSize: 10,
-                color: AppColors.textTertiary,
-                height: 1.4,
-                fontWeight: FontWeight.w400,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Fallback Tip Data
-class _TipData {
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String text;
-  const _TipData({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.text,
-  });
-}
-
-// Fallback Tip Card
-class _TipCard extends StatelessWidget {
-  final _TipData tip;
-  const _TipCard({required this.tip});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 144,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: tip.iconBg,
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Center(
-              child: Icon(tip.icon, size: 15, color: tip.iconColor),
-            ),
-          ),
-          const SizedBox(height: 9),
-          Expanded(
-            child: Text(
-              tip.text,
-              style: GoogleFonts.dmSans(
-                fontSize: 11,
-                color: AppColors.textPrimary,
-                height: 1.55,
-                fontWeight: FontWeight.w400,
-              ),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
       ),
     );
   }

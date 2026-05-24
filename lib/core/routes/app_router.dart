@@ -12,6 +12,10 @@ import 'package:skin_sync/features/profile/presentation/pages/scan_reminders.dar
 import 'package:skin_sync/features/profile/presentation/pages/privacy_details.dart';
 import 'package:skin_sync/features/profile/presentation/pages/appearance_page.dart';
 import 'package:skin_sync/features/profile/presentation/pages/skin_type.dart';
+import 'package:skin_sync/features/home/presentation/pages/ai_tips_page.dart';
+import 'package:skin_sync/features/home/presentation/pages/trends_page.dart';
+import 'package:skin_sync/features/home/presentation/pages/routine_page.dart';
+import 'package:skin_sync/features/home/presentation/pages/skin_news_page.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -72,6 +76,26 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.skinTypeRoute,
       name: 'skinType',
       builder: (context, state) => const SkinTypeEditorPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.aiTipsRoute,
+      name: 'aiTips',
+      builder: (context, state) => const AITipsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.trendsRoute,
+      name: 'trends',
+      builder: (context, state) => const TrendsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.routineRoute,
+      name: 'routine',
+      builder: (context, state) => const RoutinePage(),
+    ),
+    GoRoute(
+      path: AppRoutes.skinNewsRoute,
+      name: 'skinNews',
+      builder: (context, state) => const SkinNewsPage(),
     ),
   ],
 );

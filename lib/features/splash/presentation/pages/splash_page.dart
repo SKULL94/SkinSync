@@ -170,13 +170,13 @@ class _SplashPageState extends State<SplashPage>
 
                   // Brand wordmark
                   Text(
-                    'Aura',
+                    'Skin Sync',
                     style: GoogleFonts.playfairDisplay(
-                      fontSize: 52,
+                      fontSize: 42,
                       fontWeight: FontWeight.w400,
                       fontStyle: FontStyle.italic,
                       color: AppColors.background,
-                      letterSpacing: 6,
+                      letterSpacing: 3,
                     ),
                   ),
 
@@ -184,12 +184,12 @@ class _SplashPageState extends State<SplashPage>
 
                   // Tagline
                   Text(
-                    'SKIN INTELLIGENCE',
+                    'YOUR SKIN AI COMPANION',
                     style: GoogleFonts.dmSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                      letterSpacing: 4,
+                      letterSpacing: 3,
                     ),
                   ),
 

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/profile/presentation/pages/personal_details.dart'
     show SubHeader, SectionLabel, ToggleRow, SaveButton;
+import 'package:skin_sync/features/settings/presentation/bloc/theme_bloc.dart';
 
 class AppearancePage extends StatefulWidget {
   const AppearancePage({super.key});
@@ -13,8 +16,24 @@ class AppearancePage extends StatefulWidget {
 }
 
 class _AppearancePageState extends State<AppearancePage> {
-  int _selectedTheme = 0; // Light selected by default
   int _selectedAccent = 0; // Terracotta selected
+
+  int _themeModeToIndex(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.light => 0,
+      ThemeMode.dark => 1,
+      ThemeMode.system => 2,
+    };
+  }
+
+  ThemeMode _indexToThemeMode(int index) {
+    return switch (index) {
+      0 => ThemeMode.light,
+      1 => ThemeMode.dark,
+      2 => ThemeMode.system,
+      _ => ThemeMode.system,
+    };
+  }
 
   final _themes = [
     _ThemeData(
@@ -51,17 +70,6 @@ class _AppearancePageState extends State<AppearancePage> {
       labelBg: const Color(0xFFF2EDE6),
       isSystem: true,
     ),
-    _ThemeData(
-      name: 'Warm Night',
-      desc: 'Rich amber dark',
-      bgColor: const Color(0xFF2D1F14),
-      barColor: const Color(0xFF4A3020),
-      cardColor: const Color(0xFF3A2818),
-      cardBorderColor: const Color(0xFF4A3020),
-      nameFg: const Color(0xFFF2EDE6),
-      descFg: const Color(0xFF7A6A5A),
-      labelBg: const Color(0xFF2D1F14),
-    ),
   ];
 
   final _accents = [
@@ -75,53 +83,63 @@ class _AppearancePageState extends State<AppearancePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          SubHeader(
-            superText: 'Profile',
-            title: 'Appearance',
-            onBack: () => context.pop(),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Theme ─────────────────────────────────────────
-                  const SectionLabel('Theme'),
-                  const SizedBox(height: 8),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 11,
-                      crossAxisSpacing: 11,
-                      childAspectRatio: 0.88,
-                    ),
-                    itemCount: _themes.length,
-                    itemBuilder: (_, i) => _ThemeCard(
-                      data: _themes[i],
-                      isSelected: _selectedTheme == i,
-                      onTap: () => setState(() => _selectedTheme = i),
-                    ),
-                  ),
+    final colors = context.colors;
+
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        final selectedTheme = _themeModeToIndex(themeState.themeMode);
+
+        return Scaffold(
+          backgroundColor: colors.background,
+          body: Column(
+            children: [
+              SubHeader(
+                superText: 'Profile',
+                title: 'Appearance',
+                onBack: () => context.pop(),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Theme ─────────────────────────────────────────
+                      const SectionLabel('Theme'),
+                      const SizedBox(height: 8),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 11,
+                          crossAxisSpacing: 11,
+                          childAspectRatio: 0.75,
+                        ),
+                        itemCount: _themes.length,
+                        itemBuilder: (_, i) => _ThemeCard(
+                          data: _themes[i],
+                          isSelected: selectedTheme == i,
+                          onTap: () {
+                            context.read<ThemeBloc>().add(
+                              ThemeChanged(_indexToThemeMode(i)),
+                            );
+                          },
+                        ),
+                      ),
                   const SizedBox(height: 14),
 
-                  // ── Accent Colour ─────────────────────────────────
-                  const SectionLabel('Accent Colour'),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border:
-                          Border.all(color: AppColors.cardBorder, width: 1.5),
-                    ),
+                      // ── Accent Colour ─────────────────────────────────
+                      const SectionLabel('Accent Colour'),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: colors.cardBackground,
+                          borderRadius: BorderRadius.circular(18),
+                          border:
+                              Border.all(color: colors.cardBorder, width: 1.5),
+                        ),
                     child: Column(
                       children: [
                         Padding(
@@ -142,7 +160,7 @@ class _AppearancePageState extends State<AppearancePage> {
                                     color: _accents[i].color,
                                     border: Border.all(
                                       color: sel
-                                          ? AppColors.ink
+                                          ? colors.textPrimary
                                           : Colors.transparent,
                                       width: 2.5,
                                     ),
@@ -170,89 +188,94 @@ class _AppearancePageState extends State<AppearancePage> {
                             }),
                           ),
                         ),
-                        Container(
-                          height: 1,
-                          margin: const EdgeInsets.symmetric(horizontal: 18),
-                          color: const Color(0xFFEAE3D9),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
-                          child: Text(
-                            '${_accents[_selectedAccent].name} selected — changes button and active colours',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w300,
-                              color: AppColors.textTertiary,
+                            Container(
+                              height: 1,
+                              margin: const EdgeInsets.symmetric(horizontal: 18),
+                              color: colors.divider,
                             ),
-                          ),
-                        ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
+                              child: Text(
+                                '${_accents[_selectedAccent].name} selected — changes button and active colours',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w300,
+                                  color: colors.textTertiary,
+                                ),
+                              ),
+                            ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
+                      const SizedBox(height: 14),
 
-                  // ── Text Size ─────────────────────────────────────
-                  const SectionLabel('Text Size'),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border:
-                          Border.all(color: AppColors.cardBorder, width: 1.5),
-                    ),
-                    child: const Column(
-                      children: [
-                        ToggleRow(
-                          label: 'Larger Text',
-                          initialValue: false,
+                      // ── Text Size ─────────────────────────────────────
+                      const SectionLabel('Text Size'),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: colors.cardBackground,
+                          borderRadius: BorderRadius.circular(18),
+                          border:
+                              Border.all(color: colors.cardBorder, width: 1.5),
                         ),
-                        ToggleRow(
-                          label: 'Bold Text',
-                          initialValue: false,
-                          showDivider: false,
+                        child: const Column(
+                          children: [
+                            ToggleRow(
+                              label: 'Larger Text',
+                              initialValue: false,
+                            ),
+                            ToggleRow(
+                              label: 'Bold Text',
+                              initialValue: false,
+                              showDivider: false,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Motion ────────────────────────────────────────
+                      const SectionLabel('Motion'),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: colors.cardBackground,
+                          borderRadius: BorderRadius.circular(18),
+                          border:
+                              Border.all(color: colors.cardBorder, width: 1.5),
+                        ),
+                        child: const Column(
+                          children: [
+                            ToggleRow(
+                              label: 'Reduce Motion',
+                              sub: 'Minimises animations throughout the app',
+                              initialValue: false,
+                            ),
+                            ToggleRow(
+                              label: 'Haptic Feedback',
+                              sub: 'Subtle vibrations on interactions',
+                              initialValue: true,
+                              showDivider: false,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      SaveButton(
+                        label: 'Theme Applied',
+                        onTap: () => context.pop(),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-
-                  // ── Motion ────────────────────────────────────────
-                  const SectionLabel('Motion'),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border:
-                          Border.all(color: AppColors.cardBorder, width: 1.5),
-                    ),
-                    child: const Column(
-                      children: [
-                        ToggleRow(
-                          label: 'Reduce Motion',
-                          sub: 'Minimises animations throughout the app',
-                          initialValue: false,
-                        ),
-                        ToggleRow(
-                          label: 'Haptic Feedback',
-                          sub: 'Subtle vibrations on interactions',
-                          initialValue: true,
-                          showDivider: false,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  SaveButton(label: 'Apply Settings', onTap: () {}),
-                  const SizedBox(height: 16),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

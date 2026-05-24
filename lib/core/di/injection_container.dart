@@ -30,6 +30,7 @@ import 'package:skin_sync/features/skin_analysis/data/datasources/skin_analysis_
 import 'package:skin_sync/features/skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
 import 'package:skin_sync/features/skin_analysis/domain/repositories/skin_analysis_repository.dart';
 import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_image.dart';
+import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_with_ai.dart';
 import 'package:skin_sync/features/skin_analysis/domain/usecases/save_analysis.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
 import 'package:skin_sync/features/settings/presentation/bloc/theme_bloc.dart';
@@ -116,6 +117,7 @@ void _initSkinAnalysis() {
   sl.registerFactory(
     () => SkinAnalysisBloc(
       analyzeImage: sl(),
+      analyzeWithAI: sl(),
       saveAnalysis: sl(),
       storageService: sl(),
     ),
@@ -123,6 +125,7 @@ void _initSkinAnalysis() {
 
   // Use cases
   sl.registerLazySingleton(() => AnalyzeImage(sl()));
+  sl.registerLazySingleton(() => AnalyzeWithAI(sl()));
   sl.registerLazySingleton(() => SaveAnalysis(sl()));
 
   // Repository

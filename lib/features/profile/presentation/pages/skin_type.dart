@@ -94,7 +94,7 @@ class _SkinTypeEditorPageState extends State<SkinTypeEditorPage> {
                   InfoBox(
                     icon: Icons.info_outline_rounded,
                     text:
-                        'Your skin type helps us fine-tune analysis results and recommendations. Not sure? Complete a scan first — Aura will detect it automatically.',
+                        'Your skin type helps us fine-tune analysis results and recommendations. Not sure? Complete a scan first — Skin Sync will detect it automatically.',
                   ),
                   const SizedBox(height: 14),
 

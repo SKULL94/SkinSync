@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
+import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/history/presentation/pages/history_page.dart';
 import 'package:skin_sync/features/home/presentation/pages/home_page.dart';
+import 'package:skin_sync/features/home/presentation/pages/skin_news_page.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 import 'package:skin_sync/features/profile/presentation/pages/profile_page.dart';
 
@@ -29,16 +31,19 @@ class _LayoutPageState extends State<LayoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return BlocBuilder<LayoutBloc, LayoutState>(
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: colors.background,
           extendBody: true, // lets content flow behind the nav
           body: IndexedStack(
             index: state.currentIndex,
             children: const [
               HomePage(),
               HistoryPage(),
+              SkinNewsPage(),
               ProfilePage(),
             ],
           ),
@@ -47,6 +52,7 @@ class _LayoutPageState extends State<LayoutPage> {
             onTabChanged: (i) =>
                 context.read<LayoutBloc>().add(LayoutTabChanged(i)),
             onScanTap: () => context.push(AppRoutes.skinAnalysisRoute),
+            colors: colors,
           ),
         );
       },
@@ -62,11 +68,13 @@ class _AuraBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTabChanged;
   final VoidCallback onScanTap;
+  final AppColorsTheme colors;
 
   const _AuraBottomNav({
     required this.currentIndex,
     required this.onTabChanged,
     required this.onScanTap,
+    required this.colors,
   });
 
   @override
@@ -93,6 +101,7 @@ class _AuraBottomNav extends StatelessWidget {
               bottomPad: bottomPad,
               currentIndex: currentIndex,
               onTabChanged: onTabChanged,
+              colors: colors,
             ),
           ),
 
@@ -115,12 +124,14 @@ class _CurvedNavBar extends StatelessWidget {
   final double bottomPad;
   final int currentIndex;
   final ValueChanged<int> onTabChanged;
+  final AppColorsTheme colors;
 
   const _CurvedNavBar({
     required this.height,
     required this.bottomPad,
     required this.currentIndex,
     required this.onTabChanged,
+    required this.colors,
   });
 
   @override
@@ -136,9 +147,8 @@ class _CurvedNavBar extends StatelessWidget {
           CustomPaint(
             size: Size(screenW, height),
             painter: _NavNotchPainter(
-              backgroundColor:
-                  const Color(0xFFF2EDE6).withValues(alpha: 0.97), // --bg
-              borderColor: const Color(0xFFE0D8CC), // --bg3
+              backgroundColor: colors.navBackground,
+              borderColor: colors.navBorder,
             ),
           ),
 
@@ -158,6 +168,7 @@ class _CurvedNavBar extends StatelessWidget {
                     label: 'HOME',
                     isActive: currentIndex == 0,
                     onTap: () => onTabChanged(0),
+                    colors: colors,
                   ),
                 ),
 
@@ -169,11 +180,24 @@ class _CurvedNavBar extends StatelessWidget {
                     label: 'HISTORY',
                     isActive: currentIndex == 1,
                     onTap: () => onTabChanged(1),
+                    colors: colors,
                   ),
                 ),
 
                 // ── Centre gap — 64px wide for FAB ─────────────────
                 const SizedBox(width: 64),
+
+                // ── News (right-center) ───────────────────────────────
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.article_outlined,
+                    activeIcon: Icons.article_rounded,
+                    label: 'NEWS',
+                    isActive: currentIndex == 2,
+                    onTap: () => onTabChanged(2),
+                    colors: colors,
+                  ),
+                ),
 
                 // ── Profile (right) ──────────────────────────────────
                 Expanded(
@@ -181,13 +205,11 @@ class _CurvedNavBar extends StatelessWidget {
                     icon: Icons.person_outline,
                     activeIcon: Icons.person_rounded,
                     label: 'PROFILE',
-                    isActive: currentIndex == 2,
-                    onTap: () => onTabChanged(2),
+                    isActive: currentIndex == 3,
+                    onTap: () => onTabChanged(3),
+                    colors: colors,
                   ),
                 ),
-
-                // ── Empty spacer for symmetry ────────────────────────
-                const Expanded(child: SizedBox()),
               ],
             ),
           ),
@@ -332,6 +354,7 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final AppColorsTheme colors;
 
   const _NavItem({
     required this.icon,
@@ -339,6 +362,7 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    required this.colors,
   });
 
   @override
@@ -358,9 +382,7 @@ class _NavItem extends StatelessWidget {
                 isActive ? activeIcon : icon,
                 key: ValueKey(isActive),
                 size: 22,
-                color: isActive
-                    ? AppColors.primary // terra #D4845A
-                    : const Color(0xFFA89880), // --ink4
+                color: isActive ? colors.primary : colors.navInactive,
               ),
             ),
             const SizedBox(height: 4),
@@ -370,7 +392,7 @@ class _NavItem extends StatelessWidget {
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.8,
-                color: isActive ? AppColors.primary : const Color(0xFFA89880),
+                color: isActive ? colors.primary : colors.navInactive,
               ),
               child: Text(label),
             ),

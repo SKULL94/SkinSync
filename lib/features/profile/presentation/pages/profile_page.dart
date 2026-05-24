@@ -9,6 +9,7 @@ import 'package:skin_sync/core/models/user_profile.dart';
 import 'package:skin_sync/core/repositories/user_repository.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
+import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -72,17 +73,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
+      return Scaffold(
+        backgroundColor: colors.background,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: colors.primary),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: SingleChildScrollView(
         child: Column(
           children: [

@@ -5,10 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/domain/entities/analysis_result_entity.dart';
+import 'package:skin_sync/features/skin_analysis/domain/entities/ai_analysis_entity.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
 
 class SkinAnalysisPage extends StatelessWidget {
@@ -29,11 +31,16 @@ class SkinAnalysisPage extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        if (state.status == SkinAnalysisStatus.analyzing) {
-          return _ScanningView(image: state.selectedImage);
+        if (state.status == SkinAnalysisStatus.validating ||
+            state.status == SkinAnalysisStatus.analyzingWithAI) {
+          return _ScanningView(
+            image: state.selectedImage,
+            isAIAnalyzing: state.status == SkinAnalysisStatus.analyzingWithAI,
+          );
         }
 
-        if (state.selectedImage != null && state.results.isNotEmpty) {
+        if (state.selectedImage != null &&
+            (state.results.isNotEmpty || state.aiAnalysis != null)) {
           return _ResultsView(state: state);
         }
 
@@ -918,8 +925,9 @@ class _TipItem extends StatelessWidget {
 
 class _ScanningView extends StatefulWidget {
   final File? image;
+  final bool isAIAnalyzing;
 
-  const _ScanningView({this.image});
+  const _ScanningView({this.image, this.isAIAnalyzing = false});
 
   @override
   State<_ScanningView> createState() => _ScanningViewState();
@@ -931,14 +939,21 @@ class _ScanningViewState extends State<_ScanningView>
   late AnimationController _progressController;
   int _currentStep = 0;
 
-  final _steps = [
-    'Detecting skin texture and tone',
-    'Mapping pore structure',
-    'Analysing hydration levels',
-    'Evaluating pigmentation',
-    'Running AI model',
-    'Generating your report…',
-  ];
+  List<String> get _steps => widget.isAIAnalyzing
+      ? [
+          'Connecting to AI...',
+          'Analyzing skin texture',
+          'Evaluating skin health',
+          'Detecting concerns',
+          'Generating insights',
+          'Preparing recommendations...',
+        ]
+      : [
+          'Validating image...',
+          'Detecting skin regions',
+          'Initial analysis',
+          'Preparing for AI...',
+        ];
 
   @override
   void initState() {
@@ -1121,7 +1136,7 @@ class _ScanningViewState extends State<_ScanningView>
 
                   // Title
                   Text(
-                    'Analysing',
+                    widget.isAIAnalyzing ? 'AI Analysing' : 'Validating',
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 24,
                       fontWeight: FontWeight.w400,
@@ -1241,6 +1256,27 @@ class _ResultsView extends StatelessWidget {
 
   const _ResultsView({required this.state});
 
+  int _getMetricFromAI(AIAnalysisEntity? ai, String metric, int defaultValue) {
+    if (ai == null) return defaultValue;
+    switch (metric.toLowerCase()) {
+      case 'hydration':
+        return ai.metrics.hydration;
+      case 'texture':
+        return ai.metrics.texture;
+      case 'clarity':
+        return ai.metrics.clarity;
+      case 'oiliness':
+        return ai.metrics.oiliness;
+      case 'pores':
+      case 'pore_visibility':
+        return ai.metrics.poreVisibility;
+      case 'firmness':
+        return ai.metrics.firmness;
+      default:
+        return defaultValue;
+    }
+  }
+
   int _getMetricValue(
       List<AnalysisResultEntity> results, String label, int defaultValue) {
     final result = results
@@ -1259,10 +1295,65 @@ class _ResultsView extends StatelessWidget {
     return ((totalConfidence / results.length) * 100).toInt();
   }
 
+  Color _getSeverityColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'mild':
+        return AppColors.sage;
+      case 'moderate':
+        return AppColors.amber;
+      case 'severe':
+      case 'needs_dermatologist':
+        return AppColors.rose;
+      default:
+        return AppColors.sage;
+    }
+  }
+
+  String _getHydrationDescription(int value) {
+    if (value >= 70) {
+      return 'Your skin shows excellent hydration levels. Continue with your current moisturizing routine.';
+    } else if (value >= 50) {
+      return 'Your skin has moderate hydration. Consider adding a hydrating serum or more frequent moisturizing.';
+    } else {
+      return 'Your skin appears dehydrated. Increase water intake and use hydrating products with hyaluronic acid.';
+    }
+  }
+
+  String _getTextureDescription(int value) {
+    if (value >= 70) {
+      return 'Skin texture is smooth and even. Maintain your current routine.';
+    } else if (value >= 50) {
+      return 'Skin texture is fairly smooth. Consider gentle exfoliation to improve further.';
+    } else {
+      return 'Skin texture could use improvement. Try incorporating AHAs or BHAs for gentle exfoliation.';
+    }
+  }
+
+  String _getClarityDescription(int value) {
+    if (value >= 70) {
+      return 'Excellent skin clarity with minimal blemishes. Keep up your skincare routine.';
+    } else if (value >= 50) {
+      return 'Some minor blemishes detected. A consistent cleansing routine can help improve clarity.';
+    } else {
+      return 'Notable skin concerns detected. Consider targeted treatments and consult a dermatologist if needed.';
+    }
+  }
+
+  String _getPoreDescription(int value) {
+    if (value <= 30) {
+      return 'Pores are minimally visible. Your skin texture appears refined.';
+    } else if (value <= 60) {
+      return 'Normal pore visibility. Niacinamide can help minimize pore appearance.';
+    } else {
+      return 'Enlarged pores visible. Consider pore-minimizing products and regular cleansing.';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final results = state.results;
-    final overallScore = _calculateOverallScore(results);
+    final ai = state.aiAnalysis;
+    final overallScore = ai?.overallScore ?? _calculateOverallScore(results);
 
     return Scaffold(
       backgroundColor: AppColors.ink,
@@ -1431,7 +1522,7 @@ class _ResultsView extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'May 24, 2026',
+                                    DateFormat('MMMM d, yyyy').format(DateTime.now()),
                                     style: GoogleFonts.dmSans(
                                       fontSize: 12,
                                       color: AppColors.textTertiary,
@@ -1446,6 +1537,24 @@ class _ResultsView extends StatelessWidget {
 
                         const SizedBox(height: 20),
 
+                        // Skin type and severity badges (if AI analysis available)
+                        if (ai != null) ...[
+                          Row(
+                            children: [
+                              _BadgeChip(
+                                label: ai.skinType.toUpperCase(),
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              _BadgeChip(
+                                label: ai.severity.toUpperCase(),
+                                color: _getSeverityColor(ai.severity),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
                         // Metric tags
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -1453,26 +1562,30 @@ class _ResultsView extends StatelessWidget {
                             children: [
                               _MetricTag(
                                 label: 'Hydration',
-                                value:
-                                    '${_getMetricValue(results, 'Hydration', 72)}%',
+                                value: ai != null
+                                    ? '${_getMetricFromAI(ai, 'hydration', 72)}%'
+                                    : '${_getMetricValue(results, 'Hydration', 72)}%',
                               ),
                               const SizedBox(width: 8),
                               _MetricTag(
                                 label: 'Texture',
-                                value:
-                                    '${_getMetricValue(results, 'Texture', 68)}%',
+                                value: ai != null
+                                    ? '${_getMetricFromAI(ai, 'texture', 68)}%'
+                                    : '${_getMetricValue(results, 'Texture', 68)}%',
                               ),
                               const SizedBox(width: 8),
                               _MetricTag(
                                 label: 'Clarity',
-                                value:
-                                    '${_getMetricValue(results, 'Clarity', 65)}%',
+                                value: ai != null
+                                    ? '${_getMetricFromAI(ai, 'clarity', 65)}%'
+                                    : '${_getMetricValue(results, 'Clarity', 65)}%',
                               ),
                               const SizedBox(width: 8),
                               _MetricTag(
                                 label: 'Oiliness',
-                                value:
-                                    '${_getMetricValue(results, 'Oiliness', 45)}%',
+                                value: ai != null
+                                    ? '${_getMetricFromAI(ai, 'oiliness', 45)}%'
+                                    : '${_getMetricValue(results, 'Oiliness', 45)}%',
                               ),
                             ],
                           ),
@@ -1480,28 +1593,103 @@ class _ResultsView extends StatelessWidget {
 
                         const SizedBox(height: 20),
 
+                        // AI Insight (if available)
+                        if (ai?.aiInsight != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary.withValues(alpha: 0.08),
+                                  AppColors.rose.withValues(alpha: 0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_awesome,
+                                    size: 18,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'AI Insight',
+                                        style: GoogleFonts.dmSans(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primary,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        ai!.aiInsight!,
+                                        style: GoogleFonts.dmSans(
+                                          fontSize: 13,
+                                          color: AppColors.textPrimary,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
                         // Disclaimer
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.sage.withValues(alpha: 0.08),
+                            color: (ai?.disclaimerRequired ?? false)
+                                ? AppColors.rose.withValues(alpha: 0.08)
+                                : AppColors.sage.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: AppColors.sage.withValues(alpha: 0.2),
+                              color: (ai?.disclaimerRequired ?? false)
+                                  ? AppColors.rose.withValues(alpha: 0.2)
+                                  : AppColors.sage.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Icon(
-                                Icons.info_outline,
+                                (ai?.disclaimerRequired ?? false)
+                                    ? Icons.warning_amber_outlined
+                                    : Icons.info_outline,
                                 size: 16,
-                                color: AppColors.sage,
+                                color: (ai?.disclaimerRequired ?? false)
+                                    ? AppColors.rose
+                                    : AppColors.sage,
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'AI-powered insights. Not medical advice. Consult a dermatologist for concerns.',
+                                  (ai?.disclaimerRequired ?? false)
+                                      ? 'We recommend consulting a dermatologist for professional assessment.'
+                                      : 'AI-powered insights. Not medical advice. Consult a dermatologist for concerns.',
                                   style: GoogleFonts.dmSans(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
@@ -1514,6 +1702,48 @@ class _ResultsView extends StatelessWidget {
                         ),
 
                         const SizedBox(height: 24),
+
+                        // Detected Concerns (if AI analysis available)
+                        if (ai != null && ai.detectedConcerns.isNotEmpty) ...[
+                          Text(
+                            'Detected Concerns',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: ai.detectedConcerns.map((concern) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.rose.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppColors.rose.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Text(
+                                  concern,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.rose,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
 
                         // Detailed metrics
                         Text(
@@ -1529,35 +1759,109 @@ class _ResultsView extends StatelessWidget {
 
                         _DetailedMetricCard(
                           title: 'Hydration',
-                          value: _getMetricValue(results, 'Hydration', 72),
-                          description:
-                              'Your skin shows good hydration levels. Continue with your current moisturizing routine.',
+                          value: ai != null
+                              ? _getMetricFromAI(ai, 'hydration', 72)
+                              : _getMetricValue(results, 'Hydration', 72),
+                          description: _getHydrationDescription(
+                              ai != null ? _getMetricFromAI(ai, 'hydration', 72) : 72),
                           color: AppColors.sage,
                         ),
                         const SizedBox(height: 12),
                         _DetailedMetricCard(
                           title: 'Texture',
-                          value: _getMetricValue(results, 'Texture', 68),
-                          description:
-                              'Skin texture is fairly smooth. Consider gentle exfoliation to improve further.',
+                          value: ai != null
+                              ? _getMetricFromAI(ai, 'texture', 68)
+                              : _getMetricValue(results, 'Texture', 68),
+                          description: _getTextureDescription(
+                              ai != null ? _getMetricFromAI(ai, 'texture', 68) : 68),
                           color: AppColors.primary,
                         ),
                         const SizedBox(height: 12),
                         _DetailedMetricCard(
                           title: 'Clarity',
-                          value: _getMetricValue(results, 'Clarity', 65),
-                          description:
-                              'Some minor blemishes detected. A consistent cleansing routine can help.',
+                          value: ai != null
+                              ? _getMetricFromAI(ai, 'clarity', 65)
+                              : _getMetricValue(results, 'Clarity', 65),
+                          description: _getClarityDescription(
+                              ai != null ? _getMetricFromAI(ai, 'clarity', 65) : 65),
                           color: AppColors.rose,
                         ),
                         const SizedBox(height: 12),
                         _DetailedMetricCard(
-                          title: 'Oiliness',
-                          value: _getMetricValue(results, 'Oiliness', 45),
-                          description:
-                              'Balanced oil production. Your T-zone may benefit from mattifying products.',
+                          title: 'Pore Visibility',
+                          value: ai != null
+                              ? _getMetricFromAI(ai, 'pore_visibility', 50)
+                              : 50,
+                          description: _getPoreDescription(
+                              ai != null ? _getMetricFromAI(ai, 'pore_visibility', 50) : 50),
                           color: AppColors.amber,
                         ),
+
+                        // Recommendations (if AI analysis available)
+                        if (ai != null && ai.recommendations.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          Text(
+                            'Recommendations',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ...ai.recommendations.asMap().entries.map((entry) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _RecommendationCard(
+                                index: entry.key + 1,
+                                text: entry.value,
+                              ),
+                            );
+                          }),
+                        ],
+
+                        // Ingredients to look for (if AI analysis available)
+                        if (ai != null && ai.ingredientsToLookFor.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          Text(
+                            'Ingredients to Look For',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: ai.ingredientsToLookFor.map((ingredient) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.sage.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppColors.sage.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  ingredient,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.sage,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
 
                         const SizedBox(height: 24),
 
@@ -1787,6 +2091,89 @@ class _DetailedMetricCard extends StatelessWidget {
               fontSize: 13,
               color: AppColors.textSecondary,
               height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Badge chip for skin type and severity
+class _BadgeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _BadgeChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.dmSans(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+// Recommendation card
+class _RecommendationCard extends StatelessWidget {
+  final int index;
+  final String text;
+
+  const _RecommendationCard({required this.index, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$index',
+                style: GoogleFonts.dmSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.dmSans(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
             ),
           ),
         ],

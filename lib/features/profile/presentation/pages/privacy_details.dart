@@ -57,7 +57,7 @@ class PrivacyDataPage extends StatelessWidget {
                         ),
                         ToggleRow(
                           label: 'Analytics',
-                          sub: 'Help improve Aura (anonymous)',
+                          sub: 'Help improve Skin Sync (anonymous)',
                           initialValue: false,
                         ),
                         ToggleRow(

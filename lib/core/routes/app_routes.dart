@@ -6,6 +6,12 @@ class AppRoutes {
   static const String skinAnalysisRoute = '/skin-analysis';
   static const String historyRoute = '/history';
 
+  // Quick action pages
+  static const String aiTipsRoute = '/ai-tips';
+  static const String trendsRoute = '/trends';
+  static const String routineRoute = '/routine';
+  static const String skinNewsRoute = '/skin-news';
+
   // Profile settings pages
   static const String personalDetailsRoute = '/personal-details';
   static const String scanRemindersRoute = '/scan-reminders';

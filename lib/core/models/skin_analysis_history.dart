@@ -5,12 +5,14 @@ class SkinAnalysisHistory {
   final String imageUrl;
   final List<Map<String, dynamic>> results;
   final DateTime date;
+  final Map<String, dynamic>? aiAnalysis;
 
   SkinAnalysisHistory({
     required this.id,
     required this.imageUrl,
     required this.results,
     required this.date,
+    this.aiAnalysis,
   });
 
   Map<String, dynamic> toMap() {
@@ -19,6 +21,7 @@ class SkinAnalysisHistory {
       'imageUrl': imageUrl,
       'results': _encodeResults(results),
       'date': date.toIso8601String(),
+      if (aiAnalysis != null) 'ai_analysis': jsonEncode(aiAnalysis),
     };
   }
 
@@ -28,6 +31,9 @@ class SkinAnalysisHistory {
       imageUrl: map['imageUrl'] as String,
       results: _decodeResults(map['results'] as String),
       date: DateTime.parse(map['date'] as String),
+      aiAnalysis: map['ai_analysis'] != null
+          ? _decodeAiAnalysis(map['ai_analysis'])
+          : null,
     );
   }
 
@@ -37,5 +43,14 @@ class SkinAnalysisHistory {
 
   static List<Map<String, dynamic>> _decodeResults(String results) {
     return (jsonDecode(results) as List).cast<Map<String, dynamic>>();
+  }
+
+  static Map<String, dynamic>? _decodeAiAnalysis(dynamic value) {
+    if (value == null) return null;
+    if (value is Map<String, dynamic>) return value;
+    if (value is String) {
+      return jsonDecode(value) as Map<String, dynamic>;
+    }
+    return null;
   }
 }

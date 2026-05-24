@@ -86,11 +86,20 @@ dependencies:
   # ML
   tflite_flutter: ^0.11.0
 
+  # AI - Gemini
+  google_generative_ai: ^0.4.6
+  http: ^1.2.0
+
+  # Environment Variables
+  flutter_dotenv: ^5.1.0
+
   # Utilities
   uuid: ^4.5.1
   connectivity_plus: ^6.1.4
   workmanager: ^0.6.0
   sentry_flutter: ^8.14.2
+  xml: ^6.5.0
+  url_launcher: ^6.2.5
 
   # Navigation
   go_router: ^16.3.0
@@ -133,6 +142,7 @@ flutter:
   assets:
     - assets/images/
     - assets/models/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

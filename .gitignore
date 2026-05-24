@@ -41,3 +41,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment variables - NEVER commit secrets
+.env
+*.env
+.env.local
+.env.*.local
+
+# Keep example file for reference
+!.env.example
