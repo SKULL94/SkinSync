@@ -8,9 +8,6 @@ abstract class AuthRepository {
     required String verificationId,
     required String smsCode,
   });
-  Future<Either<Failure, UserEntity>> signInWithCredential(
-    dynamic credential,
-  );
   Future<Either<Failure, void>> signOut();
   UserEntity? getCurrentUser();
 }

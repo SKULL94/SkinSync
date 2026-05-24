@@ -3,9 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:lifecycle/lifecycle.dart';
 import 'package:skin_sync/features/history/presentation/pages/history_page.dart';
 import 'package:skin_sync/features/layout/presentation/pages/layout_page.dart';
+import 'package:skin_sync/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/pages/skin_analysis_page.dart';
 import 'package:skin_sync/features/splash/presentation/pages/splash_page.dart';
 import 'package:skin_sync/features/auth/presentation/pages/auth_page.dart';
+import 'package:skin_sync/features/profile/presentation/pages/personal_details.dart';
+import 'package:skin_sync/features/profile/presentation/pages/scan_reminders.dart';
+import 'package:skin_sync/features/profile/presentation/pages/privacy_details.dart';
+import 'package:skin_sync/features/profile/presentation/pages/appearance_page.dart';
+import 'package:skin_sync/features/profile/presentation/pages/skin_type.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -23,6 +29,11 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const AuthPage(),
     ),
     GoRoute(
+      path: AppRoutes.onboardingRoute,
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingPage(),
+    ),
+    GoRoute(
       path: AppRoutes.layoutRoute,
       name: 'layout',
       builder: (context, state) => const LayoutPage(),
@@ -36,6 +47,31 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.historyRoute,
       name: 'history',
       builder: (context, state) => const HistoryPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.personalDetailsRoute,
+      name: 'personalDetails',
+      builder: (context, state) => const PersonalDetailsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.scanRemindersRoute,
+      name: 'scanReminders',
+      builder: (context, state) => const ScanRemindersPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.privacyRoute,
+      name: 'privacy',
+      builder: (context, state) => const PrivacyDataPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.appearanceRoute,
+      name: 'appearance',
+      builder: (context, state) => const AppearancePage(),
+    ),
+    GoRoute(
+      path: AppRoutes.skinTypeRoute,
+      name: 'skinType',
+      builder: (context, state) => const SkinTypeEditorPage(),
     ),
   ],
 );

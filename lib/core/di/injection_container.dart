@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:skin_sync/core/services/network_info.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
@@ -40,7 +40,7 @@ Future<void> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
   sl.registerLazySingleton(() => Connectivity());
-  sl.registerLazySingleton(() => FirebaseAuth.instance);
+  sl.registerLazySingleton(() => Supabase.instance.client);
   sl.registerLazySingleton(() => FirebaseFirestore.instance);
   sl.registerLazySingleton(() => DatabaseHelper.instance);
 
@@ -95,7 +95,7 @@ void _initAuth() {
 
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(firebaseAuth: sl()),
+    () => AuthRemoteDataSourceImpl(supabaseClient: sl()),
   );
 }
 

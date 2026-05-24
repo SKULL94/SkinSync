@@ -45,8 +45,7 @@ dependencies:
   # Dependency Injection
   get_it: ^8.0.2
 
-  # Firebase
-  firebase_auth: ^4.16.0
+  # Firebase (Storage only - Auth migrated to Supabase)
   cloud_firestore: ^4.14.0
   firebase_core: ^2.24.2
   firebase_storage: ^11.6.9
@@ -72,6 +71,7 @@ dependencies:
   lottie: ^3.3.1
   flex_color_scheme: ^8.4.0
   flutter_native_splash: ^2.4.6
+  google_fonts: ^6.2.1
 
   # Date & Time
   intl: ^0.19.0

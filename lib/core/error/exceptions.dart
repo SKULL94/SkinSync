@@ -36,16 +36,6 @@ class AuthException implements Exception {
   String toString() => 'AuthException: $message (code: $code)';
 }
 
-class FirebaseException implements Exception {
-  final String message;
-  final String? code;
-
-  const FirebaseException({this.message = 'Firebase error occurred', this.code});
-
-  @override
-  String toString() => 'FirebaseException: $message (code: $code)';
-}
-
 class ValidationException implements Exception {
   final String message;
 

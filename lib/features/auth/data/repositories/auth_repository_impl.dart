@@ -52,23 +52,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> signInWithCredential(
-    dynamic credential,
-  ) async {
-    if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure());
-    }
-    try {
-      final user = await remoteDataSource.signInWithCredential(credential);
-      return Right(user);
-    } on AuthException catch (e) {
-      return Left(AuthFailure(message: e.message));
-    } catch (e) {
-      return Left(UnknownFailure(message: e.toString()));
-    }
-  }
-
-  @override
   Future<Either<Failure, void>> signOut() async {
     try {
       await remoteDataSource.signOut();

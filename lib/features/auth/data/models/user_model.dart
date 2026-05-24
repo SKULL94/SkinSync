@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:skin_sync/features/auth/domain/entities/user_entity.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserModel extends UserEntity {
   const UserModel({
@@ -8,10 +8,11 @@ class UserModel extends UserEntity {
     super.email,
   });
 
-  factory UserModel.fromFirebaseUser(firebase_auth.User user) {
+  /// Create UserModel from Supabase User
+  factory UserModel.fromSupabaseUser(User user) {
     return UserModel(
-      uid: user.uid,
-      phoneNumber: user.phoneNumber,
+      uid: user.id,
+      phoneNumber: user.phone,
       email: user.email,
     );
   }

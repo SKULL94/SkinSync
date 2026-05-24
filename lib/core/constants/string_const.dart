@@ -17,6 +17,7 @@ class StringConst {
   static const String kPhoneNumber = 'Phone Number';
 
   // Navigation Labels
+  static const String kHome = 'Home';
   static const String kAnalyze = 'Analyze';
   static const String kHistory = 'History';
 

@@ -449,30 +449,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3+4"
-  firebase_auth:
-    dependency: "direct main"
-    description:
-      name: firebase_auth
-      sha256: cfc2d970829202eca09e2896f0a5aa7c87302817ecc0bdfa954f026046bf10ba
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.20.0"
-  firebase_auth_platform_interface:
-    dependency: transitive
-    description:
-      name: firebase_auth_platform_interface
-      sha256: a0270e1db3b2098a14cb2a2342b3cd2e7e458e0c391b1f64f6f78b14296ec093
-      url: "https://pub.dev"
-    source: hosted
-    version: "7.3.0"
-  firebase_auth_web:
-    dependency: transitive
-    description:
-      name: firebase_auth_web
-      sha256: "64e067e763c6378b7e774e872f0f59f6812885e43020e25cde08f42e9459837b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.12.0"
   firebase_core:
     dependency: "direct main"
     description:
@@ -672,6 +648,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "16.3.0"
+  google_fonts:
+    dependency: "direct main"
+    description:
+      name: google_fonts
+      sha256: ba03d03bcaa2f6cb7bd920e3b5027181db75ab524f8891c8bc3aa603885b8055
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.3"
   gotrue:
     dependency: transitive
     description:
@@ -1750,5 +1734,5 @@ packages:
     source: hosted
     version: "2.1.0"
 sdks:
-  dart: ">=3.8.0 <4.0.0"
+  dart: ">=3.9.0 <4.0.0"
   flutter: ">=3.38.0"
