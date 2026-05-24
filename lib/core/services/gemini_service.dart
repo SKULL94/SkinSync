@@ -21,13 +21,13 @@ class GeminiService {
     }
 
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash-latest',
+      model: 'gemini-2.5-flash',
       apiKey: apiKey,
       generationConfig: GenerationConfig(
         temperature: 0.4,
         topK: 32,
         topP: 1,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 4096,
       ),
     );
     _isInitialized = true;

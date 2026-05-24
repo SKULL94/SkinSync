@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/config/api_config.dart';
+import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/services/gemini_service.dart';
 import 'package:skin_sync/core/services/weather_service.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
@@ -20,6 +21,7 @@ class _AITipsPageState extends State<AITipsPage> {
   bool _isCancelled = false; // For API cancellation
   WeatherData? _weather;
   List<_TipSection> _sections = [];
+  int _scanCount = 0;
 
   // User data
   String _skinType = 'combination';
@@ -47,10 +49,14 @@ class _AITipsPageState extends State<AITipsPage> {
 
     // Get user data from history
     final historyState = context.read<HistoryBloc>().state;
+    _scanCount = historyState.histories.length;
+
+    // Get user skin data if available
     if (historyState.histories.isNotEmpty) {
       final latest = historyState.histories.first;
       if (latest.aiAnalysis != null) {
-        _lastScore = (latest.aiAnalysis!['overall_score'] as num?)?.toInt() ?? 70;
+        _lastScore =
+            (latest.aiAnalysis!['overall_score'] as num?)?.toInt() ?? 70;
         _skinType = latest.aiAnalysis!['skin_type'] as String? ?? 'combination';
         final concerns = latest.aiAnalysis!['detected_concerns'];
         if (concerns is List) {
@@ -62,14 +68,16 @@ class _AITipsPageState extends State<AITipsPage> {
     // Check if cancelled before weather fetch
     if (_isCancelled || !mounted) return;
 
-    // Fetch weather (default city - can be made dynamic)
+    // Always fetch weather
     _weather = await WeatherService.getWeatherByCity('Mumbai');
 
     // Check if cancelled before generating tips
     if (_isCancelled || !mounted) return;
 
-    // Generate tips
-    await _generateAllTips();
+    // Only generate AI tips if user has at least 3 scans
+    if (_scanCount >= 3) {
+      await _generateAllTips();
+    }
 
     if (mounted) setState(() => _isLoading = false);
   }
@@ -117,7 +125,9 @@ class _AITipsPageState extends State<AITipsPage> {
         if (_isCancelled || !mounted) return;
 
         final errorMsg = e.toString().toLowerCase();
-        if (errorMsg.contains('quota') || errorMsg.contains('rate') || errorMsg.contains('exceeded')) {
+        if (errorMsg.contains('quota') ||
+            errorMsg.contains('rate') ||
+            errorMsg.contains('exceeded')) {
           _sections.insert(
             0,
             _TipSection(
@@ -125,7 +135,11 @@ class _AITipsPageState extends State<AITipsPage> {
               subtitle: 'API quota exceeded - resets daily',
               icon: Icons.info_outline,
               color: AppColors.rose,
-              tips: ['Your Gemini API free tier limit has been reached.', 'Tips will be available when quota resets.', 'Check console.cloud.google.com for usage details.'],
+              tips: [
+                'Your Gemini API free tier limit has been reached.',
+                'Tips will be available when quota resets.',
+                'Check console.cloud.google.com for usage details.'
+              ],
             ),
           );
         }
@@ -252,18 +266,129 @@ class _AITipsPageState extends State<AITipsPage> {
           SliverToBoxAdapter(child: _buildHeader()),
 
           // Weather card (if available)
-          if (_weather != null)
-            SliverToBoxAdapter(child: _buildWeatherCard()),
+          if (_weather != null) SliverToBoxAdapter(child: _buildWeatherCard()),
 
-          // Tip sections
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _TipSectionCard(section: _sections[index]),
-              childCount: _sections.length,
+          // Show message if not enough scans
+          if (_scanCount < 3)
+            SliverToBoxAdapter(child: _buildScanRequiredCard()),
+
+          // Tip sections (only shown if enough scans)
+          if (_scanCount >= 3)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _TipSectionCard(section: _sections[index]),
+                childCount: _sections.length,
+              ),
             ),
-          ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScanRequiredCard() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.face_retouching_natural,
+              size: 32,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Personalized Tips Locked',
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Complete 3 skin AI scans to unlock personalized skincare tips based on your skin type and concerns.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Progress indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (index) {
+              final isCompleted = index < _scanCount;
+              return Container(
+                width: 32,
+                height: 32,
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? AppColors.sage
+                      : AppColors.cardBorder.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  isCompleted ? Icons.check : Icons.camera_alt_outlined,
+                  size: 16,
+                  color: isCompleted ? Colors.white : AppColors.textTertiary,
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$_scanCount of 3 scans completed',
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => context.push(AppRoutes.skinAnalysisRoute),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Start Skin Scan',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -371,7 +496,8 @@ class _AITipsPageState extends State<AITipsPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.white70, size: 14),
+                      const Icon(Icons.location_on,
+                          color: Colors.white70, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         weather.cityName,
@@ -418,7 +544,8 @@ class _AITipsPageState extends State<AITipsPage> {
             children: [
               // Humidity Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
@@ -426,7 +553,8 @@ class _AITipsPageState extends State<AITipsPage> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.water_drop, size: 14, color: Colors.white70),
+                    const Icon(Icons.water_drop,
+                        size: 14, color: Colors.white70),
                     const SizedBox(width: 6),
                     Text(
                       '${weather.humidity}%',
@@ -442,7 +570,8 @@ class _AITipsPageState extends State<AITipsPage> {
               const SizedBox(width: 8),
               // Skin Risk Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
@@ -451,9 +580,13 @@ class _AITipsPageState extends State<AITipsPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      weather.skinRiskScore > 65 ? Icons.warning_amber : Icons.shield,
+                      weather.skinRiskScore > 65
+                          ? Icons.warning_amber
+                          : Icons.shield,
                       size: 14,
-                      color: weather.skinRiskScore > 65 ? Colors.amber : Colors.white70,
+                      color: weather.skinRiskScore > 65
+                          ? Colors.amber
+                          : Colors.white70,
                     ),
                     const SizedBox(width: 6),
                     Text(

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/config/api_config.dart';
+import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/services/gemini_service.dart';
 import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
@@ -172,6 +173,27 @@ class _RoutinePageState extends State<RoutinePage> {
       return;
     }
 
+    // Check minimum scans requirement
+    final historyState = context.read<HistoryBloc>().state;
+    if (historyState.histories.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please complete at least 3 skin scans first (${historyState.histories.length}/3)',
+          ),
+          backgroundColor: AppColors.rose,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'Scan Now',
+            textColor: Colors.white,
+            onPressed: () => context.push(AppRoutes.skinAnalysisRoute),
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isGeneratingAI = true;
       _isCancelled = false;
@@ -181,19 +203,16 @@ class _RoutinePageState extends State<RoutinePage> {
       // Check if cancelled before starting
       if (_isCancelled || !mounted) return;
 
-      // Get user's skin data
+      // Get user's skin data from latest scan
       String skinType = 'combination';
       List<String> concerns = [];
 
-      final historyState = context.read<HistoryBloc>().state;
-      if (historyState.histories.isNotEmpty) {
-        final latest = historyState.histories.first;
-        if (latest.aiAnalysis != null) {
-          skinType = latest.aiAnalysis!['skin_type'] as String? ?? 'combination';
-          final detectedConcerns = latest.aiAnalysis!['detected_concerns'];
-          if (detectedConcerns is List) {
-            concerns = detectedConcerns.map((e) => e.toString()).toList();
-          }
+      final latest = historyState.histories.first;
+      if (latest.aiAnalysis != null) {
+        skinType = latest.aiAnalysis!['skin_type'] as String? ?? 'combination';
+        final detectedConcerns = latest.aiAnalysis!['detected_concerns'];
+        if (detectedConcerns is List) {
+          concerns = detectedConcerns.map((e) => e.toString()).toList();
         }
       }
 
@@ -220,12 +239,21 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
       // Check if cancelled after API call
       if (_isCancelled || !mounted) return;
 
-      // Parse response
+      // Parse response - handle various formats from Gemini
       String jsonStr = response.trim();
-      if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replaceAll(RegExp(r'^```json?\n?'), '').replaceAll(RegExp(r'\n?```$'), '');
+
+      // Remove markdown code blocks
+      jsonStr = jsonStr.replaceAll(RegExp(r'```json\s*'), '');
+      jsonStr = jsonStr.replaceAll(RegExp(r'```\s*'), '');
+      jsonStr = jsonStr.trim();
+
+      // Extract JSON object if there's extra text
+      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(jsonStr);
+      if (jsonMatch != null) {
+        jsonStr = jsonMatch.group(0)!;
       }
 
+      debugPrint('Parsed JSON: $jsonStr');
       final Map<String, dynamic> routines = jsonDecode(jsonStr);
 
       final prefs = await SharedPreferences.getInstance();
@@ -267,8 +295,28 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
       await prefs.setBool('use_ai_routine', true);
       _loadChecks();
 
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                const Text('AI Routine created successfully!'),
+              ],
+            ),
+            backgroundColor: AppColors.sage,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
     } catch (e) {
       if (!mounted) return;
+
+      debugPrint('AI Routine Error: $e'); // Log actual error
 
       final errorMsg = e.toString().toLowerCase();
       String message = 'Failed to generate routine';
@@ -277,10 +325,12 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
         message = 'API quota exceeded. Please try again later.';
       } else if (errorMsg.contains('cancelled')) {
         return; // User cancelled, no need to show error
+      } else {
+        message = 'Failed: ${e.toString().substring(0, e.toString().length > 100 ? 100 : e.toString().length)}';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(content: Text(message), duration: const Duration(seconds: 5)),
       );
     } finally {
       if (mounted) setState(() => _isGeneratingAI = false);
@@ -789,14 +839,25 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            step.tip ?? step.duration,
+                            step.duration,
                             style: GoogleFonts.dmSans(
                               fontSize: 11,
                               color: AppColors.textTertiary,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
+                          if (step.tip != null && step.tip!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              step.tip!,
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                                color: AppColors.sage,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
                       ),
                     ),
