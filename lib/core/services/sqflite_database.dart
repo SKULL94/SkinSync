@@ -20,9 +20,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2, // Incremented version for schema update
+      version: 3, // Incremented version for ai_analysis column
       onCreate: _createDB,
-      onUpgrade: _upgradeDB, // Added for schema migrations
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -35,22 +35,27 @@ CREATE TABLE analysis_history (
   results TEXT NOT NULL,
   date TEXT NOT NULL,
   is_synced INTEGER DEFAULT 0,
-  local_image_path TEXT
+  local_image_path TEXT,
+  ai_analysis TEXT
 )''');
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
+    if (oldVersion < 2) {
       await db.execute(
           'ALTER TABLE analysis_history ADD COLUMN is_synced INTEGER DEFAULT 0');
       await db.execute(
           'ALTER TABLE analysis_history ADD COLUMN local_image_path TEXT');
     }
+    if (oldVersion < 3) {
+      await db.execute(
+          'ALTER TABLE analysis_history ADD COLUMN ai_analysis TEXT');
+    }
   }
 
   Future<int> insertAnalysis(SkinAnalysisHistory history) async {
     final db = await instance.database;
-    return await db.insert('analysis_history', history.toMap());
+    return await db.insert('analysis_history', history.toLocalMap());
   }
 
   Future<List<SkinAnalysisHistory>> getAllAnalyses() async {

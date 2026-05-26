@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/services/news_service.dart';
 import 'package:skin_sync/core/theme/theme_extension.dart';
+import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 
 class SkinNewsPage extends StatefulWidget {
   const SkinNewsPage({super.key});
@@ -148,7 +149,7 @@ class _SkinNewsPageState extends State<SkinNewsPage> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(0)),
             child: Container(
               width: 40,
               height: 40,
@@ -578,8 +579,8 @@ class _SkinNewsPageState extends State<SkinNewsPage> {
       width: width,
       height: height,
       fit: BoxFit.cover,
-      memCacheWidth: width != null ? (width * 2).toInt() : null,
-      memCacheHeight: height != null ? (height * 2).toInt() : null,
+      memCacheWidth: width != null && width.isFinite ? (width * 2).toInt() : null,
+      memCacheHeight: height != null && height.isFinite ? (height * 2).toInt() : null,
       placeholder: (context, url) => Container(
         width: width,
         height: height,

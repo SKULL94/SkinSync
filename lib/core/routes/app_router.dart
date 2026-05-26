@@ -6,6 +6,7 @@ import 'package:skin_sync/features/layout/presentation/pages/layout_page.dart';
 import 'package:skin_sync/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/pages/skin_analysis_page.dart';
 import 'package:skin_sync/features/splash/presentation/pages/splash_page.dart';
+import 'package:skin_sync/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:skin_sync/features/auth/presentation/pages/auth_page.dart';
 import 'package:skin_sync/features/profile/presentation/pages/personal_details.dart';
 import 'package:skin_sync/features/profile/presentation/pages/scan_reminders.dart';
@@ -26,6 +27,11 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.splashScreen,
       name: 'splash',
       builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.welcomeRoute,
+      name: 'welcome',
+      builder: (context, state) => const WelcomePage(),
     ),
     GoRoute(
       path: AppRoutes.authRoute,

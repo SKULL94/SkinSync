@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
-import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
@@ -12,16 +12,15 @@ import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_event.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_state.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
+import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<DashboardBloc>()..add(const LoadDashboard()),
-      child: const _HomePageContent(),
-    );
+    // DashboardBloc is provided by LayoutPage
+    return const _HomePageContent();
   }
 }
 
@@ -104,8 +103,12 @@ class _HomePageContent extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return BlocBuilder<DashboardBloc, DashboardState>(
-      buildWhen: (prev, curr) => prev.dashboard?.userName != curr.dashboard?.userName,
+      buildWhen: (prev, curr) =>
+          prev.dashboard?.userName != curr.dashboard?.userName ||
+          prev.status != curr.status,
       builder: (context, state) {
+        final isLoading = state.status == DashboardStatus.initial ||
+            state.status == DashboardStatus.loading;
         final userName = state.dashboard?.userName ?? 'there';
         final avatarInitial = userName.isNotEmpty && userName != 'there'
             ? userName[0].toUpperCase()
@@ -127,46 +130,73 @@ class _HomePageContent extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  userName,
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w400,
-                    fontStyle: FontStyle.normal,
-                    color: AppColors.textPrimary,
-                    height: 1,
+                if (isLoading)
+                  Shimmer.fromColors(
+                    baseColor: AppColors.cardBorder,
+                    highlightColor: AppColors.background,
+                    child: Container(
+                      width: 100,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBorder,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    userName,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w400,
+                      fontStyle: FontStyle.normal,
+                      color: AppColors.textPrimary,
+                      height: 1,
+                    ),
                   ),
-                ),
               ],
             ),
             GestureDetector(
-              onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(2)),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFF0D4C2),
-                      Color(0xFFEDD8D8),
-                    ],
-                  ),
-                  border: Border.all(color: AppColors.cardBorder, width: 2),
-                ),
-                child: Center(
-                  child: Text(
-                    avatarInitial,
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
+              onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(3)),
+              child: isLoading
+                  ? Shimmer.fromColors(
+                      baseColor: AppColors.cardBorder,
+                      highlightColor: AppColors.background,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.cardBorder,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFF0D4C2),
+                            Color(0xFFEDD8D8),
+                          ],
+                        ),
+                        border: Border.all(color: AppColors.cardBorder, width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          avatarInitial,
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
             ),
           ],
         );
@@ -192,7 +222,11 @@ class _HomePageContent extends StatelessWidget {
             'Instant AI-powered analysis with\npersonalised recommendations';
 
         return GestureDetector(
-          onTap: () => context.push(AppRoutes.skinAnalysisRoute),
+          onTap: () {
+            // Reset bloc to start fresh scan
+            context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
+            context.push(AppRoutes.skinAnalysisRoute);
+          },
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -500,7 +534,11 @@ class _HomePageContent extends StatelessWidget {
                 iconBg: const Color(0xFFF0D4C2),
                 label: 'New Scan',
                 sub: 'Analyse now',
-                onTap: () => context.push(AppRoutes.skinAnalysisRoute),
+                onTap: () {
+                  // Reset bloc to start fresh scan
+                  context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
+                  context.push(AppRoutes.skinAnalysisRoute);
+                },
               ),
             ),
             const SizedBox(width: 11),
@@ -660,13 +698,21 @@ class _HomePageContent extends StatelessWidget {
 
   int _calculateOverallScore(HistoryEntity analysis) {
     try {
-      if (analysis.results.isNotEmpty) {
-        final topConfidence =
-            (analysis.results.first['confidence'] as num?)?.toDouble() ?? 0.5;
-        return (50 + (topConfidence * 50)).toInt().clamp(0, 100);
+      // Only use AI analysis score - no fallback
+      if (analysis.aiAnalysis != null) {
+        final aiScore = analysis.aiAnalysis!['overall_score'];
+        if (aiScore != null) {
+          return (aiScore as num).toInt().clamp(0, 100);
+        }
+        debugPrint('ERROR: aiAnalysis exists but overall_score is null');
+      } else {
+        debugPrint('ERROR: aiAnalysis is NULL - cannot calculate score');
       }
-    } catch (_) {}
-    return 55;
+    } catch (e) {
+      debugPrint('Error calculating score: $e');
+    }
+    // Return 0 to indicate missing data
+    return 0;
   }
 }
 
@@ -677,8 +723,84 @@ class _ScoreStripCard extends StatelessWidget {
 
   const _ScoreStripCard({required this.score, required this.lastDate});
 
+  String _formatDateIST(DateTime date) {
+    // Convert to IST (UTC+5:30)
+    final ist = date.toUtc().add(const Duration(hours: 5, minutes: 30));
+    final now = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+    final diff = now.difference(ist);
+
+    if (diff.inMinutes < 1) {
+      return 'Just now';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h ago';
+    } else if (diff.inDays == 1) {
+      return 'Yesterday';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays}d ago';
+    } else {
+      // Format as "12 May, 3:45 PM"
+      final day = ist.day;
+      final month = _monthName(ist.month);
+      final hour = ist.hour > 12 ? ist.hour - 12 : (ist.hour == 0 ? 12 : ist.hour);
+      final minute = ist.minute.toString().padLeft(2, '0');
+      final ampm = ist.hour >= 12 ? 'PM' : 'AM';
+      return '$day $month, $hour:$minute $ampm';
+    }
+  }
+
+  String _monthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
+  }
+
+  // Get badge info based on score
+  ({String label, Color color, Color bgColor, IconData icon}) _getBadgeInfo() {
+    if (score == 0) {
+      // Missing AI analysis data
+      return (
+        label: 'No Data',
+        color: AppColors.textTertiary,
+        bgColor: AppColors.cardBorder.withValues(alpha: 0.3),
+        icon: Icons.help_outline_rounded,
+      );
+    } else if (score >= 80) {
+      return (
+        label: 'Excellent',
+        color: const Color(0xFF2E7D32),
+        bgColor: const Color(0xFFE8F5E9),
+        icon: Icons.sentiment_very_satisfied_rounded,
+      );
+    } else if (score >= 60) {
+      return (
+        label: 'Good',
+        color: AppColors.sage,
+        bgColor: AppColors.sage.withValues(alpha: 0.12),
+        icon: Icons.sentiment_satisfied_rounded,
+      );
+    } else if (score >= 40) {
+      return (
+        label: 'Fair',
+        color: AppColors.amber,
+        bgColor: AppColors.amber.withValues(alpha: 0.12),
+        icon: Icons.sentiment_neutral_rounded,
+      );
+    } else {
+      return (
+        label: 'Needs Care',
+        color: AppColors.rose,
+        bgColor: AppColors.rose.withValues(alpha: 0.12),
+        icon: Icons.sentiment_dissatisfied_rounded,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final badge = _getBadgeInfo();
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -702,26 +824,40 @@ class _ScoreStripCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  '$score',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimary,
-                    height: 1,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '$score',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textPrimary,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      '/100',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.arrow_upward, size: 12, color: AppColors.sage),
-                    const SizedBox(width: 3),
+                    Icon(Icons.access_time, size: 12, color: AppColors.textTertiary),
+                    const SizedBox(width: 4),
                     Text(
-                      '10 pts from last scan',
+                      _formatDateIST(lastDate),
                       style: GoogleFonts.dmSans(
                         fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.sage,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ],
@@ -729,15 +865,35 @@ class _ScoreStripCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(
-            width: 68,
-            height: 68,
-            child: CustomPaint(
-              painter: _ScoreRingPainter(
-                progress: score / 100,
-                color: AppColors.amber,
-                trackColor: AppColors.cardBorder,
+          // Skin Health Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: badge.bgColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: badge.color.withValues(alpha: 0.2),
+                width: 1,
               ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  badge.icon,
+                  size: 28,
+                  color: badge.color,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  badge.label,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: badge.color,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -29,29 +29,73 @@ class _RoutinePageState extends State<RoutinePage> {
   String _todayKey = '';
 
   // Default routines
-  List<_RoutineStep> _defaultMorningSteps = [
-    _RoutineStep(id: 'cleanser', name: 'Cleanser', icon: Icons.water_drop_outlined, duration: '60 sec'),
-    _RoutineStep(id: 'toner', name: 'Toner', icon: Icons.opacity, duration: '30 sec'),
-    _RoutineStep(id: 'serum', name: 'Serum', icon: Icons.science_outlined, duration: '60 sec'),
-    _RoutineStep(id: 'moisturizer', name: 'Moisturizer', icon: Icons.spa_outlined, duration: '30 sec'),
-    _RoutineStep(id: 'sunscreen', name: 'Sunscreen', icon: Icons.wb_sunny_outlined, duration: '60 sec'),
+  final List<_RoutineStep> _defaultMorningSteps = [
+    const _RoutineStep(
+        id: 'cleanser',
+        name: 'Cleanser',
+        icon: Icons.water_drop_outlined,
+        duration: '60 sec'),
+    const _RoutineStep(
+        id: 'toner', name: 'Toner', icon: Icons.opacity, duration: '30 sec'),
+    const _RoutineStep(
+        id: 'serum',
+        name: 'Serum',
+        icon: Icons.science_outlined,
+        duration: '60 sec'),
+    const _RoutineStep(
+        id: 'moisturizer',
+        name: 'Moisturizer',
+        icon: Icons.spa_outlined,
+        duration: '30 sec'),
+    const _RoutineStep(
+        id: 'sunscreen',
+        name: 'Sunscreen',
+        icon: Icons.wb_sunny_outlined,
+        duration: '60 sec'),
   ];
 
-  List<_RoutineStep> _defaultNightSteps = [
-    _RoutineStep(id: 'makeup_remover', name: 'Makeup Remover', icon: Icons.face_retouching_off, duration: '60 sec'),
-    _RoutineStep(id: 'cleanser_n', name: 'Cleanser', icon: Icons.water_drop_outlined, duration: '60 sec'),
-    _RoutineStep(id: 'toner_n', name: 'Toner', icon: Icons.opacity, duration: '30 sec'),
-    _RoutineStep(id: 'treatment', name: 'Treatment/Serum', icon: Icons.science_outlined, duration: '60 sec'),
-    _RoutineStep(id: 'eye_cream', name: 'Eye Cream', icon: Icons.remove_red_eye_outlined, duration: '30 sec'),
-    _RoutineStep(id: 'moisturizer_n', name: 'Night Moisturizer', icon: Icons.nightlight_outlined, duration: '30 sec'),
+  final List<_RoutineStep> _defaultNightSteps = [
+    const _RoutineStep(
+        id: 'makeup_remover',
+        name: 'Makeup Remover',
+        icon: Icons.face_retouching_off,
+        duration: '60 sec'),
+    const _RoutineStep(
+        id: 'cleanser_n',
+        name: 'Cleanser',
+        icon: Icons.water_drop_outlined,
+        duration: '60 sec'),
+    const _RoutineStep(
+        id: 'toner_n', name: 'Toner', icon: Icons.opacity, duration: '30 sec'),
+    const _RoutineStep(
+        id: 'treatment',
+        name: 'Treatment/Serum',
+        icon: Icons.science_outlined,
+        duration: '60 sec'),
+    const _RoutineStep(
+        id: 'eye_cream',
+        name: 'Eye Cream',
+        icon: Icons.remove_red_eye_outlined,
+        duration: '30 sec'),
+    const _RoutineStep(
+        id: 'moisturizer_n',
+        name: 'Night Moisturizer',
+        icon: Icons.nightlight_outlined,
+        duration: '30 sec'),
   ];
 
   // AI-generated routines
   List<_RoutineStep> _aiMorningSteps = [];
   List<_RoutineStep> _aiNightSteps = [];
 
-  List<_RoutineStep> get _morningSteps => _useAIRoutine && _aiMorningSteps.isNotEmpty ? _aiMorningSteps : _defaultMorningSteps;
-  List<_RoutineStep> get _nightSteps => _useAIRoutine && _aiNightSteps.isNotEmpty ? _aiNightSteps : _defaultNightSteps;
+  List<_RoutineStep> get _morningSteps =>
+      _useAIRoutine && _aiMorningSteps.isNotEmpty
+          ? _aiMorningSteps
+          : _defaultMorningSteps;
+  List<_RoutineStep> get _nightSteps =>
+      _useAIRoutine && _aiNightSteps.isNotEmpty
+          ? _aiNightSteps
+          : _defaultNightSteps;
 
   @override
   void initState() {
@@ -94,13 +138,16 @@ class _RoutinePageState extends State<RoutinePage> {
   List<_RoutineStep> _parseRoutineJson(String json) {
     try {
       final List<dynamic> list = jsonDecode(json);
-      return list.map((item) => _RoutineStep(
-        id: item['id'] ?? item['name'].toString().toLowerCase().replaceAll(' ', '_'),
-        name: item['name'] ?? '',
-        icon: _getIconForStep(item['name'] ?? ''),
-        duration: item['duration'] ?? '60 sec',
-        tip: item['tip'],
-      )).toList();
+      return list
+          .map((item) => _RoutineStep(
+                id: item['id'] ??
+                    item['name'].toString().toLowerCase().replaceAll(' ', '_'),
+                name: item['name'] ?? '',
+                icon: _getIconForStep(item['name'] ?? ''),
+                duration: item['duration'] ?? '60 sec',
+                tip: item['tip'],
+              ))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -110,15 +157,19 @@ class _RoutinePageState extends State<RoutinePage> {
     final lower = name.toLowerCase();
     if (lower.contains('cleans')) return Icons.water_drop_outlined;
     if (lower.contains('tone')) return Icons.opacity;
-    if (lower.contains('serum') || lower.contains('treatment')) return Icons.science_outlined;
+    if (lower.contains('serum') || lower.contains('treatment'))
+      return Icons.science_outlined;
     if (lower.contains('moistur')) return Icons.spa_outlined;
-    if (lower.contains('sun') || lower.contains('spf')) return Icons.wb_sunny_outlined;
+    if (lower.contains('sun') || lower.contains('spf'))
+      return Icons.wb_sunny_outlined;
     if (lower.contains('eye')) return Icons.remove_red_eye_outlined;
-    if (lower.contains('night') || lower.contains('sleep')) return Icons.nightlight_outlined;
+    if (lower.contains('night') || lower.contains('sleep'))
+      return Icons.nightlight_outlined;
     if (lower.contains('mask')) return Icons.face_outlined;
     if (lower.contains('oil')) return Icons.water_outlined;
     if (lower.contains('exfol')) return Icons.grain;
-    if (lower.contains('makeup') || lower.contains('remov')) return Icons.face_retouching_off;
+    if (lower.contains('makeup') || lower.contains('remov'))
+      return Icons.face_retouching_off;
     return Icons.check_circle_outline;
   }
 
@@ -128,10 +179,14 @@ class _RoutinePageState extends State<RoutinePage> {
 
     setState(() {
       for (final step in _morningSteps) {
-        _morningChecks[step.id] = prefs.getBool('routine_${prefix}${_todayKey}_morning_${step.id}') ?? false;
+        _morningChecks[step.id] =
+            prefs.getBool('routine_${prefix}${_todayKey}_morning_${step.id}') ??
+                false;
       }
       for (final step in _nightSteps) {
-        _nightChecks[step.id] = prefs.getBool('routine_${prefix}${_todayKey}_night_${step.id}') ?? false;
+        _nightChecks[step.id] =
+            prefs.getBool('routine_${prefix}${_todayKey}_night_${step.id}') ??
+                false;
       }
     });
   }
@@ -139,7 +194,8 @@ class _RoutinePageState extends State<RoutinePage> {
   Future<void> _toggleCheck(String id, bool isMorning) async {
     final prefs = await SharedPreferences.getInstance();
     final prefix = _useAIRoutine ? 'ai_' : '';
-    final key = 'routine_${prefix}${_todayKey}_${isMorning ? 'morning' : 'night'}_$id';
+    final key =
+        'routine_${prefix}${_todayKey}_${isMorning ? 'morning' : 'night'}_$id';
 
     setState(() {
       if (isMorning) {
@@ -168,7 +224,8 @@ class _RoutinePageState extends State<RoutinePage> {
   Future<void> _generateAIRoutine() async {
     if (!ApiConfig.isGeminiConfigured) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AI not configured. Please add Gemini API key.')),
+        const SnackBar(
+            content: Text('AI not configured. Please add Gemini API key.')),
       );
       return;
     }
@@ -259,7 +316,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
       final prefs = await SharedPreferences.getInstance();
 
       if (routines['morning'] != null) {
-        _aiMorningSteps = (routines['morning'] as List).asMap().entries.map((entry) {
+        _aiMorningSteps =
+            (routines['morning'] as List).asMap().entries.map((entry) {
           final item = entry.value;
           return _RoutineStep(
             id: 'ai_m_${entry.key}',
@@ -269,11 +327,13 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
             tip: item['tip'],
           );
         }).toList();
-        await prefs.setString('ai_morning_routine', jsonEncode(routines['morning']));
+        await prefs.setString(
+            'ai_morning_routine', jsonEncode(routines['morning']));
       }
 
       if (routines['night'] != null) {
-        _aiNightSteps = (routines['night'] as List).asMap().entries.map((entry) {
+        _aiNightSteps =
+            (routines['night'] as List).asMap().entries.map((entry) {
           final item = entry.value;
           return _RoutineStep(
             id: 'ai_n_${entry.key}',
@@ -283,7 +343,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
             tip: item['tip'],
           );
         }).toList();
-        await prefs.setString('ai_night_routine', jsonEncode(routines['night']));
+        await prefs.setString(
+            'ai_night_routine', jsonEncode(routines['night']));
       }
 
       setState(() {
@@ -298,21 +359,20 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                const SizedBox(width: 10),
-                const Text('AI Routine created successfully!'),
+                Icon(Icons.check_circle, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text('AI Routine created successfully!'),
               ],
             ),
             backgroundColor: AppColors.sage,
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
       }
-
     } catch (e) {
       if (!mounted) return;
 
@@ -321,12 +381,15 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
       final errorMsg = e.toString().toLowerCase();
       String message = 'Failed to generate routine';
 
-      if (errorMsg.contains('quota') || errorMsg.contains('rate') || errorMsg.contains('exceeded')) {
+      if (errorMsg.contains('quota') ||
+          errorMsg.contains('rate') ||
+          errorMsg.contains('exceeded')) {
         message = 'API quota exceeded. Please try again later.';
       } else if (errorMsg.contains('cancelled')) {
         return; // User cancelled, no need to show error
       } else {
-        message = 'Failed: ${e.toString().substring(0, e.toString().length > 100 ? 100 : e.toString().length)}';
+        message =
+            'Failed: ${e.toString().substring(0, e.toString().length > 100 ? 100 : e.toString().length)}';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -397,7 +460,9 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat('EEEE, MMM d').format(DateTime.now()).toUpperCase(),
+                  DateFormat('EEEE, MMM d')
+                      .format(DateTime.now())
+                      .toUpperCase(),
                   style: GoogleFonts.dmSans(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
@@ -433,10 +498,14 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: !_useAIRoutine ? AppColors.primary.withValues(alpha: 0.1) : Colors.white,
+                  color: !_useAIRoutine
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: !_useAIRoutine ? AppColors.primary : AppColors.cardBorder,
+                    color: !_useAIRoutine
+                        ? AppColors.primary
+                        : AppColors.cardBorder,
                     width: !_useAIRoutine ? 1.5 : 1,
                   ),
                 ),
@@ -446,7 +515,9 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                     Icon(
                       Icons.list_alt,
                       size: 18,
-                      color: !_useAIRoutine ? AppColors.primary : AppColors.textSecondary,
+                      color: !_useAIRoutine
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -454,7 +525,9 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: !_useAIRoutine ? AppColors.primary : AppColors.textSecondary,
+                        color: !_useAIRoutine
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -473,13 +546,18 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                 decoration: BoxDecoration(
                   gradient: _useAIRoutine
                       ? LinearGradient(
-                          colors: [AppColors.primary.withValues(alpha: 0.15), AppColors.rose.withValues(alpha: 0.15)],
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.15),
+                            AppColors.rose.withValues(alpha: 0.15)
+                          ],
                         )
                       : null,
                   color: _useAIRoutine ? null : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _useAIRoutine ? AppColors.primary : AppColors.cardBorder,
+                    color: _useAIRoutine
+                        ? AppColors.primary
+                        : AppColors.cardBorder,
                     width: _useAIRoutine ? 1.5 : 1,
                   ),
                 ),
@@ -487,12 +565,13 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(
+                          const SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.primary),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -512,7 +591,9 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                           Icon(
                             Icons.auto_awesome,
                             size: 18,
-                            color: _useAIRoutine ? AppColors.primary : AppColors.textSecondary,
+                            color: _useAIRoutine
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -520,7 +601,9 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                             style: GoogleFonts.dmSans(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: _useAIRoutine ? AppColors.primary : AppColors.textSecondary,
+                              color: _useAIRoutine
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -541,14 +624,16 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                   border: Border.all(color: AppColors.cardBorder),
                 ),
                 child: _isGeneratingAI
-                    ? Padding(
-                        padding: const EdgeInsets.all(10),
+                    ? const Padding(
+                        padding: EdgeInsets.all(10),
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(AppColors.primary),
                         ),
                       )
-                    : Icon(Icons.refresh, size: 18, color: AppColors.textSecondary),
+                    : const Icon(Icons.refresh,
+                        size: 18, color: AppColors.textSecondary),
               ),
             ),
           ],
@@ -584,7 +669,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                       Icon(
                         Icons.wb_sunny_outlined,
                         size: 16,
-                        color: _isMorning ? Colors.white : AppColors.textSecondary,
+                        color:
+                            _isMorning ? Colors.white : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -592,12 +678,15 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                         style: GoogleFonts.dmSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: _isMorning ? Colors.white : AppColors.textSecondary,
+                          color: _isMorning
+                              ? Colors.white
+                              : AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: _isMorning
                               ? Colors.white.withValues(alpha: 0.2)
@@ -609,7 +698,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                           style: GoogleFonts.dmSans(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: _isMorning ? Colors.white : AppColors.primary,
+                            color:
+                                _isMorning ? Colors.white : AppColors.primary,
                           ),
                         ),
                       ),
@@ -633,7 +723,9 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                       Icon(
                         Icons.nightlight_outlined,
                         size: 16,
-                        color: !_isMorning ? Colors.white : AppColors.textSecondary,
+                        color: !_isMorning
+                            ? Colors.white
+                            : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -641,12 +733,15 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                         style: GoogleFonts.dmSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: !_isMorning ? Colors.white : AppColors.textSecondary,
+                          color: !_isMorning
+                              ? Colors.white
+                              : AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: !_isMorning
                               ? Colors.white.withValues(alpha: 0.2)
@@ -687,8 +782,14 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: _isMorning
-                  ? [AppColors.primary, AppColors.primaryLight]  // Terracotta gradient
-                  : [const Color(0xFF5A6B8C), const Color(0xFF7A8BA8)],  // Soft slate blue
+                  ? [
+                      AppColors.primary,
+                      AppColors.primaryLight
+                    ] // Terracotta gradient
+                  : [
+                      const Color(0xFF5A6B8C),
+                      const Color(0xFF7A8BA8)
+                    ], // Soft slate blue
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -706,7 +807,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                       value: progress / 100,
                       strokeWidth: 5,
                       backgroundColor: Colors.white.withValues(alpha: 0.3),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                     Text(
                       '$progress%',
@@ -741,7 +843,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                         if (_useAIRoutine) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
@@ -749,7 +852,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                                const Icon(Icons.auto_awesome,
+                                    size: 10, color: Colors.white),
                                 const SizedBox(width: 3),
                                 Text(
                                   'AI',
@@ -820,7 +924,9 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                       child: Icon(
                         step.icon,
                         size: 20,
-                        color: isChecked ? AppColors.sage : AppColors.textSecondary,
+                        color: isChecked
+                            ? AppColors.sage
+                            : AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -833,8 +939,11 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                             style: GoogleFonts.dmSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: isChecked ? AppColors.sage : AppColors.textPrimary,
-                              decoration: isChecked ? TextDecoration.lineThrough : null,
+                              color: isChecked
+                                  ? AppColors.sage
+                                  : AppColors.textPrimary,
+                              decoration:
+                                  isChecked ? TextDecoration.lineThrough : null,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -868,12 +977,14 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
                         color: isChecked ? AppColors.sage : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isChecked ? AppColors.sage : AppColors.cardBorder,
+                          color:
+                              isChecked ? AppColors.sage : AppColors.cardBorder,
                           width: 1.5,
                         ),
                       ),
                       child: isChecked
-                          ? const Icon(Icons.check, size: 16, color: Colors.white)
+                          ? const Icon(Icons.check,
+                              size: 16, color: Colors.white)
                           : null,
                     ),
                   ],
@@ -896,7 +1007,8 @@ Include 4-6 steps for each routine. Be specific to their skin type and concerns.
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.lightbulb_outline, size: 18, color: AppColors.sage),
+              const Icon(Icons.lightbulb_outline,
+                  size: 18, color: AppColors.sage),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

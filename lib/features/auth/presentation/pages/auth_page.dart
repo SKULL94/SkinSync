@@ -72,14 +72,31 @@ class _PhoneInputView extends StatefulWidget {
 class _PhoneInputViewState extends State<_PhoneInputView> {
   final _phoneController = TextEditingController();
   final String _countryCode = '+91';
+  bool _isValidPhone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneController.addListener(_onPhoneChanged);
+  }
 
   @override
   void dispose() {
+    _phoneController.removeListener(_onPhoneChanged);
     _phoneController.dispose();
     super.dispose();
   }
 
+  void _onPhoneChanged() {
+    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    final isValid = digits.length == 10;
+    if (isValid != _isValidPhone) {
+      setState(() => _isValidPhone = isValid);
+    }
+  }
+
   void _onSendOtp() {
+    if (!_isValidPhone) return;
     final phone = '$_countryCode${_phoneController.text.replaceAll(' ', '')}';
     context.read<AuthBloc>().add(AuthPhoneNumberChanged(phone));
     context.read<AuthBloc>().add(const AuthSendOtpRequested());
@@ -239,20 +256,25 @@ class _PhoneInputViewState extends State<_PhoneInputView> {
 
                     // Send OTP button
                     GestureDetector(
-                      onTap: _onSendOtp,
-                      child: Container(
+                      onTap: _isValidPhone ? _onSendOtp : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         width: double.infinity,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: _isValidPhone
+                              ? AppColors.primary
+                              : AppColors.primary.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.28),
-                              blurRadius: 24,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
+                          boxShadow: _isValidPhone
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: 0.28),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Center(
                           child: Text(
@@ -260,7 +282,9 @@ class _PhoneInputViewState extends State<_PhoneInputView> {
                             style: GoogleFonts.dmSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white,
+                              color: _isValidPhone
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.7),
                               letterSpacing: 0.5,
                             ),
                           ),

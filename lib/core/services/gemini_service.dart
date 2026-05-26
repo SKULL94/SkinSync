@@ -24,8 +24,8 @@ class GeminiService {
       model: 'gemini-2.5-flash',
       apiKey: apiKey,
       generationConfig: GenerationConfig(
-        temperature: 0.4,
-        topK: 32,
+        temperature: 0,
+        topK: 1,
         topP: 1,
         maxOutputTokens: 4096,
       ),

@@ -15,7 +15,19 @@ class SkinAnalysisHistory {
     this.aiAnalysis,
   });
 
+  /// For Supabase (snake_case columns)
   Map<String, dynamic> toMap() {
+    return {
+      'user_id': id,
+      'image_url': imageUrl,
+      'results': _encodeResults(results),
+      'date': date.toIso8601String(),
+      if (aiAnalysis != null) 'ai_analysis': jsonEncode(aiAnalysis),
+    };
+  }
+
+  /// For local SQLite (camelCase columns)
+  Map<String, dynamic> toLocalMap() {
     return {
       'user_id': id,
       'imageUrl': imageUrl,
@@ -28,7 +40,7 @@ class SkinAnalysisHistory {
   factory SkinAnalysisHistory.fromMap(Map<String, dynamic> map) {
     return SkinAnalysisHistory(
       id: map['user_id'] as String,
-      imageUrl: map['imageUrl'] as String,
+      imageUrl: (map['image_url'] ?? map['imageUrl']) as String,
       results: _decodeResults(map['results'] as String),
       date: DateTime.parse(map['date'] as String),
       aiAnalysis: map['ai_analysis'] != null

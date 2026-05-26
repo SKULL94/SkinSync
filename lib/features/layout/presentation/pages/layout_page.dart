@@ -5,15 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/history/presentation/pages/history_page.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_event.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_state.dart';
 import 'package:skin_sync/features/home/presentation/pages/home_page.dart';
 import 'package:skin_sync/features/home/presentation/pages/skin_news_page.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 import 'package:skin_sync/features/profile/presentation/pages/profile_page.dart';
+import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
 
 class LayoutPage extends StatefulWidget {
   const LayoutPage({super.key});
@@ -33,29 +39,57 @@ class _LayoutPageState extends State<LayoutPage> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return BlocBuilder<LayoutBloc, LayoutState>(
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: colors.background,
-          extendBody: true, // lets content flow behind the nav
-          body: IndexedStack(
-            index: state.currentIndex,
-            children: const [
-              HomePage(),
-              HistoryPage(),
-              SkinNewsPage(),
-              ProfilePage(),
+    return BlocProvider(
+      create: (_) => sl<DashboardBloc>()..add(const LoadDashboard()),
+      child: BlocBuilder<DashboardBloc, DashboardState>(
+        buildWhen: (prev, curr) => prev.status != curr.status,
+        builder: (context, dashboardState) {
+          final isLoading = dashboardState.status == DashboardStatus.initial ||
+              dashboardState.status == DashboardStatus.loading;
+
+          return Stack(
+            children: [
+              // Main content
+              BlocBuilder<LayoutBloc, LayoutState>(
+                builder: (context, state) {
+                  return Scaffold(
+                    backgroundColor: colors.background,
+                    extendBody: true,
+                    body: IndexedStack(
+                      index: state.currentIndex,
+                      children: [
+                        // Pass the existing bloc to HomePage
+                        BlocProvider.value(
+                          value: context.read<DashboardBloc>(),
+                          child: const HomePage(),
+                        ),
+                        const HistoryPage(),
+                        const SkinNewsPage(),
+                        const ProfilePage(),
+                      ],
+                    ),
+                    bottomNavigationBar: _AuraBottomNav(
+                      currentIndex: state.currentIndex,
+                      onTabChanged: (i) =>
+                          context.read<LayoutBloc>().add(LayoutTabChanged(i)),
+                      onScanTap: () {
+                        // Reset bloc to start fresh scan
+                        context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
+                        context.push(AppRoutes.skinAnalysisRoute);
+                      },
+                      colors: colors,
+                    ),
+                  );
+                },
+              ),
+
+              // Full-screen skeleton overlay
+              if (isLoading)
+                _FullScreenSkeleton(colors: colors),
             ],
-          ),
-          bottomNavigationBar: _AuraBottomNav(
-            currentIndex: state.currentIndex,
-            onTabChanged: (i) =>
-                context.read<LayoutBloc>().add(LayoutTabChanged(i)),
-            onScanTap: () => context.push(AppRoutes.skinAnalysisRoute),
-            colors: colors,
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -498,6 +532,209 @@ class _ScanFABState extends State<_ScanFAB>
               Icons.camera_alt_outlined,
               size: 22,
               color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FULL SCREEN SKELETON — blocks UI until data loads
+// ═══════════════════════════════════════════════════════════════════════════
+class _FullScreenSkeleton extends StatelessWidget {
+  final AppColorsTheme colors;
+
+  const _FullScreenSkeleton({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: colors.background,
+      body: SafeArea(
+        child: Shimmer.fromColors(
+          baseColor: colors.cardBorder,
+          highlightColor: colors.background,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header skeleton
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: colors.cardBorder,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 120,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: colors.cardBorder,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colors.cardBorder,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Hero card skeleton
+                Container(
+                  width: double.infinity,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: colors.cardBorder,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Score strip skeleton
+                Container(
+                  width: double.infinity,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: colors.cardBorder,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                const SizedBox(height: 13),
+
+                // Disclaimer skeleton
+                Container(
+                  width: double.infinity,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: colors.cardBorder,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // Section header skeleton
+                Container(
+                  width: 100,
+                  height: 19,
+                  decoration: BoxDecoration(
+                    color: colors.cardBorder,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Quick actions skeleton
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: colors.cardBorder,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: colors.cardBorder,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 11),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: colors.cardBorder,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: colors.cardBorder,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      // Skeleton nav bar
+      bottomNavigationBar: Container(
+        height: 58 + MediaQuery.of(context).padding.bottom,
+        decoration: BoxDecoration(
+          color: colors.navBackground,
+          border: Border(
+            top: BorderSide(color: colors.navBorder, width: 1),
+          ),
+        ),
+        child: Shimmer.fromColors(
+          baseColor: colors.cardBorder,
+          highlightColor: colors.background,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(
+              4,
+              (index) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: colors.cardBorder,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 32,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: colors.cardBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -7,8 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
+import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/domain/entities/analysis_result_entity.dart';
 import 'package:skin_sync/features/skin_analysis/domain/entities/ai_analysis_entity.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
@@ -28,6 +30,9 @@ class SkinAnalysisPage extends StatelessWidget {
         if (state.status == SkinAnalysisStatus.saved) {
           SnackbarHelper.showSuccess(context, 'Analysis saved successfully');
           context.read<HistoryBloc>().add(const HistoryLoadRequested());
+          // Navigate to history screen (tab index 1)
+          context.read<LayoutBloc>().add(const LayoutTabChanged(1));
+          context.go(AppRoutes.layoutRoute);
         }
       },
       builder: (context, state) {

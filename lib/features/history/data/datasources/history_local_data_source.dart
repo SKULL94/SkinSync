@@ -18,13 +18,18 @@ class HistoryLocalDataSourceImpl implements HistoryLocalDataSource {
   @override
   Future<List<HistoryModel>> getHistories(String userId) async {
     try {
-      final histories = await databaseHelper.getAllAnalyses();
-      return histories.map((h) => HistoryModel(
+      final histories = await databaseHelper.getUserAnalyses(userId);
+      // Map with aiAnalysis and sort by date descending (latest first)
+      final mapped = histories.map((h) => HistoryModel(
         id: h.id,
         imageUrl: h.imageUrl,
         results: h.results,
         date: h.date,
+        aiAnalysis: h.aiAnalysis,
       )).toList();
+      // Sort by date descending
+      mapped.sort((a, b) => b.date.compareTo(a.date));
+      return mapped;
     } catch (e) {
       throw CacheException(message: 'Failed to load histories: $e');
     }

@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:skin_sync/core/constants/app_constants.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
-import 'package:skin_sync/core/repositories/user_repository.dart';
-import 'package:skin_sync/core/services/storage_service.dart';
-import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:skin_sync/features/auth/presentation/bloc/auth_bloc.dart';
 
-class SplashPage extends StatefulWidget {
-  const SplashPage({super.key});
+class WelcomePage extends StatefulWidget {
+  const WelcomePage({super.key});
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  State<WelcomePage> createState() => _WelcomePageState();
 }
 
-class _SplashPageState extends State<SplashPage>
+class _WelcomePageState extends State<WelcomePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _floatController;
   late Animation<double> _floatAnimation;
@@ -33,54 +30,26 @@ class _SplashPageState extends State<SplashPage>
     _floatAnimation = Tween<double>(begin: 0, end: -10).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
-
-    _checkAuthAndNavigate();
-  }
-
-  Future<void> _checkAuthAndNavigate() async {
-    // Show splash for at least 1.5 seconds
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    if (!mounted) return;
-
-    final storageService = sl<StorageService>();
-    final userRepository = sl<UserRepository>();
-    final supabase = Supabase.instance.client;
-
-    // Check Supabase session first (handles returning users)
-    final session = supabase.auth.currentSession;
-    final supabaseUser = supabase.auth.currentUser;
-
-    if (session != null && supabaseUser != null) {
-      // User is authenticated in Supabase
-      await storageService.save(AppConstants.userId, supabaseUser.id);
-
-      // Check if user has profile in Supabase (returning user check)
-      final profile = await userRepository.getCurrentUserProfile();
-
-      if (profile != null && profile.firstName != null) {
-        // Returning user with profile - go to home
-        await storageService.save('onboarding_completed', true);
-        await storageService.save('user_name', profile.firstName);
-        if (profile.gender != null) {
-          await storageService.save('user_gender', profile.gender);
-        }
-        if (mounted) context.go(AppRoutes.layoutRoute);
-      } else {
-        // Authenticated but no profile - needs onboarding
-        if (mounted) context.go(AppRoutes.onboardingRoute);
-      }
-      return;
-    }
-
-    // Not authenticated - go to welcome page
-    if (mounted) context.go(AppRoutes.welcomeRoute);
   }
 
   @override
   void dispose() {
     _floatController.dispose();
     super.dispose();
+  }
+
+  void _onBeginPressed() {
+    // New user signup flow
+    context.read<AuthBloc>().add(const AuthResetState());
+    context.read<AuthBloc>().add(const AuthToggleAuthType(false));
+    context.go(AppRoutes.authRoute);
+  }
+
+  void _onSignInPressed() {
+    // Existing user sign in flow
+    context.read<AuthBloc>().add(const AuthResetState());
+    context.read<AuthBloc>().add(const AuthToggleAuthType(true));
+    context.go(AppRoutes.authRoute);
   }
 
   @override
@@ -97,14 +66,16 @@ class _SplashPageState extends State<SplashPage>
       body: Stack(
         children: [
           // Background decorative orbs
-          const _SplashBackground(),
+          const _WelcomeBackground(),
 
-          // Main content - just logo
+          // Main content
           SafeArea(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const Spacer(flex: 2),
+
                   // Animated Terra Orb
                   AnimatedBuilder(
                     animation: _floatAnimation,
@@ -143,6 +114,32 @@ class _SplashPageState extends State<SplashPage>
                       letterSpacing: 3,
                     ),
                   ),
+
+                  const Spacer(flex: 2),
+
+                  // Action buttons
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 60),
+                    child: Column(
+                      children: [
+                        // Begin button - Primary (Sign Up)
+                        _PrimaryButton(
+                          label: 'Get Started',
+                          onPressed: _onBeginPressed,
+                        ),
+
+                        const SizedBox(height: 11),
+
+                        // Sign In button - Secondary
+                        _SecondaryButton(
+                          label: 'Sign In',
+                          onPressed: _onSignInPressed,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
@@ -154,8 +151,8 @@ class _SplashPageState extends State<SplashPage>
 }
 
 // Background with decorative gradient orbs
-class _SplashBackground extends StatelessWidget {
-  const _SplashBackground();
+class _WelcomeBackground extends StatelessWidget {
+  const _WelcomeBackground();
 
   @override
   Widget build(BuildContext context) {
@@ -269,4 +266,88 @@ class _TerraOrbPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Primary button with terra gradient
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _PrimaryButton({
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 272,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.35),
+              blurRadius: 32,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Secondary outline button
+class _SecondaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _SecondaryButton({
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 272,
+        height: 46,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(23),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: AppColors.background.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
