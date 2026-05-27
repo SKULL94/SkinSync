@@ -1,67 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
-import 'package:skin_sync/features/profile/presentation/pages/personal_details.dart'
-    show SubHeader, SectionLabel, SaveButton, InfoBox;
+import 'package:skin_sync/core/constants/string_const.dart';
+import 'package:skin_sync/core/constants/text_styles.dart';
+import 'package:skin_sync/core/di/injection_container.dart';
+import 'package:skin_sync/features/profile/presentation/bloc/skin_type_bloc.dart';
+import 'package:skin_sync/features/profile/presentation/widgets/info_box.dart';
+import 'package:skin_sync/features/profile/presentation/widgets/save_button.dart';
+import 'package:skin_sync/features/profile/presentation/widgets/section_label.dart';
+import 'package:skin_sync/features/profile/presentation/widgets/sub_header.dart';
 
-class SkinTypeEditorPage extends StatefulWidget {
+class SkinTypeEditorPage extends StatelessWidget {
   const SkinTypeEditorPage({super.key});
 
   @override
-  State<SkinTypeEditorPage> createState() => _SkinTypeEditorPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<SkinTypeBloc>()..add(const SkinTypeLoadRequested()),
+      child: const _SkinTypeEditorView(),
+    );
+  }
 }
 
-class _SkinTypeEditorPageState extends State<SkinTypeEditorPage> {
-  // Combination selected by default (index 1)
-  int _selectedType = 1;
-  // Fitzpatrick III selected by default (index 2)
-  int _selectedFitz = 2;
+class _SkinTypeEditorView extends StatelessWidget {
+  const _SkinTypeEditorView();
 
-  final _skinTypes = [
+  static const _skinTypes = [
     _SkinTypeData(
+      key: 'oily',
       emoji: '💧',
-      name: 'Oily',
-      desc: 'Excess sebum, shine, enlarged pores',
+      name: StringConst.kOily,
+      desc: StringConst.kOilyDesc,
       fullWidth: false,
     ),
     _SkinTypeData(
+      key: 'combo',
       emoji: '⚖️',
-      name: 'Combination',
-      desc: 'Oily T-zone, drier cheeks',
+      name: StringConst.kCombination,
+      desc: StringConst.kComboDesc,
       fullWidth: false,
     ),
     _SkinTypeData(
+      key: 'dry',
       emoji: '🌵',
-      name: 'Dry',
-      desc: 'Tight, flaky, lacks moisture',
+      name: StringConst.kDry,
+      desc: StringConst.kDryDesc,
       fullWidth: false,
     ),
     _SkinTypeData(
+      key: 'normal',
       emoji: '🌸',
-      name: 'Normal',
-      desc: 'Balanced, minimal concerns',
+      name: StringConst.kNormal,
+      desc: StringConst.kNormalDesc,
       fullWidth: false,
     ),
     _SkinTypeData(
+      key: 'sensitive',
       emoji: '🌿',
-      name: 'Sensitive',
-      desc: 'Reactive, redness-prone, easily irritated by products or weather',
+      name: StringConst.kSensitive,
+      desc: StringConst.kSensitiveDesc,
       fullWidth: true,
     ),
   ];
 
-  // Fitzpatrick scale swatches
-  final _fitzColors = [
-    const Color(0xFFFDDCC4), // Type I
-    const Color(0xFFF5C5A3), // Type II
-    const Color(0xFFE8A882), // Type III — default
-    const Color(0xFFC48A5A), // Type IV
-    const Color(0xFF8B5E3C), // Type V
-    const Color(0xFF4A2C1A), // Type VI
+  static const _fitzColors = [
+    Color(0xFFFDDCC4),
+    Color(0xFFF5C5A3),
+    Color(0xFFE8A882),
+    Color(0xFFC48A5A),
+    Color(0xFF8B5E3C),
+    Color(0xFF4A2C1A),
   ];
 
-  final _fitzLabels = [
+  static const _fitzLabels = [
     'Type I — Very Light',
     'Type II — Light',
     'Type III — Medium Beige',
@@ -72,69 +84,76 @@ class _SkinTypeEditorPageState extends State<SkinTypeEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          // ── Header ────────────────────────────────────────────────
-          SubHeader(
-            superText: 'Profile',
-            title: 'My Skin Type',
-            onBack: () => context.pop(),
-          ),
-
-          // ── Body ──────────────────────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Info box
-                  InfoBox(
-                    icon: Icons.info_outline_rounded,
-                    text:
-                        'Your skin type helps us fine-tune analysis results and recommendations. Not sure? Complete a scan first — Skin Sync will detect it automatically.',
-                  ),
-                  const SizedBox(height: 14),
-
-                  // ── Skin type grid ─────────────────────────────────
-                  const SectionLabel('Select Your Skin Type'),
-                  const SizedBox(height: 8),
-                  _buildSkinTypeGrid(),
-                  const SizedBox(height: 14),
-
-                  // ── Fitzpatrick scale ──────────────────────────────
-                  const SectionLabel('Skin Tone'),
-                  const SizedBox(height: 8),
-                  _buildFitzpatrickCard(),
-                  const SizedBox(height: 24),
-
-                  // Save
-                  SaveButton(
-                    label: 'Save Skin Profile',
-                    onTap: () => context.pop(),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+    return BlocConsumer<SkinTypeBloc, SkinTypeState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, state) {
+        if (state.status == SkinTypeStatus.success) {
+          context.pop();
+        }
+      },
+      builder: (context, state) {
+        if (state.status == SkinTypeStatus.loading) {
+          return const Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
             ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: Column(
+            children: [
+              SubHeader(
+                superText: StringConst.kProfile,
+                title: StringConst.kMySkinType,
+                onBack: () => context.pop(),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const InfoBox(
+                        icon: Icons.info_outline_rounded,
+                        text: StringConst.kSkinTypeInfo,
+                      ),
+                      const SizedBox(height: 14),
+                      const SectionLabel(StringConst.kSelectYourSkinType),
+                      const SizedBox(height: 8),
+                      _buildSkinTypeGrid(context, state),
+                      const SizedBox(height: 14),
+                      const SectionLabel(StringConst.kSkinTone),
+                      const SizedBox(height: 8),
+                      _buildFitzpatrickCard(context, state),
+                      const SizedBox(height: 24),
+                      SaveButton(
+                        label: StringConst.kSaveSkinProfile,
+                        isLoading: state.status == SkinTypeStatus.saving,
+                        onTap: () => context
+                            .read<SkinTypeBloc>()
+                            .add(const SkinTypeSaveRequested()),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  // ── 2-col grid + full-width last card ────────────────────────────────
-  Widget _buildSkinTypeGrid() {
-    // Separate the full-width card (Sensitive) from the 2-col cards
+  Widget _buildSkinTypeGrid(BuildContext context, SkinTypeState state) {
     final gridCards = _skinTypes.where((t) => !t.fullWidth).toList();
     final fullCard = _skinTypes.firstWhere((t) => t.fullWidth);
-    final fullIndex = _skinTypes.indexOf(fullCard);
 
     return Column(
       children: [
-        // 2×2 grid
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -146,27 +165,29 @@ class _SkinTypeEditorPageState extends State<SkinTypeEditorPage> {
           ),
           itemCount: gridCards.length,
           itemBuilder: (_, i) {
-            final typeIndex = _skinTypes.indexOf(gridCards[i]);
+            final type = gridCards[i];
             return _SkinTypeCard(
-              data: gridCards[i],
-              isSelected: _selectedType == typeIndex,
-              onTap: () => setState(() => _selectedType = typeIndex),
+              data: type,
+              isSelected: state.selectedType == type.key,
+              onTap: () => context
+                  .read<SkinTypeBloc>()
+                  .add(SkinTypeSelected(type.key)),
             );
           },
         ),
         const SizedBox(height: 11),
-        // Full-width Sensitive card
         _SkinTypeCardFull(
           data: fullCard,
-          isSelected: _selectedType == fullIndex,
-          onTap: () => setState(() => _selectedType = fullIndex),
+          isSelected: state.selectedType == fullCard.key,
+          onTap: () => context
+              .read<SkinTypeBloc>()
+              .add(SkinTypeSelected(fullCard.key)),
         ),
       ],
     );
   }
 
-  // ── Fitzpatrick colour swatches ──────────────────────────────────────
-  Widget _buildFitzpatrickCard() {
+  Widget _buildFitzpatrickCard(BuildContext context, SkinTypeState state) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -178,22 +199,22 @@ class _SkinTypeEditorPageState extends State<SkinTypeEditorPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Fitzpatrick Scale',
-            style: GoogleFonts.dmSans(
+            StringConst.kFitzpatrickScale,
+            style: AppTextStyles.caption.copyWith(
               fontSize: 11,
-              fontWeight: FontWeight.w400,
               color: AppColors.textTertiary,
               letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: 10),
-          // 6 colour swatches in a row
           Row(
             children: List.generate(_fitzColors.length, (i) {
-              final sel = _selectedFitz == i;
+              final sel = state.selectedFitzpatrick == i;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _selectedFitz = i),
+                  onTap: () => context
+                      .read<SkinTypeBloc>()
+                      .add(SkinTypeFitzpatrickChanged(i)),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: EdgeInsets.only(left: i == 0 ? 0 : 6),
@@ -221,12 +242,9 @@ class _SkinTypeEditorPageState extends State<SkinTypeEditorPage> {
             }),
           ),
           const SizedBox(height: 10),
-          // Label for selected shade
           Text(
-            _fitzLabels[_selectedFitz],
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w300,
+            _fitzLabels[state.selectedFitzpatrick],
+            style: AppTextStyles.caption.copyWith(
               color: AppColors.textTertiary,
             ),
           ),
@@ -236,16 +254,15 @@ class _SkinTypeEditorPageState extends State<SkinTypeEditorPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// DATA MODEL
-// ─────────────────────────────────────────────────────────────────────────
 class _SkinTypeData {
+  final String key;
   final String emoji;
   final String name;
   final String desc;
   final bool fullWidth;
 
   const _SkinTypeData({
+    required this.key,
     required this.emoji,
     required this.name,
     required this.desc,
@@ -253,12 +270,6 @@ class _SkinTypeData {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// SKIN TYPE CARD — square (2-col grid item)
-// Matches HTML .skin-edit-card:
-//   border-radius:16px, border:1.5px --bg3, bg:--white, padding:18px 14px
-//   .sel → terral bg + terra border + checkmark badge top-right
-// ─────────────────────────────────────────────────────────────────────────
 class _SkinTypeCard extends StatelessWidget {
   final _SkinTypeData data;
   final bool isSelected;
@@ -278,9 +289,7 @@ class _SkinTypeCard extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFFF0D4C2) // --terral
-              : Colors.white,
+          color: isSelected ? const Color(0xFFF0D4C2) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.cardBorder,
@@ -289,7 +298,6 @@ class _SkinTypeCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Selected checkmark — top right
             if (isSelected)
               Positioned(
                 top: 0,
@@ -306,7 +314,6 @@ class _SkinTypeCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // Content
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -314,19 +321,17 @@ class _SkinTypeCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   data.name,
-                  style: GoogleFonts.playfairDisplay(
+                  style: AppTextStyles.heading3.copyWith(
                     fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    color:
-                        isSelected ? AppColors.primary : AppColors.textPrimary,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   data.desc,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w300,
+                  style: AppTextStyles.caption.copyWith(
                     color: AppColors.textTertiary,
                     height: 1.5,
                   ),
@@ -342,10 +347,6 @@ class _SkinTypeCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// SKIN TYPE CARD FULL — spans full width (Sensitive option)
-// Matches HTML: grid-column:1/-1, flex row, emoji left + text right
-// ─────────────────────────────────────────────────────────────────────────
 class _SkinTypeCardFull extends StatelessWidget {
   final _SkinTypeData data;
   final bool isSelected;
@@ -374,22 +375,16 @@ class _SkinTypeCardFull extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Emoji
-            Text(
-              data.emoji,
-              style: const TextStyle(fontSize: 26),
-            ),
+            Text(data.emoji, style: const TextStyle(fontSize: 26)),
             const SizedBox(width: 14),
-            // Text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     data.name,
-                    style: GoogleFonts.playfairDisplay(
+                    style: AppTextStyles.heading3.copyWith(
                       fontSize: 15,
-                      fontWeight: FontWeight.w400,
                       color: isSelected
                           ? AppColors.primary
                           : AppColors.textPrimary,
@@ -398,9 +393,7 @@ class _SkinTypeCardFull extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     data.desc,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w300,
+                    style: AppTextStyles.caption.copyWith(
                       color: AppColors.textTertiary,
                       height: 1.5,
                     ),
@@ -408,7 +401,6 @@ class _SkinTypeCardFull extends StatelessWidget {
                 ],
               ),
             ),
-            // Checkmark on right when selected
             if (isSelected) ...[
               const SizedBox(width: 12),
               Container(

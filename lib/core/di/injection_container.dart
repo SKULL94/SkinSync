@@ -39,6 +39,10 @@ import 'package:skin_sync/features/home/data/repositories/dashboard_repository_i
 import 'package:skin_sync/features/home/domain/repositories/dashboard_repository.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:skin_sync/features/auth/presentation/bloc/onboarding_bloc.dart';
+import 'package:skin_sync/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:skin_sync/features/profile/presentation/bloc/personal_details_bloc.dart';
+import 'package:skin_sync/features/profile/presentation/bloc/scan_reminders_bloc.dart';
+import 'package:skin_sync/features/profile/presentation/bloc/skin_type_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -85,6 +89,9 @@ Future<void> init() async {
 
   // Features - Onboarding
   _initOnboarding();
+
+  // Features - Profile
+  _initProfile();
 }
 
 void _initAuth() {
@@ -228,6 +235,36 @@ void _initOnboarding() {
     () => OnboardingBloc(
       storageService: sl(),
       userRepository: sl(),
+    ),
+  );
+}
+
+void _initProfile() {
+  // Bloc
+  sl.registerFactory(
+    () => ProfileBloc(
+      userRepository: sl(),
+      storageService: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => PersonalDetailsBloc(
+      userRepository: sl(),
+      storageService: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => ScanRemindersBloc(
+      storageService: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => SkinTypeBloc(
+      userRepository: sl(),
+      storageService: sl(),
     ),
   );
 }

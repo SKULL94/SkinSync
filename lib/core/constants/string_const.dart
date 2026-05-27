@@ -210,4 +210,98 @@ class StringConst {
   static const String kFemale = 'Female';
   static const String kNonBinary = 'Non-binary / Prefer not to say';
   static const String kCompleteSetup = 'Complete Setup';
+
+  // Profile Page
+  static const String kMember = 'Member';
+  static const String kMemberSince = 'Member since';
+  static const String kFreePlan = 'Free Plan';
+  static const String kScans = 'SCANS';
+  static const String kBestScore = 'BEST SCORE';
+  static const String kImprovement = 'IMPROVEMENT';
+  static const String kMySkinType = 'My Skin Type';
+  static const String kMyConcerns = 'My Concerns';
+  static const String kEdit = 'Edit';
+  static const String kPersonalDetails = 'Personal Details';
+  static const String kNameAgeGender = 'Name, age, gender';
+  static const String kScanReminders = 'Scan Reminders';
+  static const String kEveryDays = 'Every 7 days';
+  static const String kPrivacyData = 'Privacy & Data';
+  static const String kManageYourData = 'Manage your data';
+  static const String kAppearance = 'Appearance';
+  static const String kLightMode = 'Light mode';
+  static const String kSignOut = 'Sign Out';
+
+  // Skin Types
+  static const String kOily = 'Oily';
+  static const String kCombo = 'Combo';
+  static const String kDry = 'Dry';
+  static const String kNormal = 'Normal';
+
+  // Concerns
+  static const String kAcne = 'Acne';
+  static const String kDarkSpots = 'Dark spots';
+  static const String kPores = 'Pores';
+  static const String kWrinkles = 'Wrinkles';
+  static const String kDryness = 'Dryness';
+  static const String kRedness = 'Redness';
+
+  // Personal Details Page
+  static const String kProfilePhoto = 'Profile Photo';
+  static const String kTapToUpdateAvatar = 'Tap to update your avatar';
+  static const String kBasicInfo = 'Basic Info';
+  static const String kFirstName = 'First Name';
+  static const String kLastName = 'Last Name';
+  static const String kEnterLastName = 'Enter last name';
+  static const String kDateOfBirth = 'Date of Birth';
+  static const String kGender = 'Gender';
+  static const String kSelectGender = 'Select Gender';
+  static const String kContact = 'Contact';
+  static const String kMobileNumberField = 'Mobile Number';
+  static const String kEmailAddress = 'Email Address';
+  static const String kEnterEmail = 'Enter email';
+  static const String kLocation = 'Location';
+  static const String kCityCountry = 'City, Country';
+  static const String kSkinBackground = 'Skin Background';
+  static const String kFitzpatrickScale = 'Fitzpatrick Scale';
+  static const String kKnownAllergies = 'Known Allergies';
+  static const String kAllergyHint = 'e.g., Fragrance, Lanolin';
+  static const String kNotSet = 'Not set';
+  static const String kVerified = 'Verified';
+  static const String kSaveChanges = 'Save Changes';
+  static const String kSaving = 'Saving...';
+  static const String kProfileSavedSuccess = 'Profile saved successfully!';
+  static const String kFailedToSave = 'Failed to save. Please try again.';
+
+  // Skin Type Page
+  static const String kSensitive = 'Sensitive';
+  static const String kCombination = 'Combination';
+  static const String kOilyDesc = 'Excess sebum, shine, enlarged pores';
+  static const String kComboDesc = 'Oily T-zone, drier cheeks';
+  static const String kDryDesc = 'Tight, flaky, lacks moisture';
+  static const String kNormalDesc = 'Balanced, minimal concerns';
+  static const String kSensitiveDesc = 'Reactive, redness-prone, easily irritated by products or weather';
+  static const String kSkinTypeInfo = 'Your skin type helps us fine-tune analysis results and recommendations. Not sure? Complete a scan first — Skin Sync will detect it automatically.';
+  static const String kSelectYourSkinType = 'Select Your Skin Type';
+  static const String kSkinTone = 'Skin Tone';
+  static const String kSaveSkinProfile = 'Save Skin Profile';
+
+  // Scan Reminders Page
+  static const String kReminders = 'Reminders';
+  static const String kEnableReminders = 'Enable Reminders';
+  static const String kPushNotifications = 'Push notifications to your device';
+  static const String kMorningReminder = 'Morning Reminder';
+  static const String kBestLighting = 'Best lighting for accurate results';
+  static const String kStreakAlerts = 'Streak Alerts';
+  static const String kStayOnTrack = 'Stay on track with your routine';
+  static const String kReminderTime = 'Reminder Time';
+  static const String kPreferredTime = 'Preferred Time';
+  static const String kFrequency = 'Frequency';
+  static const String kDailyFreq = 'Daily';
+  static const String kEvery7Days = 'Every 7 days';
+  static const String kEvery14Days = 'Every 14 days';
+  static const String kMonthlyFreq = 'Monthly';
+  static const String kCustom = 'Custom';
+  static const String kDaysOfWeek = 'Days of Week';
+  static const String kSaveReminderSettings = 'Save Reminder Settings';
+  static const String kScanRemindersInfo = 'Regular scans track your skin\'s progress over time. We recommend scanning every 7 days for the most accurate trend data.';
 }

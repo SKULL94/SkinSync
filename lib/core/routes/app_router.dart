@@ -10,8 +10,6 @@ import 'package:skin_sync/features/welcome/presentation/pages/welcome_page.dart'
 import 'package:skin_sync/features/auth/presentation/pages/auth_page.dart';
 import 'package:skin_sync/features/profile/presentation/pages/personal_details.dart';
 import 'package:skin_sync/features/profile/presentation/pages/scan_reminders.dart';
-import 'package:skin_sync/features/profile/presentation/pages/privacy_details.dart';
-import 'package:skin_sync/features/profile/presentation/pages/appearance_page.dart';
 import 'package:skin_sync/features/profile/presentation/pages/skin_type.dart';
 import 'package:skin_sync/features/home/presentation/pages/ai_tips_page.dart';
 import 'package:skin_sync/features/home/presentation/pages/trends_page.dart';
@@ -68,16 +66,16 @@ final GoRouter appRouter = GoRouter(
       name: 'scanReminders',
       builder: (context, state) => const ScanRemindersPage(),
     ),
-    GoRoute(
-      path: AppRoutes.privacyRoute,
-      name: 'privacy',
-      builder: (context, state) => const PrivacyDataPage(),
-    ),
-    GoRoute(
-      path: AppRoutes.appearanceRoute,
-      name: 'appearance',
-      builder: (context, state) => const AppearancePage(),
-    ),
+    // GoRoute(
+    //   path: AppRoutes.privacyRoute,
+    //   name: 'privacy',
+    //   builder: (context, state) => const PrivacyDataPage(),
+    // ),
+    // GoRoute(
+    //   path: AppRoutes.appearanceRoute,
+    //   name: 'appearance',
+    //   builder: (context, state) => const AppearancePage(),
+    // ),
     GoRoute(
       path: AppRoutes.skinTypeRoute,
       name: 'skinType',
