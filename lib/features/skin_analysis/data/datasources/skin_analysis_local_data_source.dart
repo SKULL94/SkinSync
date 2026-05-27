@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:skin_sync/core/error/exceptions.dart';
+import 'package:skin_sync/core/services/ml_kit_skin_detector.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
 import 'package:skin_sync/core/models/tflite/tflite_repository.dart';
 
@@ -14,12 +15,14 @@ abstract class SkinAnalysisLocalDataSource {
 
 class SkinAnalysisLocalDataSourceImpl implements SkinAnalysisLocalDataSource {
   final TFLiteRepository _tfLiteRepo = TFLiteRepository();
+  final MLKitSkinDetector _mlKitDetector = MLKitSkinDetector();
   bool _isModelReady = false;
 
   @override
   Future<void> initializeModel() async {
     if (!_isModelReady) {
       await _tfLiteRepo.initialize();
+      await _mlKitDetector.initialize();
       _isModelReady = true;
     }
   }
@@ -34,13 +37,19 @@ class SkinAnalysisLocalDataSourceImpl implements SkinAnalysisLocalDataSource {
       final correctedFile = File(imageFile.path)
         ..writeAsBytesSync(img.encodeJpg(orientedImage));
 
-      final correctedBytes = await correctedFile.readAsBytes();
-      final isSkin = await compute(_isHumanSkinFromBytes, correctedBytes);
+      // Two-tier validation: ML Kit first, then color-based fallback
+      final isValidByMLKit = await _mlKitDetector.isValidSkinImage(correctedFile);
 
-      if (!isSkin) {
-        throw const ValidationException(
-          message: 'Not a valid skin image. Please upload clear skin photo',
-        );
+      if (!isValidByMLKit) {
+        // Fallback to expanded color-based detection
+        final correctedBytes = await correctedFile.readAsBytes();
+        final isSkinByColor = await compute(_isHumanSkinFromBytes, correctedBytes);
+
+        if (!isSkinByColor) {
+          throw const ValidationException(
+            message: 'Please upload a clear photo of your skin',
+          );
+        }
       }
 
       final modelOutput = await _tfLiteRepo.analyzeImage(correctedFile.path);
@@ -112,6 +121,7 @@ class SkinAnalysisLocalDataSourceImpl implements SkinAnalysisLocalDataSource {
   @override
   void dispose() {
     _tfLiteRepo.dispose();
+    _mlKitDetector.dispose();
   }
 }
 
@@ -128,7 +138,8 @@ bool _isHumanSkinFromBytes(Uint8List bytes) {
 
   int skinPixels = 0;
   final totalPixels = resized.width * resized.height;
-  const minSkinPercentage = 0.25;
+  // Lowered threshold to be more permissive
+  const minSkinPercentage = 0.15;
 
   for (int y = 0; y < resized.height; y++) {
     for (int x = 0; x < resized.width; x++) {
@@ -140,13 +151,24 @@ bool _isHumanSkinFromBytes(Uint8List bytes) {
       final hsv = _rgbToHsv(r, g, b);
       final yCbCr = _rgbToYCbCr(r, g, b);
 
-      final isSkin = (hsv[0] >= 0.0 && hsv[0] <= 0.1) &&
-          (hsv[1] >= 0.15 && hsv[1] <= 0.9) &&
-          (hsv[2] >= 0.2 && hsv[2] <= 0.95) &&
-          (yCbCr[1] >= 80 && yCbCr[1] <= 130) &&
-          (yCbCr[2] >= 135 && yCbCr[2] <= 180);
+      // Expanded ranges to support all skin tones (light to dark)
+      // HSV-based detection with wider ranges
+      final isSkinHSV = (hsv[0] >= 0.0 && hsv[0] <= 0.15) && // Hue: red-orange-yellow
+          (hsv[1] >= 0.10 && hsv[1] <= 0.95) && // Saturation: wider range
+          (hsv[2] >= 0.15 && hsv[2] <= 0.98); // Value: include darker skin
 
-      if (isSkin) skinPixels++;
+      // YCbCr-based detection with expanded ranges for all ethnicities
+      final isSkinYCbCr = (yCbCr[1] >= 70 && yCbCr[1] <= 145) && // Cb: expanded
+          (yCbCr[2] >= 125 && yCbCr[2] <= 200); // Cr: expanded for darker skin
+
+      // RGB ratio-based detection (works across skin tones)
+      final isSkinRGB = r > 60 && g > 40 && b > 20 && // Minimum values
+          r > g && g > b && // Red > Green > Blue (typical for skin)
+          (r - g).abs() > 10 && // Some color difference
+          r - b > 15; // Red significantly more than blue
+
+      // Pass if any method detects skin
+      if (isSkinHSV || isSkinYCbCr || isSkinRGB) skinPixels++;
     }
   }
 
