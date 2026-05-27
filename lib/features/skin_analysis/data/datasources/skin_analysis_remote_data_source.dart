@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:skin_sync/core/config/api_config.dart';
 import 'package:skin_sync/core/error/exceptions.dart';
 import 'package:skin_sync/core/services/gemini_service.dart';
-import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
 import 'package:skin_sync/core/models/skin_analysis_history.dart';
 import 'package:skin_sync/core/services/sqflite_database.dart';
@@ -14,8 +13,7 @@ abstract class SkinAnalysisRemoteDataSource {
   Future<void> saveAnalysis({
     required String userId,
     required File imageFile,
-    required List<AnalysisResultModel> results,
-    AIAnalysisModel? aiAnalysis,
+    required AIAnalysisModel aiAnalysis,
   });
 
   Future<AIAnalysisModel> analyzeWithAI(File imageFile);
@@ -44,26 +42,25 @@ class SkinAnalysisRemoteDataSourceImpl implements SkinAnalysisRemoteDataSource {
   Future<void> saveAnalysis({
     required String userId,
     required File imageFile,
-    required List<AnalysisResultModel> results,
-    AIAnalysisModel? aiAnalysis,
+    required AIAnalysisModel aiAnalysis,
   }) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filePath = 'users/$userId/analysis/$timestamp.jpg';
       final localImagePath = imageFile.path;
 
-      // Combine local results with AI analysis
-      final combinedResults = results.map((r) => r.toMap()).toList();
+      // Convert AI analysis to results format for storage
+      final resultsFromAI = _convertAIAnalysisToResults(aiAnalysis);
 
       final placeholderHistory = SkinAnalysisHistory(
-        imageUrl: localImagePath, // Use local path initially
-        results: combinedResults,
+        imageUrl: localImagePath,
+        results: resultsFromAI,
         date: DateTime.now(),
         id: userId,
-        aiAnalysis: aiAnalysis?.toJson(),
+        aiAnalysis: aiAnalysis.toJson(),
       );
 
-      // Save to local DB first (fast) - this allows immediate success feedback
+      // Save to local DB first (fast)
       final dbHelper = DatabaseHelper.instance;
       final localId = await dbHelper.insertAnalysis(placeholderHistory);
 
@@ -73,7 +70,7 @@ class SkinAnalysisRemoteDataSourceImpl implements SkinAnalysisRemoteDataSource {
         userId: userId,
         imageFile: imageFile,
         filePath: filePath,
-        combinedResults: combinedResults,
+        resultsFromAI: resultsFromAI,
         aiAnalysis: aiAnalysis,
         dbHelper: dbHelper,
       );
@@ -82,14 +79,46 @@ class SkinAnalysisRemoteDataSourceImpl implements SkinAnalysisRemoteDataSource {
     }
   }
 
-  /// Background sync to Supabase - runs after local save completes
+  /// Converts AI analysis to a results list format for storage
+  List<Map<String, dynamic>> _convertAIAnalysisToResults(AIAnalysisModel aiAnalysis) {
+    return [
+      {
+        'displayLabel': 'Skin Health Score',
+        'confidence': aiAnalysis.overallScore / 100.0,
+        'riskLevel': _getSeverityLabel(aiAnalysis.severity),
+        'riskColorValue': _getSeverityColor(aiAnalysis.severity),
+      },
+    ];
+  }
+
+  String _getSeverityLabel(String severity) {
+    return switch (severity.toLowerCase()) {
+      'mild' => 'Good',
+      'moderate' => 'Fair',
+      'severe' => 'Needs Attention',
+      'needs_dermatologist' => 'Consult Professional',
+      _ => 'Unknown',
+    };
+  }
+
+  int _getSeverityColor(String severity) {
+    return switch (severity.toLowerCase()) {
+      'mild' => 0xFF4CAF50, // Green
+      'moderate' => 0xFFFF9800, // Orange
+      'severe' => 0xFFF44336, // Red
+      'needs_dermatologist' => 0xFF9C27B0, // Purple
+      _ => 0xFF9E9E9E, // Grey
+    };
+  }
+
+  /// Background sync to Supabase
   Future<void> _syncToCloud({
     required int localId,
     required String userId,
     required File imageFile,
     required String filePath,
-    required List<Map<String, dynamic>> combinedResults,
-    required AIAnalysisModel? aiAnalysis,
+    required List<Map<String, dynamic>> resultsFromAI,
+    required AIAnalysisModel aiAnalysis,
     required DatabaseHelper dbHelper,
   }) async {
     try {
@@ -113,17 +142,16 @@ class SkinAnalysisRemoteDataSourceImpl implements SkinAnalysisRemoteDataSource {
       // Insert to Supabase database
       final completeHistory = SkinAnalysisHistory(
         imageUrl: imageUrl,
-        results: combinedResults,
+        results: resultsFromAI,
         date: DateTime.now(),
         id: userId,
-        aiAnalysis: aiAnalysis?.toJson(),
+        aiAnalysis: aiAnalysis.toJson(),
       );
 
       await SupabaseService.client.from('images').insert(completeHistory.toMap());
     } catch (e) {
       // Mark as not synced for retry later
       await dbHelper.updateAnalysis(localId, {'is_synced': 0});
-      // Silently fail - data is safe locally
       debugPrint('Cloud sync failed: $e');
     }
   }

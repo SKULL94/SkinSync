@@ -5,7 +5,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:skin_sync/core/config/api_config.dart';
 import 'package:skin_sync/core/constants/app_constants.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
-import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
 import 'package:skin_sync/features/skin_analysis/domain/repositories/skin_analysis_repository.dart';
 
@@ -15,8 +14,6 @@ part 'skin_analysis_state.dart';
 class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
   final SkinAnalysisRepository repository;
   final StorageService storageService;
-
-  static const double _minConfidenceForAI = 0.3;
 
   SkinAnalysisBloc({
     required this.repository,
@@ -38,81 +35,62 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
     emit(state.copyWith(
       status: SkinAnalysisStatus.validating,
       selectedImage: event.imageFile,
-      clearResults: true,
       clearAIAnalysis: true,
     ));
 
-    // Step 1: Local model validates image
-    final localResult = await repository.analyzeImage(event.imageFile);
+    // Step 1: Validate image (is it a skin image?)
+    final validationResult = await repository.validateImage(event.imageFile);
 
-    final localAnalysis = localResult.fold(
+    final isValid = validationResult.fold(
       (failure) {
         emit(state.copyWith(
           status: SkinAnalysisStatus.failure,
           errorMessage: failure.message,
           clearImage: true,
-          clearResults: true,
         ));
-        return null;
+        return false;
       },
-      (results) => results,
+      (valid) => valid,
     );
 
-    if (localAnalysis == null) return;
+    if (!isValid) return;
 
-    // Check if local model has sufficient confidence
-    final hasValidSkinImage = localAnalysis.isNotEmpty &&
-        localAnalysis.first.confidence >= _minConfidenceForAI;
-
-    if (!hasValidSkinImage) {
+    // Step 2: Check if Gemini is configured
+    if (!ApiConfig.isGeminiConfigured) {
       emit(state.copyWith(
         status: SkinAnalysisStatus.failure,
-        errorMessage: 'Please capture a clear image of your skin',
+        errorMessage: 'AI analysis not configured. Please add Gemini API key.',
         clearImage: true,
-        clearResults: true,
       ));
       return;
     }
 
-    // Step 2: If Gemini is configured, send to AI for detailed analysis
-    if (ApiConfig.isGeminiConfigured) {
-      emit(state.copyWith(
-        status: SkinAnalysisStatus.analyzingWithAI,
-        results: localAnalysis,
-      ));
+    // Step 3: Analyze with Gemini AI
+    emit(state.copyWith(status: SkinAnalysisStatus.analyzingWithAI));
 
-      final aiResult = await repository.analyzeWithAI(event.imageFile);
+    final aiResult = await repository.analyzeWithAI(event.imageFile);
 
-      aiResult.fold(
-        (failure) {
-          // AI failed, but we still have local results
-          emit(state.copyWith(
-            status: SkinAnalysisStatus.analyzed,
-            errorMessage: 'AI analysis unavailable: ${failure.message}',
-          ));
-        },
-        (aiAnalysis) {
-          emit(state.copyWith(
-            status: SkinAnalysisStatus.analyzed,
-            aiAnalysis: aiAnalysis,
-          ));
-        },
-      );
-    } else {
-      // No AI configured, use local results only
-      emit(state.copyWith(
-        status: SkinAnalysisStatus.analyzed,
-        results: localAnalysis,
-      ));
-    }
+    aiResult.fold(
+      (failure) {
+        emit(state.copyWith(
+          status: SkinAnalysisStatus.failure,
+          errorMessage: failure.message,
+        ));
+      },
+      (aiAnalysis) {
+        emit(state.copyWith(
+          status: SkinAnalysisStatus.analyzed,
+          aiAnalysis: aiAnalysis,
+        ));
+      },
+    );
   }
 
   Future<void> _onSaveRequested(
     SkinAnalysisSaveRequested event,
     Emitter<SkinAnalysisState> emit,
   ) async {
-    if (state.selectedImage == null ||
-        (state.results.isEmpty && state.aiAnalysis == null)) {
+    if (state.selectedImage == null || state.aiAnalysis == null) {
       emit(state.copyWith(
         status: SkinAnalysisStatus.failure,
         errorMessage: 'No analysis to save',
@@ -133,8 +111,7 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
     final result = await repository.saveAnalysis(
       userId: _userId!,
       imageFile: state.selectedImage!,
-      results: state.results,
-      aiAnalysis: state.aiAnalysis,
+      aiAnalysis: state.aiAnalysis!,
     );
 
     result.fold(
@@ -150,12 +127,10 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
     SkinAnalysisShareRequested event,
     Emitter<SkinAnalysisState> emit,
   ) async {
-    if (state.aiAnalysis == null && state.results.isEmpty) return;
+    if (state.aiAnalysis == null) return;
 
-    String message;
-    if (state.aiAnalysis != null) {
-      final ai = state.aiAnalysis!;
-      message = '''
+    final ai = state.aiAnalysis!;
+    final message = '''
 SkinSync AI Analysis Report
 
 Overall Score: ${ai.overallScore}/100
@@ -172,17 +147,6 @@ ${ai.aiInsight ?? ''}
 
 Download App: https://skinsync.app/download
 ''';
-    } else {
-      final topResult = state.results.first;
-      message = '''
-SkinSync Analysis Report
-
-Top Result: ${topResult.displayLabel} (${(topResult.confidence * 100).toStringAsFixed(1)}%)
-Risk Level: ${topResult.riskLevel}
-
-Download App: https://skinsync.app/download
-''';
-    }
 
     await Share.share(message, subject: 'SkinSync Analysis Results');
   }

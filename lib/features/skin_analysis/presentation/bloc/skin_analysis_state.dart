@@ -2,7 +2,7 @@ part of 'skin_analysis_bloc.dart';
 
 enum SkinAnalysisStatus {
   initial,
-  validating,      // Local model validating image
+  validating,      // Validating skin image
   analyzingWithAI, // Gemini analyzing
   analyzed,
   saving,
@@ -13,7 +13,6 @@ enum SkinAnalysisStatus {
 final class SkinAnalysisState extends Equatable {
   final SkinAnalysisStatus status;
   final File? selectedImage;
-  final List<AnalysisResultModel> results;
   final AIAnalysisModel? aiAnalysis;
   final String? errorMessage;
   final int scanningStep;
@@ -21,7 +20,6 @@ final class SkinAnalysisState extends Equatable {
   const SkinAnalysisState({
     this.status = SkinAnalysisStatus.initial,
     this.selectedImage,
-    this.results = const [],
     this.aiAnalysis,
     this.errorMessage,
     this.scanningStep = 0,
@@ -34,18 +32,15 @@ final class SkinAnalysisState extends Equatable {
   SkinAnalysisState copyWith({
     SkinAnalysisStatus? status,
     File? selectedImage,
-    List<AnalysisResultModel>? results,
     AIAnalysisModel? aiAnalysis,
     String? errorMessage,
     int? scanningStep,
     bool clearImage = false,
-    bool clearResults = false,
     bool clearAIAnalysis = false,
   }) {
     return SkinAnalysisState(
       status: status ?? this.status,
       selectedImage: clearImage ? null : (selectedImage ?? this.selectedImage),
-      results: clearResults ? const [] : (results ?? this.results),
       aiAnalysis: clearAIAnalysis ? null : (aiAnalysis ?? this.aiAnalysis),
       errorMessage: errorMessage,
       scanningStep: scanningStep ?? this.scanningStep,
@@ -53,5 +48,5 @@ final class SkinAnalysisState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, selectedImage, results, aiAnalysis, errorMessage, scanningStep];
+  List<Object?> get props => [status, selectedImage, aiAnalysis, errorMessage, scanningStep];
 }

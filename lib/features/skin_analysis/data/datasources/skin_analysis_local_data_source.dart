@@ -1,126 +1,64 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:skin_sync/core/error/exceptions.dart';
 import 'package:skin_sync/core/services/ml_kit_skin_detector.dart';
-import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
-import 'package:skin_sync/core/models/tflite/tflite_repository.dart';
 
 abstract class SkinAnalysisLocalDataSource {
-  Future<void> initializeModel();
-  Future<List<AnalysisResultModel>> analyzeImage(File imageFile);
+  Future<void> initialize();
+  Future<bool> validateSkinImage(File imageFile);
+  Future<File> prepareImage(File imageFile);
   void dispose();
 }
 
 class SkinAnalysisLocalDataSourceImpl implements SkinAnalysisLocalDataSource {
-  final TFLiteRepository _tfLiteRepo = TFLiteRepository();
   final MLKitSkinDetector _mlKitDetector = MLKitSkinDetector();
-  bool _isModelReady = false;
+  bool _isInitialized = false;
 
   @override
-  Future<void> initializeModel() async {
-    if (!_isModelReady) {
-      await _tfLiteRepo.initialize();
+  Future<void> initialize() async {
+    if (!_isInitialized) {
       await _mlKitDetector.initialize();
-      _isModelReady = true;
+      _isInitialized = true;
     }
   }
 
   @override
-  Future<List<AnalysisResultModel>> analyzeImage(File imageFile) async {
+  Future<bool> validateSkinImage(File imageFile) async {
     try {
-      await initializeModel();
+      await initialize();
 
+      // Two-tier validation: ML Kit first, then color-based fallback
+      final isValidByMLKit = await _mlKitDetector.isValidSkinImage(imageFile);
+
+      if (isValidByMLKit) return true;
+
+      // Fallback to color-based skin detection
+      final bytes = await imageFile.readAsBytes();
+      final isSkinByColor = await compute(_isHumanSkinFromBytes, bytes);
+
+      return isSkinByColor;
+    } catch (e) {
+      debugPrint('Validation error: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<File> prepareImage(File imageFile) async {
+    try {
       final bytes = await imageFile.readAsBytes();
       final orientedImage = await compute(_correctOrientationFromBytes, bytes);
       final correctedFile = File(imageFile.path)
         ..writeAsBytesSync(img.encodeJpg(orientedImage));
-
-      // Two-tier validation: ML Kit first, then color-based fallback
-      final isValidByMLKit = await _mlKitDetector.isValidSkinImage(correctedFile);
-
-      if (!isValidByMLKit) {
-        // Fallback to expanded color-based detection
-        final correctedBytes = await correctedFile.readAsBytes();
-        final isSkinByColor = await compute(_isHumanSkinFromBytes, correctedBytes);
-
-        if (!isSkinByColor) {
-          throw const ValidationException(
-            message: 'Please upload a clear photo of your skin',
-          );
-        }
-      }
-
-      final modelOutput = await _tfLiteRepo.analyzeImage(correctedFile.path);
-      final labels = await _tfLiteRepo.loadLabels();
-      return _parseResults(modelOutput, labels);
+      return correctedFile;
     } catch (e) {
-      if (e is ValidationException) rethrow;
-      throw ServerException(message: 'Analysis failed: $e');
+      throw ServerException(message: 'Failed to prepare image: $e');
     }
-  }
-
-  List<AnalysisResultModel> _parseResults(
-    List<List<double>> modelOutput,
-    List<String> labels,
-  ) {
-    final scores = modelOutput[0];
-
-    final resultList = List.generate(scores.length, (index) {
-      final medicalLabel = labels[index];
-      final riskLevel = _getRiskLevel(medicalLabel);
-      final color = _getRiskColor(riskLevel);
-
-      return AnalysisResultModel(
-        medicalLabel: medicalLabel,
-        displayLabel: _mapLabel(medicalLabel),
-        riskLevel: riskLevel,
-        riskColorValue: color.toARGB32(),
-        confidence: scores[index],
-      );
-    });
-
-    resultList.sort(
-      (a, b) => b.confidence.compareTo(a.confidence),
-    );
-    return resultList;
-  }
-
-  String _mapLabel(String medicalLabel) {
-    const labelMap = {
-      'Melanocytic nevi (nv)': 'Benign Mole',
-      'Melanoma (mel)': 'Possible Skin Cancer',
-      'Benign keratosis (bkl)': 'Harmless Skin Growth',
-      'Basal cell carcinoma (bcc)': 'Skin Cancer (BCC)',
-      'Actinic keratoses (akiec)': 'Pre-Cancerous Spot',
-    };
-    return labelMap[medicalLabel] ?? medicalLabel;
-  }
-
-  String _getRiskLevel(String label) {
-    switch (label) {
-      case 'Melanoma (mel)':
-      case 'Basal cell carcinoma (bcc)':
-        return 'High Risk';
-      case 'Actinic keratoses (akiec)':
-        return 'Medium Risk';
-      default:
-        return 'Low Risk';
-    }
-  }
-
-  Color _getRiskColor(String riskLevel) {
-    return switch (riskLevel) {
-      'High Risk' => Colors.red,
-      'Medium Risk' => Colors.orange,
-      _ => Colors.green,
-    };
   }
 
   @override
   void dispose() {
-    _tfLiteRepo.dispose();
     _mlKitDetector.dispose();
   }
 }
@@ -138,7 +76,6 @@ bool _isHumanSkinFromBytes(Uint8List bytes) {
 
   int skinPixels = 0;
   final totalPixels = resized.width * resized.height;
-  // Lowered threshold to be more permissive
   const minSkinPercentage = 0.15;
 
   for (int y = 0; y < resized.height; y++) {
@@ -151,23 +88,24 @@ bool _isHumanSkinFromBytes(Uint8List bytes) {
       final hsv = _rgbToHsv(r, g, b);
       final yCbCr = _rgbToYCbCr(r, g, b);
 
-      // Expanded ranges to support all skin tones (light to dark)
-      // HSV-based detection with wider ranges
-      final isSkinHSV = (hsv[0] >= 0.0 && hsv[0] <= 0.15) && // Hue: red-orange-yellow
-          (hsv[1] >= 0.10 && hsv[1] <= 0.95) && // Saturation: wider range
-          (hsv[2] >= 0.15 && hsv[2] <= 0.98); // Value: include darker skin
+      // HSV-based detection
+      final isSkinHSV = (hsv[0] >= 0.0 && hsv[0] <= 0.15) &&
+          (hsv[1] >= 0.10 && hsv[1] <= 0.95) &&
+          (hsv[2] >= 0.15 && hsv[2] <= 0.98);
 
-      // YCbCr-based detection with expanded ranges for all ethnicities
-      final isSkinYCbCr = (yCbCr[1] >= 70 && yCbCr[1] <= 145) && // Cb: expanded
-          (yCbCr[2] >= 125 && yCbCr[2] <= 200); // Cr: expanded for darker skin
+      // YCbCr-based detection
+      final isSkinYCbCr = (yCbCr[1] >= 70 && yCbCr[1] <= 145) &&
+          (yCbCr[2] >= 125 && yCbCr[2] <= 200);
 
-      // RGB ratio-based detection (works across skin tones)
-      final isSkinRGB = r > 60 && g > 40 && b > 20 && // Minimum values
-          r > g && g > b && // Red > Green > Blue (typical for skin)
-          (r - g).abs() > 10 && // Some color difference
-          r - b > 15; // Red significantly more than blue
+      // RGB ratio-based detection
+      final isSkinRGB = r > 60 &&
+          g > 40 &&
+          b > 20 &&
+          r > g &&
+          g > b &&
+          (r - g).abs() > 10 &&
+          r - b > 15;
 
-      // Pass if any method detects skin
       if (isSkinHSV || isSkinYCbCr || isSkinRGB) skinPixels++;
     }
   }

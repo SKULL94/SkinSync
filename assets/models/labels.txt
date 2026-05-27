@@ -1,5 +1,0 @@
-Melanocytic nevi (nv)          # Benign
-Melanoma (mel)                 # Malignant
-Benign keratosis (bkl)         # Benign
-Basal cell carcinoma (bcc)     # Malignant 
-Actinic keratoses (akiec)      # Pre-cancerous

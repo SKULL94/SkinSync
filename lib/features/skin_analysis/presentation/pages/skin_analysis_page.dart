@@ -13,7 +13,6 @@ import 'package:skin_sync/core/utils/snackbar_helper.dart';
 import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
-import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/face_camera_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
@@ -21,6 +20,16 @@ import 'package:skin_sync/features/skin_analysis/presentation/widgets/face_camer
 
 class SkinAnalysisPage extends StatelessWidget {
   const SkinAnalysisPage({super.key});
+
+  int _getSeverityColorValue(String severity) {
+    return switch (severity.toLowerCase()) {
+      'mild' => 0xFF4CAF50,
+      'moderate' => 0xFFFF9800,
+      'severe' => 0xFFF44336,
+      'needs_dermatologist' => 0xFF9C27B0,
+      _ => 0xFF9E9E9E,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,21 +44,21 @@ class SkinAnalysisPage extends StatelessWidget {
           SnackbarHelper.showSuccess(context, StringConst.kAnalysisSavedSuccess);
 
           // Optimistically add to history with local image path
-          if (state.selectedImage != null) {
+          if (state.selectedImage != null && state.aiAnalysis != null) {
+            final ai = state.aiAnalysis!;
             final historyEntity = HistoryEntity(
               id: DateTime.now().millisecondsSinceEpoch.toString(),
-              imageUrl: state.selectedImage!.path, // Local path for now
-              results: state.results
-                  .map((r) => {
-                        'displayLabel': r.displayLabel,
-                        'medicalLabel': r.medicalLabel,
-                        'confidence': r.confidence,
-                        'riskLevel': r.riskLevel,
-                        'riskColorValue': r.riskColor.value,
-                      })
-                  .toList(),
+              imageUrl: state.selectedImage!.path,
+              results: [
+                {
+                  'displayLabel': 'Skin Health Score',
+                  'confidence': ai.overallScore / 100.0,
+                  'riskLevel': ai.severity,
+                  'riskColorValue': _getSeverityColorValue(ai.severity),
+                },
+              ],
               date: DateTime.now(),
-              aiAnalysis: state.aiAnalysis?.toJson(),
+              aiAnalysis: ai.toJson(),
             );
             context.read<HistoryBloc>().add(HistoryAddOptimistic(historyEntity));
           }
@@ -67,8 +76,7 @@ class SkinAnalysisPage extends StatelessWidget {
           );
         }
 
-        if (state.selectedImage != null &&
-            (state.results.isNotEmpty || state.aiAnalysis != null)) {
+        if (state.selectedImage != null && state.aiAnalysis != null) {
           return _ResultsView(state: state);
         }
 
@@ -435,23 +443,6 @@ class _ResultsView extends StatelessWidget {
     }
   }
 
-  int _getMetricValue(
-      List<AnalysisResultModel> results, String label, int defaultValue) {
-    final result = results
-        .where((r) => r.displayLabel.toLowerCase() == label.toLowerCase())
-        .firstOrNull;
-    if (result != null) {
-      return (result.confidence * 100).toInt();
-    }
-    return defaultValue;
-  }
-
-  int _calculateOverallScore(List<AnalysisResultModel> results) {
-    if (results.isEmpty) return 75;
-    final totalConfidence =
-        results.fold<double>(0, (sum, r) => sum + r.confidence);
-    return ((totalConfidence / results.length) * 100).toInt();
-  }
 
   Color _getSeverityColor(String severity) {
     switch (severity.toLowerCase()) {
@@ -509,9 +500,8 @@ class _ResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final results = state.results;
-    final ai = state.aiAnalysis;
-    final overallScore = ai?.overallScore ?? _calculateOverallScore(results);
+    final ai = state.aiAnalysis!;
+    final overallScore = ai.overallScore;
 
     return Scaffold(
       backgroundColor: AppColors.ink,
@@ -606,28 +596,26 @@ class _ResultsView extends StatelessWidget {
                         const SizedBox(height: 20),
                         _buildScoreHeader(overallScore),
                         const SizedBox(height: 20),
-                        if (ai != null) ...[
-                          _buildBadges(ai),
-                          const SizedBox(height: 16),
-                        ],
-                        _buildMetricTags(results, ai),
+                        _buildBadges(ai),
+                        const SizedBox(height: 16),
+                        _buildMetricTags(ai),
                         const SizedBox(height: 20),
-                        if (ai?.aiInsight != null) ...[
-                          _buildAIInsight(ai!),
+                        if (ai.aiInsight != null) ...[
+                          _buildAIInsight(ai),
                           const SizedBox(height: 16),
                         ],
                         _buildDisclaimer(ai),
                         const SizedBox(height: 24),
-                        if (ai != null && ai.detectedConcerns.isNotEmpty) ...[
+                        if (ai.detectedConcerns.isNotEmpty) ...[
                           _buildDetectedConcerns(ai),
                           const SizedBox(height: 24),
                         ],
-                        _buildDetailedAnalysis(results, ai),
-                        if (ai != null && ai.recommendations.isNotEmpty) ...[
+                        _buildDetailedAnalysis(ai),
+                        if (ai.recommendations.isNotEmpty) ...[
                           const SizedBox(height: 24),
                           _buildRecommendations(ai),
                         ],
-                        if (ai != null && ai.ingredientsToLookFor.isNotEmpty) ...[
+                        if (ai.ingredientsToLookFor.isNotEmpty) ...[
                           const SizedBox(height: 24),
                           _buildIngredients(ai),
                         ],
@@ -724,37 +712,29 @@ class _ResultsView extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricTags(List<AnalysisResultModel> results, AIAnalysisModel? ai) {
+  Widget _buildMetricTags(AIAnalysisModel ai) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
           _MetricTag(
             label: StringConst.kHydrationMetric,
-            value: ai != null
-                ? '${_getMetricFromAI(ai, 'hydration', 72)}%'
-                : '${_getMetricValue(results, 'Hydration', 72)}%',
+            value: '${ai.metrics.hydration}%',
           ),
           const SizedBox(width: 8),
           _MetricTag(
             label: StringConst.kTextureMetric,
-            value: ai != null
-                ? '${_getMetricFromAI(ai, 'texture', 68)}%'
-                : '${_getMetricValue(results, 'Texture', 68)}%',
+            value: '${ai.metrics.texture}%',
           ),
           const SizedBox(width: 8),
           _MetricTag(
             label: StringConst.kClarityMetric,
-            value: ai != null
-                ? '${_getMetricFromAI(ai, 'clarity', 65)}%'
-                : '${_getMetricValue(results, 'Clarity', 65)}%',
+            value: '${ai.metrics.clarity}%',
           ),
           const SizedBox(width: 8),
           _MetricTag(
             label: StringConst.kOilinessMetric,
-            value: ai != null
-                ? '${_getMetricFromAI(ai, 'oiliness', 45)}%'
-                : '${_getMetricValue(results, 'Oiliness', 45)}%',
+            value: '${ai.metrics.oiliness}%',
           ),
         ],
       ),
@@ -819,8 +799,8 @@ class _ResultsView extends StatelessWidget {
     );
   }
 
-  Widget _buildDisclaimer(AIAnalysisModel? ai) {
-    final needsWarning = ai?.disclaimerRequired ?? false;
+  Widget _buildDisclaimer(AIAnalysisModel ai) {
+    final needsWarning = ai.disclaimerRequired;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -894,17 +874,11 @@ class _ResultsView extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailedAnalysis(List<AnalysisResultModel> results, AIAnalysisModel? ai) {
-    final hydrationValue = ai != null
-        ? _getMetricFromAI(ai, 'hydration', 72)
-        : _getMetricValue(results, 'Hydration', 72);
-    final textureValue = ai != null
-        ? _getMetricFromAI(ai, 'texture', 68)
-        : _getMetricValue(results, 'Texture', 68);
-    final clarityValue = ai != null
-        ? _getMetricFromAI(ai, 'clarity', 65)
-        : _getMetricValue(results, 'Clarity', 65);
-    final poreValue = ai != null ? _getMetricFromAI(ai, 'pore_visibility', 50) : 50;
+  Widget _buildDetailedAnalysis(AIAnalysisModel ai) {
+    final hydrationValue = ai.metrics.hydration;
+    final textureValue = ai.metrics.texture;
+    final clarityValue = ai.metrics.clarity;
+    final poreValue = ai.metrics.poreVisibility;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

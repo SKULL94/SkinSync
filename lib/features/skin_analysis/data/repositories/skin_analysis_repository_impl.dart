@@ -5,7 +5,6 @@ import 'package:skin_sync/core/error/failures.dart';
 import 'package:skin_sync/core/services/network_info.dart';
 import 'package:skin_sync/features/skin_analysis/data/datasources/skin_analysis_local_data_source.dart';
 import 'package:skin_sync/features/skin_analysis/data/datasources/skin_analysis_remote_data_source.dart';
-import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
 import 'package:skin_sync/features/skin_analysis/domain/repositories/skin_analysis_repository.dart';
 
@@ -21,14 +20,21 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
   });
 
   @override
-  Future<Either<Failure, List<AnalysisResultModel>>> analyzeImage(
-    File image,
-  ) async {
+  Future<Either<Failure, bool>> validateImage(File image) async {
     try {
-      final results = await localDataSource.analyzeImage(image);
-      return Right(results);
-    } on ValidationException catch (e) {
-      return Left(ValidationFailure(message: e.message));
+      // Prepare image (fix orientation)
+      final preparedImage = await localDataSource.prepareImage(image);
+
+      // Validate if it's a skin image
+      final isValid = await localDataSource.validateSkinImage(preparedImage);
+
+      if (!isValid) {
+        return const Left(
+          ValidationFailure(message: 'Please capture a clear image of your skin'),
+        );
+      }
+
+      return const Right(true);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {
@@ -57,14 +63,12 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
   Future<Either<Failure, void>> saveAnalysis({
     required String userId,
     required File imageFile,
-    required List<AnalysisResultModel> results,
-    AIAnalysisModel? aiAnalysis,
+    required AIAnalysisModel aiAnalysis,
   }) async {
     try {
       await remoteDataSource.saveAnalysis(
         userId: userId,
         imageFile: imageFile,
-        results: results,
         aiAnalysis: aiAnalysis,
       );
       return const Right(null);
