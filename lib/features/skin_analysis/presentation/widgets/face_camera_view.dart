@@ -31,7 +31,7 @@ class _FaceCameraViewState extends State<FaceCameraView>
   List<CameraDescription>? _cameras;
   DateTime? _lastDetectionTime;
 
-  final double _circleRadiusFactor = 0.35;
+  final double _circleRadiusFactor = 0.38; // Slightly larger circle for easier positioning
   static const _detectionInterval = Duration(milliseconds: 300);
 
   @override
@@ -107,7 +107,7 @@ class _FaceCameraViewState extends State<FaceCameraView>
         enableLandmarks: false,
         enableClassification: false,
         enableTracking: false,
-        minFaceSize: 0.15,
+        minFaceSize: 0.2, // Require proper face size to avoid false positives
         performanceMode: FaceDetectorMode.fast,
       ),
     );
@@ -197,16 +197,18 @@ class _FaceCameraViewState extends State<FaceCameraView>
     final faceSize =
         (faceRect.width / imageWidth + faceRect.height / imageHeight) / 2;
 
-    final distanceFromCenter =
-        ((faceCenterX - 0.5).abs() + (faceCenterY - 0.5).abs()) / 2;
+    // Check if face is roughly in frame (not at extreme edges)
+    final isInFrame = faceCenterX > 0.15 && faceCenterX < 0.85 &&
+                      faceCenterY > 0.15 && faceCenterY < 0.85;
 
     FaceDetectionStatus newStatus;
-    if (distanceFromCenter > 0.2) {
-      newStatus = FaceDetectionStatus.faceOutsideCircle;
-    } else if (faceSize < 0.2) {
+    // Balanced thresholds - needs proper face but not pixel-perfect positioning
+    if (faceSize < 0.18) {
       newStatus = FaceDetectionStatus.faceTooFar;
-    } else if (faceSize > 0.6) {
+    } else if (faceSize > 0.80) {
       newStatus = FaceDetectionStatus.faceTooClose;
+    } else if (!isInFrame) {
+      newStatus = FaceDetectionStatus.faceOutsideCircle;
     } else {
       newStatus = FaceDetectionStatus.faceReady;
     }

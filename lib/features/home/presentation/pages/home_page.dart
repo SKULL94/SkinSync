@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -106,11 +109,13 @@ class _HomePageContent extends StatelessWidget {
     return BlocBuilder<DashboardBloc, DashboardState>(
       buildWhen: (prev, curr) =>
           prev.dashboard?.userName != curr.dashboard?.userName ||
+          prev.dashboard?.avatarUrl != curr.dashboard?.avatarUrl ||
           prev.status != curr.status,
       builder: (context, state) {
         final isLoading = state.status == DashboardStatus.initial ||
             state.status == DashboardStatus.loading;
         final userName = state.dashboard?.userName ?? 'there';
+        final avatarUrl = state.dashboard?.avatarUrl;
         final avatarInitial = userName.isNotEmpty && userName != 'there'
             ? userName[0].toUpperCase()
             : '?';
@@ -172,37 +177,75 @@ class _HomePageContent extends StatelessWidget {
                         ),
                       ),
                     )
-                  : Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFF0D4C2),
-                            Color(0xFFEDD8D8),
-                          ],
-                        ),
-                        border:
-                            Border.all(color: AppColors.cardBorder, width: 2),
-                      ),
-                      child: Center(
-                        child: Text(
-                          avatarInitial,
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
+                  : _buildAvatar(avatarUrl, avatarInitial),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildAvatar(String? avatarUrl, String initial) {
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      final isLocalFile = !avatarUrl.startsWith('http');
+
+      return Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.cardBorder, width: 2),
+        ),
+        child: ClipOval(
+          child: isLocalFile
+              ? Image.file(
+                  File(avatarUrl),
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildInitialAvatar(initial),
+                )
+              : CachedNetworkImage(
+                  imageUrl: avatarUrl,
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => _buildInitialAvatar(initial),
+                  errorWidget: (_, __, ___) => _buildInitialAvatar(initial),
+                ),
+        ),
+      );
+    }
+
+    return _buildInitialAvatar(initial);
+  }
+
+  Widget _buildInitialAvatar(String initial) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFF0D4C2),
+            Color(0xFFEDD8D8),
+          ],
+        ),
+        border: Border.all(color: AppColors.cardBorder, width: 2),
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
     );
   }
 

@@ -40,6 +40,7 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
       final userName = userDetails?['first_name'] as String? ??
           profile?.firstName ??
           StringConst.kDefaultUserName;
+      final avatarUrl = userDetails?['avatar_url'] as String?;
       final skinType = profile?.skinType;
 
       final scanStats = await _fetchScanStatistics();
@@ -48,6 +49,7 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
 
       return DashboardModel(
         userName: userName,
+        avatarUrl: avatarUrl,
         skinType: skinType,
         totalScans: scanStats['totalScans'] ?? 0,
         currentStreak: scanStats['streak'] ?? 0,

@@ -3,6 +3,7 @@ import 'package:skin_sync/features/home/domain/entities/dashboard_entity.dart';
 class DashboardModel extends DashboardEntity {
   const DashboardModel({
     required super.userName,
+    super.avatarUrl,
     super.skinType,
     super.totalScans,
     super.currentStreak,

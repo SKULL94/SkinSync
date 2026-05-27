@@ -156,7 +156,8 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
                   color: AppColors.sage,
                 ),
               ),
-              title: Text('Choose from Gallery', style: AppTextStyles.bodyMedium),
+              title:
+                  Text('Choose from Gallery', style: AppTextStyles.bodyMedium),
               subtitle: Text(
                 'Select an existing photo',
                 style: AppTextStyles.caption,
@@ -164,7 +165,8 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
               onTap: () {
                 Navigator.pop(sheetContext);
                 context.read<PersonalDetailsBloc>().add(
-                      const PersonalDetailsImagePickRequested(fromCamera: false),
+                      const PersonalDetailsImagePickRequested(
+                          fromCamera: false),
                     );
               },
             ),
@@ -218,162 +220,177 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<PersonalDetailsBloc, PersonalDetailsState>(
-      listenWhen: (previous, current) => previous.status != current.status,
+    return BlocListener<PersonalDetailsBloc, PersonalDetailsState>(
+      listenWhen: (previous, current) =>
+          previous.isUploadingImage &&
+          !current.isUploadingImage &&
+          current.avatarUrl != null,
       listener: (context, state) {
-        if (state.status == PersonalDetailsStatus.loaded) {
-          _syncControllersWithState(state);
-        }
-        if (state.status == PersonalDetailsStatus.success) {
-          // Dismiss keyboard/unfocus
-          FocusScope.of(context).unfocus();
-
-          // Refresh dashboard to reflect changes
-          context.read<DashboardBloc>().add(const RefreshDashboard());
-
-          SnackbarHelper.showSuccess(context, StringConst.kProfileSavedSuccess);
-        }
-        if (state.status == PersonalDetailsStatus.failure &&
-            state.errorMessage != null) {
-          SnackbarHelper.showError(context, state.errorMessage!);
-        }
+        // Refresh dashboard when avatar upload completes
+        context.read<DashboardBloc>().add(const RefreshDashboard());
       },
-      buildWhen: (previous, current) =>
-          previous.status != current.status ||
-          previous.gender != current.gender ||
-          previous.dateOfBirth != current.dateOfBirth ||
-          previous.firstName != current.firstName ||
-          previous.avatarUrl != current.avatarUrl ||
-          previous.localAvatarPath != current.localAvatarPath ||
-          previous.isUploadingImage != current.isUploadingImage,
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          body: Column(
-            children: [
-              SubHeader(
-                superText: StringConst.kProfile,
-                title: StringConst.kPersonalDetails,
-                onBack: () => context.pop(),
-              ),
-              Expanded(
-                child: state.status == PersonalDetailsStatus.loading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
+      child: BlocConsumer<PersonalDetailsBloc, PersonalDetailsState>(
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: (context, state) {
+          if (state.status == PersonalDetailsStatus.loaded) {
+            _syncControllersWithState(state);
+          }
+          if (state.status == PersonalDetailsStatus.success) {
+            // Dismiss keyboard/unfocus
+            FocusScope.of(context).unfocus();
+
+            // Refresh dashboard to reflect changes
+            context.read<DashboardBloc>().add(const RefreshDashboard());
+
+            // Pop back to previous screen
+            context.pop();
+          }
+          if (state.status == PersonalDetailsStatus.failure &&
+              state.errorMessage != null) {
+            SnackbarHelper.showError(context, state.errorMessage!);
+          }
+        },
+        buildWhen: (previous, current) =>
+            previous.status != current.status ||
+            previous.gender != current.gender ||
+            previous.dateOfBirth != current.dateOfBirth ||
+            previous.firstName != current.firstName ||
+            previous.avatarUrl != current.avatarUrl ||
+            previous.localAvatarPath != current.localAvatarPath ||
+            previous.isUploadingImage != current.isUploadingImage,
+        builder: (context, state) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Column(
+              children: [
+                SubHeader(
+                  superText: StringConst.kProfile,
+                  title: StringConst.kPersonalDetails,
+                  onBack: () => context.pop(),
+                ),
+                Expanded(
+                  child: state.status == PersonalDetailsStatus.loading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _AvatarCard(
+                                userName: state.firstName,
+                                avatarUrl: state.avatarUrl,
+                                localAvatarPath: state.localAvatarPath,
+                                isUploading: state.isUploadingImage,
+                                onEditTap: () =>
+                                    _showImagePickerOptions(context),
+                              ),
+                              const SizedBox(height: 14),
+                              const SectionLabel(StringConst.kBasicInfo),
+                              const SizedBox(height: 8),
+                              FormGroup(rows: [
+                                _EditableFormRow(
+                                  label: StringConst.kFirstName,
+                                  controller: _firstNameController,
+                                  onChanged: (v) => context
+                                      .read<PersonalDetailsBloc>()
+                                      .add(PersonalDetailsFirstNameChanged(v)),
+                                ),
+                                _EditableFormRow(
+                                  label: StringConst.kLastName,
+                                  controller: _lastNameController,
+                                  hintText: StringConst.kEnterLastName,
+                                  onChanged: (v) => context
+                                      .read<PersonalDetailsBloc>()
+                                      .add(PersonalDetailsLastNameChanged(v)),
+                                ),
+                                _TappableFormRow(
+                                  label: StringConst.kDateOfBirth,
+                                  value: _formatDob(state.dateOfBirth),
+                                  onTap: () =>
+                                      _selectDate(context, state.dateOfBirth),
+                                ),
+                                _TappableFormRow(
+                                  label: StringConst.kGender,
+                                  value: state.formattedGender,
+                                  onTap: () =>
+                                      _selectGender(context, state.gender),
+                                ),
+                              ]),
+                              const SizedBox(height: 14),
+                              const SectionLabel(StringConst.kContact),
+                              const SizedBox(height: 8),
+                              FormGroup(rows: [
+                                _FormRow(
+                                  label: StringConst.kMobileNumberField,
+                                  value: state.formattedPhone,
+                                  trailing: const _VerifiedBadge(),
+                                ),
+                                _EditableFormRow(
+                                  label: StringConst.kEmailAddress,
+                                  controller: _emailController,
+                                  hintText: StringConst.kEnterEmail,
+                                  keyboardType: TextInputType.emailAddress,
+                                  onChanged: (v) => context
+                                      .read<PersonalDetailsBloc>()
+                                      .add(PersonalDetailsEmailChanged(v)),
+                                ),
+                                _EditableFormRow(
+                                  label: StringConst.kLocation,
+                                  controller: _locationController,
+                                  hintText: StringConst.kCityCountry,
+                                  onChanged: (v) => context
+                                      .read<PersonalDetailsBloc>()
+                                      .add(PersonalDetailsLocationChanged(v)),
+                                ),
+                              ]),
+                              // TODO: Re-enable Skin Background section when ready
+                              // const SizedBox(height: 14),
+                              // const SectionLabel(StringConst.kSkinBackground),
+                              // const SizedBox(height: 8),
+                              // FormGroup(rows: [
+                              //   _TappableFormRow(
+                              //     label: StringConst.kFitzpatrickScale,
+                              //     value:
+                              //         state.fitzpatrickScale ?? StringConst.kNotSet,
+                              //     onTap: () {},
+                              //   ),
+                              //   _EditableFormRow(
+                              //     label: StringConst.kKnownAllergies,
+                              //     controller: _allergiesController,
+                              //     hintText: StringConst.kAllergyHint,
+                              //     onChanged: (v) => context
+                              //         .read<PersonalDetailsBloc>()
+                              //         .add(PersonalDetailsAllergiesChanged(v)),
+                              //   ),
+                              // ]),
+                              const SizedBox(height: 24),
+                              SaveButton(
+                                label:
+                                    state.status == PersonalDetailsStatus.saving
+                                        ? StringConst.kSaving
+                                        : StringConst.kSaveChanges,
+                                isLoading: state.status ==
+                                    PersonalDetailsStatus.saving,
+                                onTap: () {
+                                  context.read<PersonalDetailsBloc>().add(
+                                      const PersonalDetailsSaveRequested());
+                                  context.pop();
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
                         ),
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _AvatarCard(
-                              userName: state.firstName,
-                              avatarUrl: state.avatarUrl,
-                              localAvatarPath: state.localAvatarPath,
-                              isUploading: state.isUploadingImage,
-                              onEditTap: () => _showImagePickerOptions(context),
-                            ),
-                            const SizedBox(height: 14),
-                            const SectionLabel(StringConst.kBasicInfo),
-                            const SizedBox(height: 8),
-                            FormGroup(rows: [
-                              _EditableFormRow(
-                                label: StringConst.kFirstName,
-                                controller: _firstNameController,
-                                onChanged: (v) => context
-                                    .read<PersonalDetailsBloc>()
-                                    .add(PersonalDetailsFirstNameChanged(v)),
-                              ),
-                              _EditableFormRow(
-                                label: StringConst.kLastName,
-                                controller: _lastNameController,
-                                hintText: StringConst.kEnterLastName,
-                                onChanged: (v) => context
-                                    .read<PersonalDetailsBloc>()
-                                    .add(PersonalDetailsLastNameChanged(v)),
-                              ),
-                              _TappableFormRow(
-                                label: StringConst.kDateOfBirth,
-                                value: _formatDob(state.dateOfBirth),
-                                onTap: () =>
-                                    _selectDate(context, state.dateOfBirth),
-                              ),
-                              _TappableFormRow(
-                                label: StringConst.kGender,
-                                value: state.formattedGender,
-                                onTap: () =>
-                                    _selectGender(context, state.gender),
-                              ),
-                            ]),
-                            const SizedBox(height: 14),
-                            const SectionLabel(StringConst.kContact),
-                            const SizedBox(height: 8),
-                            FormGroup(rows: [
-                              _FormRow(
-                                label: StringConst.kMobileNumberField,
-                                value: state.formattedPhone,
-                                trailing: const _VerifiedBadge(),
-                              ),
-                              _EditableFormRow(
-                                label: StringConst.kEmailAddress,
-                                controller: _emailController,
-                                hintText: StringConst.kEnterEmail,
-                                keyboardType: TextInputType.emailAddress,
-                                onChanged: (v) => context
-                                    .read<PersonalDetailsBloc>()
-                                    .add(PersonalDetailsEmailChanged(v)),
-                              ),
-                              _EditableFormRow(
-                                label: StringConst.kLocation,
-                                controller: _locationController,
-                                hintText: StringConst.kCityCountry,
-                                onChanged: (v) => context
-                                    .read<PersonalDetailsBloc>()
-                                    .add(PersonalDetailsLocationChanged(v)),
-                              ),
-                            ]),
-                            // TODO: Re-enable Skin Background section when ready
-                            // const SizedBox(height: 14),
-                            // const SectionLabel(StringConst.kSkinBackground),
-                            // const SizedBox(height: 8),
-                            // FormGroup(rows: [
-                            //   _TappableFormRow(
-                            //     label: StringConst.kFitzpatrickScale,
-                            //     value:
-                            //         state.fitzpatrickScale ?? StringConst.kNotSet,
-                            //     onTap: () {},
-                            //   ),
-                            //   _EditableFormRow(
-                            //     label: StringConst.kKnownAllergies,
-                            //     controller: _allergiesController,
-                            //     hintText: StringConst.kAllergyHint,
-                            //     onChanged: (v) => context
-                            //         .read<PersonalDetailsBloc>()
-                            //         .add(PersonalDetailsAllergiesChanged(v)),
-                            //   ),
-                            // ]),
-                            const SizedBox(height: 24),
-                            SaveButton(
-                              label: state.status == PersonalDetailsStatus.saving
-                                  ? StringConst.kSaving
-                                  : StringConst.kSaveChanges,
-                              isLoading:
-                                  state.status == PersonalDetailsStatus.saving,
-                              onTap: () => context
-                                  .read<PersonalDetailsBloc>()
-                                  .add(const PersonalDetailsSaveRequested()),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

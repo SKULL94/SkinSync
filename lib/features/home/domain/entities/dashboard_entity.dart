@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class DashboardEntity extends Equatable {
   final String userName;
+  final String? avatarUrl;
   final String? skinType;
   final int totalScans;
   final int currentStreak;
@@ -18,6 +19,7 @@ class DashboardEntity extends Equatable {
 
   const DashboardEntity({
     required this.userName,
+    this.avatarUrl,
     this.skinType,
     this.totalScans = 0,
     this.currentStreak = 0,
@@ -50,6 +52,7 @@ class DashboardEntity extends Equatable {
   @override
   List<Object?> get props => [
         userName,
+        avatarUrl,
         skinType,
         totalScans,
         currentStreak,
