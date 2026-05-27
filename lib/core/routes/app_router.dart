@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lifecycle/lifecycle.dart';
 import 'package:skin_sync/features/history/presentation/pages/history_page.dart';
 import 'package:skin_sync/features/layout/presentation/pages/layout_page.dart';
-import 'package:skin_sync/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:skin_sync/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/pages/skin_analysis_page.dart';
 import 'package:skin_sync/features/splash/presentation/pages/splash_page.dart';
 import 'package:skin_sync/features/welcome/presentation/pages/welcome_page.dart';

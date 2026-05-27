@@ -38,6 +38,7 @@ import 'package:skin_sync/features/home/data/datasources/dashboard_remote_data_s
 import 'package:skin_sync/features/home/data/repositories/dashboard_repository_impl.dart';
 import 'package:skin_sync/features/home/domain/repositories/dashboard_repository.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
+import 'package:skin_sync/features/auth/presentation/bloc/onboarding_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -81,6 +82,9 @@ Future<void> init() async {
 
   // Features - Dashboard
   _initDashboard();
+
+  // Features - Onboarding
+  _initOnboarding();
 }
 
 void _initAuth() {
@@ -213,6 +217,16 @@ void _initDashboard() {
   sl.registerLazySingleton<DashboardRemoteDataSource>(
     () => DashboardRemoteDataSourceImpl(
       supabaseClient: sl(),
+      userRepository: sl(),
+    ),
+  );
+}
+
+void _initOnboarding() {
+  // Bloc
+  sl.registerFactory(
+    () => OnboardingBloc(
+      storageService: sl(),
       userRepository: sl(),
     ),
   );

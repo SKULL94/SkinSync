@@ -16,6 +16,7 @@ final class AuthState extends Equatable {
   final String otp;
   final String verificationId;
   final bool isLogin;
+  final bool isPhoneValid;
   final String? userId;
   final String? errorMessage;
 
@@ -25,6 +26,7 @@ final class AuthState extends Equatable {
     this.otp = '',
     this.verificationId = '',
     this.isLogin = true,
+    this.isPhoneValid = false,
     this.userId,
     this.errorMessage,
   });
@@ -35,6 +37,7 @@ final class AuthState extends Equatable {
     String? otp,
     String? verificationId,
     bool? isLogin,
+    bool? isPhoneValid,
     String? userId,
     String? errorMessage,
   }) {
@@ -44,6 +47,7 @@ final class AuthState extends Equatable {
       otp: otp ?? this.otp,
       verificationId: verificationId ?? this.verificationId,
       isLogin: isLogin ?? this.isLogin,
+      isPhoneValid: isPhoneValid ?? this.isPhoneValid,
       userId: userId ?? this.userId,
       errorMessage: errorMessage,
     );
@@ -56,6 +60,7 @@ final class AuthState extends Equatable {
         otp,
         verificationId,
         isLogin,
+        isPhoneValid,
         userId,
         errorMessage,
       ];

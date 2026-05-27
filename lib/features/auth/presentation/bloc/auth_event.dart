@@ -45,3 +45,12 @@ final class AuthToggleAuthType extends AuthEvent {
 final class AuthResetState extends AuthEvent {
   const AuthResetState();
 }
+
+final class AuthPhoneValidationChanged extends AuthEvent {
+  final bool isValid;
+
+  const AuthPhoneValidationChanged(this.isValid);
+
+  @override
+  List<Object?> get props => [isValid];
+}

@@ -15,6 +15,20 @@ class StringConst {
       'Start your personalized skincare routine';
   static const String kContinue = 'Continue';
   static const String kPhoneNumber = 'Phone Number';
+  static const String kYourMobileNumber = 'Your mobile\nnumber';
+  static const String kWellSendCode = "We'll send a one-time code to verify";
+  static const String kMobileNumber = 'MOBILE NUMBER';
+  static const String kPhoneHint = '98765 43210';
+  static const String kSendOtp = 'Send OTP';
+  static const String kTermsPrivacy = 'By continuing you agree to our ';
+  static const String kTerms = 'Terms';
+  static const String kPrivacyPolicy = 'Privacy Policy';
+  static const String kEnterCode = 'Enter the\n6-digit code';
+  static const String kSentToNumber = 'Sent to your number';
+  static const String kDidntReceive = "Didn't receive it?";
+  static const String kResend = 'Resend';
+  static const String kVerifyContinue = 'Verify & Continue';
+  static const String kWelcomeCompleteProfile = 'Welcome! Please complete your profile setup.';
 
   // Navigation Labels
   static const String kHome = 'Home';
@@ -181,4 +195,19 @@ class StringConst {
   // Dashboard - AI Insight Fallback
   static const String kFallbackInsight =
       'Keep up with your skincare routine! Consistency is key to seeing improvements in your skin health.';
+
+  // Onboarding - Name Screen
+  static const String kWhatsYourName = "What's your\nname?";
+  static const String kPersonalisedInsights =
+      'Personalised insights crafted just for you';
+  static const String kYourFirstName = 'Your first name';
+
+  // Onboarding - Gender Screen
+  static const String kHowDoYouIdentify = 'How do you\nidentify?';
+  static const String kHelpsPersonalise =
+      'Helps us personalise your skin analysis';
+  static const String kMale = 'Male';
+  static const String kFemale = 'Female';
+  static const String kNonBinary = 'Non-binary / Prefer not to say';
+  static const String kCompleteSetup = 'Complete Setup';
 }

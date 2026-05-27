@@ -22,6 +22,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.userRepository,
   }) : super(const AuthState()) {
     on<AuthPhoneNumberChanged>(_onPhoneNumberChanged);
+    on<AuthPhoneValidationChanged>(_onPhoneValidationChanged);
     on<AuthSendOtpRequested>(_onSendOtpRequested);
     on<AuthOtpChanged>(_onOtpChanged);
     on<AuthVerifyOtpRequested>(_onVerifyOtpRequested);
@@ -34,6 +35,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) {
     emit(state.copyWith(phoneNumber: event.phoneNumber));
+  }
+
+  void _onPhoneValidationChanged(
+    AuthPhoneValidationChanged event,
+    Emitter<AuthState> emit,
+  ) {
+    emit(state.copyWith(isPhoneValid: event.isValid));
   }
 
   Future<void> _onSendOtpRequested(
