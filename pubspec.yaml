@@ -86,6 +86,10 @@ dependencies:
   # ML
   tflite_flutter: ^0.11.0
   google_mlkit_image_labeling: ^0.12.0
+  google_mlkit_face_detection: ^0.11.0
+
+  # Camera
+  camera: ^0.11.0
 
   # AI - Gemini
   google_generative_ai: ^0.4.6

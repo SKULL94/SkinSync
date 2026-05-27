@@ -14,6 +14,7 @@ import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/domain/entities/analysis_result_entity.dart';
 import 'package:skin_sync/features/skin_analysis/domain/entities/ai_analysis_entity.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
+import 'package:skin_sync/features/skin_analysis/presentation/widgets/face_camera_view.dart';
 
 class SkinAnalysisPage extends StatelessWidget {
   const SkinAnalysisPage({super.key});
@@ -49,7 +50,15 @@ class SkinAnalysisPage extends StatelessWidget {
           return _ResultsView(state: state);
         }
 
-        return const _InitialView();
+        // Live camera view with face detection
+        return FaceCameraView(
+          onImageCaptured: (imageFile) {
+            context.read<SkinAnalysisBloc>().add(
+                  SkinAnalysisImageSelected(imageFile),
+                );
+          },
+          onBack: () => context.pop(),
+        );
       },
     );
   }
