@@ -7,8 +7,6 @@ import 'package:skin_sync/features/skin_analysis/data/datasources/skin_analysis_
 import 'package:skin_sync/features/skin_analysis/data/datasources/skin_analysis_remote_data_source.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
-import 'package:skin_sync/features/skin_analysis/domain/entities/analysis_result_entity.dart';
-import 'package:skin_sync/features/skin_analysis/domain/entities/ai_analysis_entity.dart';
 import 'package:skin_sync/features/skin_analysis/domain/repositories/skin_analysis_repository.dart';
 
 class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
@@ -23,7 +21,7 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
   });
 
   @override
-  Future<Either<Failure, List<AnalysisResultEntity>>> analyzeImage(
+  Future<Either<Failure, List<AnalysisResultModel>>> analyzeImage(
     File image,
   ) async {
     try {
@@ -39,7 +37,7 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
   }
 
   @override
-  Future<Either<Failure, AIAnalysisEntity>> analyzeWithAI(File image) async {
+  Future<Either<Failure, AIAnalysisModel>> analyzeWithAI(File image) async {
     try {
       final isConnected = await networkInfo.isConnected;
       if (!isConnected) {
@@ -59,42 +57,15 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
   Future<Either<Failure, void>> saveAnalysis({
     required String userId,
     required File imageFile,
-    required List<AnalysisResultEntity> results,
-    AIAnalysisEntity? aiAnalysis,
+    required List<AnalysisResultModel> results,
+    AIAnalysisModel? aiAnalysis,
   }) async {
     try {
-      final models = results
-          .map((r) => AnalysisResultModel.fromEntity(r))
-          .toList();
-
-      AIAnalysisModel? aiModel;
-      if (aiAnalysis != null) {
-        aiModel = AIAnalysisModel(
-          overallScore: aiAnalysis.overallScore,
-          needsProfessionalAssessment: aiAnalysis.needsProfessionalAssessment,
-          metrics: SkinMetricsModel(
-            texture: aiAnalysis.metrics.texture,
-            clarity: aiAnalysis.metrics.clarity,
-            oiliness: aiAnalysis.metrics.oiliness,
-            hydration: aiAnalysis.metrics.hydration,
-            poreVisibility: aiAnalysis.metrics.poreVisibility,
-            firmness: aiAnalysis.metrics.firmness,
-          ),
-          detectedConcerns: aiAnalysis.detectedConcerns,
-          severity: aiAnalysis.severity,
-          skinType: aiAnalysis.skinType,
-          recommendations: aiAnalysis.recommendations,
-          ingredientsToLookFor: aiAnalysis.ingredientsToLookFor,
-          aiInsight: aiAnalysis.aiInsight,
-          disclaimerRequired: aiAnalysis.disclaimerRequired,
-        );
-      }
-
       await remoteDataSource.saveAnalysis(
         userId: userId,
         imageFile: imageFile,
-        results: models,
-        aiAnalysis: aiModel,
+        results: results,
+        aiAnalysis: aiAnalysis,
       );
       return const Right(null);
     } on ServerException catch (e) {

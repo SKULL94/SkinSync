@@ -1,18 +1,29 @@
 import 'dart:convert';
-import 'package:skin_sync/features/skin_analysis/domain/entities/ai_analysis_entity.dart';
+import 'package:equatable/equatable.dart';
 
-class AIAnalysisModel extends AIAnalysisEntity {
+class AIAnalysisModel extends Equatable {
+  final int overallScore;
+  final bool needsProfessionalAssessment;
+  final SkinMetricsModel metrics;
+  final List<String> detectedConcerns;
+  final String severity;
+  final String skinType;
+  final List<String> recommendations;
+  final List<String> ingredientsToLookFor;
+  final String? aiInsight;
+  final bool disclaimerRequired;
+
   const AIAnalysisModel({
-    required super.overallScore,
-    required super.needsProfessionalAssessment,
-    required super.metrics,
-    required super.detectedConcerns,
-    required super.severity,
-    required super.skinType,
-    required super.recommendations,
-    required super.ingredientsToLookFor,
-    super.aiInsight,
-    required super.disclaimerRequired,
+    required this.overallScore,
+    required this.needsProfessionalAssessment,
+    required this.metrics,
+    required this.detectedConcerns,
+    required this.severity,
+    required this.skinType,
+    required this.recommendations,
+    required this.ingredientsToLookFor,
+    this.aiInsight,
+    required this.disclaimerRequired,
   });
 
   factory AIAnalysisModel.fromJson(Map<String, dynamic> json) {
@@ -92,16 +103,37 @@ class AIAnalysisModel extends AIAnalysisEntity {
       'disclaimer': disclaimerRequired,
     };
   }
+
+  @override
+  List<Object?> get props => [
+        overallScore,
+        needsProfessionalAssessment,
+        metrics,
+        detectedConcerns,
+        severity,
+        skinType,
+        recommendations,
+        ingredientsToLookFor,
+        aiInsight,
+        disclaimerRequired,
+      ];
 }
 
-class SkinMetricsModel extends SkinMetrics {
+class SkinMetricsModel extends Equatable {
+  final int texture;
+  final int clarity;
+  final int oiliness;
+  final int hydration;
+  final int poreVisibility;
+  final int firmness;
+
   const SkinMetricsModel({
-    required super.texture,
-    required super.clarity,
-    required super.oiliness,
-    required super.hydration,
-    required super.poreVisibility,
-    required super.firmness,
+    required this.texture,
+    required this.clarity,
+    required this.oiliness,
+    required this.hydration,
+    required this.poreVisibility,
+    required this.firmness,
   });
 
   factory SkinMetricsModel.fromJson(Map<String, dynamic> json) {
@@ -124,4 +156,14 @@ class SkinMetricsModel extends SkinMetrics {
     }
     return 50; // Default middle value
   }
+
+  @override
+  List<Object?> get props => [
+        texture,
+        clarity,
+        oiliness,
+        hydration,
+        poreVisibility,
+        firmness,
+      ];
 }

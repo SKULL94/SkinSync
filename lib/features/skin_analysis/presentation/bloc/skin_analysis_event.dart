@@ -27,3 +27,11 @@ final class SkinAnalysisShareRequested extends SkinAnalysisEvent {
 final class SkinAnalysisReset extends SkinAnalysisEvent {
   const SkinAnalysisReset();
 }
+
+final class SkinAnalysisScanningStepChanged extends SkinAnalysisEvent {
+  final int step;
+  const SkinAnalysisScanningStepChanged(this.step);
+
+  @override
+  List<Object?> get props => [step];
+}

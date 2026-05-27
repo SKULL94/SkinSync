@@ -33,6 +33,7 @@ import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_image.d
 import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_with_ai.dart';
 import 'package:skin_sync/features/skin_analysis/domain/usecases/save_analysis.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
+import 'package:skin_sync/features/skin_analysis/presentation/bloc/face_camera_bloc.dart';
 import 'package:skin_sync/features/settings/presentation/bloc/theme_bloc.dart';
 import 'package:skin_sync/features/home/data/datasources/dashboard_remote_data_source.dart';
 import 'package:skin_sync/features/home/data/repositories/dashboard_repository_impl.dart';
@@ -133,6 +134,8 @@ void _initSkinAnalysis() {
       storageService: sl(),
     ),
   );
+
+  sl.registerFactory(() => FaceCameraBloc());
 
   // Use cases
   sl.registerLazySingleton(() => AnalyzeImage(sl()));

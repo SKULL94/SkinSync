@@ -13,9 +13,10 @@ enum SkinAnalysisStatus {
 final class SkinAnalysisState extends Equatable {
   final SkinAnalysisStatus status;
   final File? selectedImage;
-  final List<AnalysisResultEntity> results;
-  final AIAnalysisEntity? aiAnalysis;
+  final List<AnalysisResultModel> results;
+  final AIAnalysisModel? aiAnalysis;
   final String? errorMessage;
+  final int scanningStep;
 
   const SkinAnalysisState({
     this.status = SkinAnalysisStatus.initial,
@@ -23,6 +24,7 @@ final class SkinAnalysisState extends Equatable {
     this.results = const [],
     this.aiAnalysis,
     this.errorMessage,
+    this.scanningStep = 0,
   });
 
   bool get hasAIAnalysis => aiAnalysis != null;
@@ -32,9 +34,10 @@ final class SkinAnalysisState extends Equatable {
   SkinAnalysisState copyWith({
     SkinAnalysisStatus? status,
     File? selectedImage,
-    List<AnalysisResultEntity>? results,
-    AIAnalysisEntity? aiAnalysis,
+    List<AnalysisResultModel>? results,
+    AIAnalysisModel? aiAnalysis,
     String? errorMessage,
+    int? scanningStep,
     bool clearImage = false,
     bool clearResults = false,
     bool clearAIAnalysis = false,
@@ -45,9 +48,10 @@ final class SkinAnalysisState extends Equatable {
       results: clearResults ? const [] : (results ?? this.results),
       aiAnalysis: clearAIAnalysis ? null : (aiAnalysis ?? this.aiAnalysis),
       errorMessage: errorMessage,
+      scanningStep: scanningStep ?? this.scanningStep,
     );
   }
 
   @override
-  List<Object?> get props => [status, selectedImage, results, aiAnalysis, errorMessage];
+  List<Object?> get props => [status, selectedImage, results, aiAnalysis, errorMessage, scanningStep];
 }

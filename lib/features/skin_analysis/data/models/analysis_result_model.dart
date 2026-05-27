@@ -1,13 +1,22 @@
-import 'package:skin_sync/features/skin_analysis/domain/entities/analysis_result_entity.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 
-class AnalysisResultModel extends AnalysisResultEntity {
+class AnalysisResultModel extends Equatable {
+  final String medicalLabel;
+  final String displayLabel;
+  final String riskLevel;
+  final int riskColorValue;
+  final double confidence;
+
   const AnalysisResultModel({
-    required super.medicalLabel,
-    required super.displayLabel,
-    required super.riskLevel,
-    required super.riskColorValue,
-    required super.confidence,
+    required this.medicalLabel,
+    required this.displayLabel,
+    required this.riskLevel,
+    required this.riskColorValue,
+    required this.confidence,
   });
+
+  Color get riskColor => Color(riskColorValue);
 
   factory AnalysisResultModel.fromMap(Map<String, dynamic> map) {
     return AnalysisResultModel(
@@ -29,13 +38,12 @@ class AnalysisResultModel extends AnalysisResultEntity {
     };
   }
 
-  factory AnalysisResultModel.fromEntity(AnalysisResultEntity entity) {
-    return AnalysisResultModel(
-      medicalLabel: entity.medicalLabel,
-      displayLabel: entity.displayLabel,
-      riskLevel: entity.riskLevel,
-      riskColorValue: entity.riskColorValue,
-      confidence: entity.confidence,
-    );
-  }
+  @override
+  List<Object?> get props => [
+        medicalLabel,
+        displayLabel,
+        riskLevel,
+        riskColorValue,
+        confidence,
+      ];
 }

@@ -22,7 +22,6 @@ class UserRepository {
       if (response == null) return null;
       return UserProfile.fromMap(response);
     } catch (e) {
-      print('Error fetching user profile: $e');
       return null;
     }
   }
@@ -54,7 +53,6 @@ class UserRepository {
 
       return UserProfile.fromMap(response);
     } catch (e) {
-      print('Error creating user profile: $e');
       return null;
     }
   }
@@ -170,10 +168,7 @@ class UserRepository {
       final authUser = _supabaseClient.auth.currentUser;
       if (authUser == null) return false;
 
-      await _supabaseClient
-          .from('users')
-          .delete()
-          .eq('auth_id', authUser.id);
+      await _supabaseClient.from('users').delete().eq('auth_id', authUser.id);
 
       return true;
     } catch (e) {

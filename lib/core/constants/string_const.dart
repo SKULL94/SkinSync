@@ -304,4 +304,93 @@ class StringConst {
   static const String kDaysOfWeek = 'Days of Week';
   static const String kSaveReminderSettings = 'Save Reminder Settings';
   static const String kScanRemindersInfo = 'Regular scans track your skin\'s progress over time. We recommend scanning every 7 days for the most accurate trend data.';
+
+  // Skin Analysis - Camera View
+  static const String kAiSkinLab = 'AI SKIN LAB';
+  static const String kPositionYourFace = 'Position your face';
+  static const String kCapture = 'Capture';
+  static const String kStartingCamera = 'Starting camera...';
+  static const String kPositionFaceInCircle = 'Position your face in the circle';
+  static const String kMoveFaceInsideCircle = 'Move face inside the circle';
+  static const String kMoveCloserToCamera = 'Move closer to the camera';
+  static const String kMoveBackALittle = 'Move back a little';
+  static const String kOnlyOneFacePlease = 'Only one face please';
+  static const String kPerfectTapToCapture = 'Perfect! Tap to capture';
+
+  // Skin Analysis - Scanning View
+  static const String kAiAnalysing = 'AI Analysing';
+  static const String kValidating = 'Validating';
+  static const String kConnectingToAi = 'Connecting to AI...';
+  static const String kAnalyzingSkinTexture = 'Analyzing skin texture';
+  static const String kEvaluatingSkinHealth = 'Evaluating skin health';
+  static const String kDetectingConcerns = 'Detecting concerns';
+  static const String kGeneratingInsights = 'Generating insights';
+  static const String kPreparingRecommendations = 'Preparing recommendations...';
+  static const String kValidatingImage = 'Validating image...';
+  static const String kDetectingSkinRegions = 'Detecting skin regions';
+  static const String kInitialAnalysis = 'Initial analysis';
+  static const String kPreparingForAi = 'Preparing for AI...';
+
+  // Skin Analysis - Results View
+  static const String kAnalysisComplete = 'ANALYSIS COMPLETE';
+  static const String kYourSkinHealth = 'Your Skin Health';
+  static const String kDetectedConcerns = 'Detected Concerns';
+  static const String kDetailedAnalysis = 'Detailed Analysis';
+  static const String kRecommendations = 'Recommendations';
+  static const String kIngredientsToLookFor = 'Ingredients to Look For';
+  static const String kAiInsight = 'AI Insight';
+  static const String kSaveAnalysis = 'Save Analysis';
+  static const String kConsultDermatologist = 'We recommend consulting a dermatologist for professional assessment.';
+  static const String kAiDisclaimer = 'AI-powered insights. Not medical advice. Consult a dermatologist for concerns.';
+
+  // Skin Analysis - Metrics
+  static const String kHydrationMetric = 'Hydration';
+  static const String kTextureMetric = 'Texture';
+  static const String kClarityMetric = 'Clarity';
+  static const String kOilinessMetric = 'Oiliness';
+  static const String kPoreVisibility = 'Pore Visibility';
+  static const String kFirmnessMetric = 'Firmness';
+
+  // Skin Analysis - Hydration Descriptions
+  static const String kHydrationExcellent = 'Your skin shows excellent hydration levels. Continue with your current moisturizing routine.';
+  static const String kHydrationModerate = 'Your skin has moderate hydration. Consider adding a hydrating serum or more frequent moisturizing.';
+  static const String kHydrationLow = 'Your skin appears dehydrated. Increase water intake and use hydrating products with hyaluronic acid.';
+
+  // Skin Analysis - Texture Descriptions
+  static const String kTextureExcellent = 'Skin texture is smooth and even. Maintain your current routine.';
+  static const String kTextureModerate = 'Skin texture is fairly smooth. Consider gentle exfoliation to improve further.';
+  static const String kTextureLow = 'Skin texture could use improvement. Try incorporating AHAs or BHAs for gentle exfoliation.';
+
+  // Skin Analysis - Clarity Descriptions
+  static const String kClarityExcellent = 'Excellent skin clarity with minimal blemishes. Keep up your skincare routine.';
+  static const String kClarityModerate = 'Some minor blemishes detected. A consistent cleansing routine can help improve clarity.';
+  static const String kClarityLow = 'Notable skin concerns detected. Consider targeted treatments and consult a dermatologist if needed.';
+
+  // Skin Analysis - Pore Descriptions
+  static const String kPoreMinimal = 'Pores are minimally visible. Your skin texture appears refined.';
+  static const String kPoreNormal = 'Normal pore visibility. Niacinamide can help minimize pore appearance.';
+  static const String kPoreEnlarged = 'Enlarged pores visible. Consider pore-minimizing products and regular cleansing.';
+
+  // Skin Analysis - Tips
+  static const String kTipsForBestResults = 'Tips for Best Results';
+  static const String kUseNaturalLighting = 'Use natural lighting';
+  static const String kRemoveMakeup = 'Remove makeup if possible';
+  static const String kKeepFaceCentered = 'Keep face centered in frame';
+  static const String kHoldCameraSteady = 'Hold camera steady';
+
+  // Skin Analysis - Focus Areas (concerns)
+  static const String kFocusAreas = 'FOCUS AREAS';
+  static const String kConcernAcne = 'Acne';
+  static const String kConcernDryness = 'Dryness';
+  static const String kConcernOiliness = 'Oiliness';
+  static const String kConcernDarkSpots = 'Dark spots';
+  static const String kConcernWrinkles = 'Wrinkles';
+  static const String kConcernRedness = 'Redness';
+  static const String kConcernPores = 'Pores';
+  static const String kConcernUnevenTone = 'Uneven tone';
+
+  // Skin Analysis - Misc
+  static const String kKeepScanning = 'Keep Scanning';
+  static const String kScanYourSkin = 'Scan your skin,';
+  static const String kGetSmartCare = 'get smart care';
 }

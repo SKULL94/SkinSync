@@ -5,8 +5,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:skin_sync/core/config/api_config.dart';
 import 'package:skin_sync/core/constants/app_constants.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
-import 'package:skin_sync/features/skin_analysis/domain/entities/analysis_result_entity.dart';
-import 'package:skin_sync/features/skin_analysis/domain/entities/ai_analysis_entity.dart';
+import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
+import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
 import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_image.dart';
 import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_with_ai.dart';
 import 'package:skin_sync/features/skin_analysis/domain/usecases/save_analysis.dart';
@@ -32,6 +32,7 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
     on<SkinAnalysisSaveRequested>(_onSaveRequested);
     on<SkinAnalysisShareRequested>(_onShareRequested);
     on<SkinAnalysisReset>(_onReset);
+    on<SkinAnalysisScanningStepChanged>(_onScanningStepChanged);
   }
 
   String? get _userId => storageService.fetch<String>(AppConstants.userId);
@@ -201,5 +202,12 @@ Download App: https://skinsync.app/download
     Emitter<SkinAnalysisState> emit,
   ) {
     emit(const SkinAnalysisState());
+  }
+
+  void _onScanningStepChanged(
+    SkinAnalysisScanningStepChanged event,
+    Emitter<SkinAnalysisState> emit,
+  ) {
+    emit(state.copyWith(scanningStep: event.step));
   }
 }
