@@ -90,7 +90,8 @@ class _ProfileView extends StatelessWidget {
                       SignOutButton(
                         onTap: () => _showSignOutConfirmation(context),
                       ),
-                      const SizedBox(height: 108),
+                      // Extra padding to clear floating nav bar
+                      SizedBox(height: 100 + MediaQuery.of(context).padding.bottom),
                     ],
                   ),
                 ),

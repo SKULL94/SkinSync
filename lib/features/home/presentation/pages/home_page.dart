@@ -92,7 +92,8 @@ class _HomePageContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _buildUpcomingReminder(context),
-                const SizedBox(height: 108),
+                // Extra padding to clear floating nav bar
+                SizedBox(height: 100 + MediaQuery.of(context).padding.bottom),
               ],
             ),
           ),
@@ -157,7 +158,7 @@ class _HomePageContent extends StatelessWidget {
               ],
             ),
             GestureDetector(
-              onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(3)),
+              onTap: () => context.push(AppRoutes.personalDetailsRoute),
               child: isLoading
                   ? Shimmer.fromColors(
                       baseColor: AppColors.cardBorder,
@@ -165,7 +166,7 @@ class _HomePageContent extends StatelessWidget {
                       child: Container(
                         width: 44,
                         height: 44,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.cardBorder,
                         ),
@@ -184,7 +185,8 @@ class _HomePageContent extends StatelessWidget {
                             Color(0xFFEDD8D8),
                           ],
                         ),
-                        border: Border.all(color: AppColors.cardBorder, width: 2),
+                        border:
+                            Border.all(color: AppColors.cardBorder, width: 2),
                       ),
                       child: Center(
                         child: Text(
@@ -217,7 +219,8 @@ class _HomePageContent extends StatelessWidget {
           prev.dashboard?.heroTitle != curr.dashboard?.heroTitle ||
           prev.dashboard?.heroSubtitle != curr.dashboard?.heroSubtitle,
       builder: (context, state) {
-        final heroTitle = state.dashboard?.heroTitle ?? 'How does your\nskin feel today?';
+        final heroTitle =
+            state.dashboard?.heroTitle ?? 'How does your\nskin feel today?';
         final heroSubtitle = state.dashboard?.heroSubtitle ??
             'Instant AI-powered analysis with\npersonalised recommendations';
 
@@ -286,7 +289,8 @@ class _HomePageContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
@@ -328,13 +332,15 @@ class _HomePageContent extends StatelessWidget {
                         style: GoogleFonts.dmSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w300,
-                          color: const Color(0xFFF2EDE6).withValues(alpha: 0.55),
+                          color:
+                              const Color(0xFFF2EDE6).withValues(alpha: 0.55),
                           height: 1.65,
                         ),
                       ),
                       const SizedBox(height: 22),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(22),
@@ -404,7 +410,8 @@ class _HomePageContent extends StatelessWidget {
             width: 68,
             height: 68,
             child: CustomPaint(
-              painter: _ScoreRingPainter(progress: 0, color: AppColors.cardBorder),
+              painter: const _ScoreRingPainter(
+                  progress: 0, color: AppColors.cardBorder),
               child: Center(
                 child: Text(
                   '?',
@@ -536,7 +543,9 @@ class _HomePageContent extends StatelessWidget {
                 sub: 'Analyse now',
                 onTap: () {
                   // Reset bloc to start fresh scan
-                  context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
+                  context
+                      .read<SkinAnalysisBloc>()
+                      .add(const SkinAnalysisReset());
                   context.push(AppRoutes.skinAnalysisRoute);
                 },
               ),
@@ -544,7 +553,8 @@ class _HomePageContent extends StatelessWidget {
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget: Icon(Icons.auto_awesome, size: 18, color: AppColors.rose),
+                iconWidget:
+                    Icon(Icons.auto_awesome, size: 18, color: AppColors.rose),
                 iconBg: const Color(0xFFEDD8D8),
                 label: 'AI Tips',
                 sub: 'Personalized',
@@ -558,8 +568,8 @@ class _HomePageContent extends StatelessWidget {
           children: [
             Expanded(
               child: _QuickActionCard(
-                iconWidget: Icon(Icons.show_chart,
-                    size: 18, color: AppColors.sage),
+                iconWidget:
+                    Icon(Icons.show_chart, size: 18, color: AppColors.sage),
                 iconBg: const Color(0xFFD4E3CC),
                 label: 'Trends',
                 sub: 'View progress',
@@ -671,9 +681,12 @@ class _HomePageContent extends StatelessWidget {
                 ),
                 if (daysSinceLastScan > 0)
                   GestureDetector(
-                    onTap: () => context.read<LayoutBloc>().add(const LayoutTabChanged(1)),
+                    onTap: () => context
+                        .read<LayoutBloc>()
+                        .add(const LayoutTabChanged(1)),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(10),
@@ -726,7 +739,8 @@ class _ScoreStripCard extends StatelessWidget {
   String _formatDateIST(DateTime date) {
     // Convert to IST (UTC+5:30)
     final ist = date.toUtc().add(const Duration(hours: 5, minutes: 30));
-    final now = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+    final now =
+        DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
     final diff = now.difference(ist);
 
     if (diff.inMinutes < 1) {
@@ -743,7 +757,8 @@ class _ScoreStripCard extends StatelessWidget {
       // Format as "12 May, 3:45 PM"
       final day = ist.day;
       final month = _monthName(ist.month);
-      final hour = ist.hour > 12 ? ist.hour - 12 : (ist.hour == 0 ? 12 : ist.hour);
+      final hour =
+          ist.hour > 12 ? ist.hour - 12 : (ist.hour == 0 ? 12 : ist.hour);
       final minute = ist.minute.toString().padLeft(2, '0');
       final ampm = ist.hour >= 12 ? 'PM' : 'AM';
       return '$day $month, $hour:$minute $ampm';
@@ -751,8 +766,20 @@ class _ScoreStripCard extends StatelessWidget {
   }
 
   String _monthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return months[month - 1];
   }
 
@@ -850,7 +877,8 @@ class _ScoreStripCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 12, color: AppColors.textTertiary),
+                    Icon(Icons.access_time,
+                        size: 12, color: AppColors.textTertiary),
                     const SizedBox(width: 4),
                     Text(
                       _formatDateIST(lastDate),

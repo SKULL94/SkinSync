@@ -33,14 +33,22 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
   @override
   Future<DashboardModel> getDashboardData() async {
     try {
+      // Try fetching from user_details first, fallback to users table
+      final userDetails = await userRepository.getUserDetails();
       final profile = await userRepository.getCurrentUserProfile();
+
+      final userName = userDetails?['first_name'] as String? ??
+          profile?.firstName ??
+          StringConst.kDefaultUserName;
+      final skinType = profile?.skinType;
+
       final scanStats = await _fetchScanStatistics();
       final heroMessage = _generateHeroMessage(scanStats);
-      final tips = _generateTips(profile?.skinType, null);
+      final tips = _generateTips(skinType, null);
 
       return DashboardModel(
-        userName: profile?.firstName ?? StringConst.kDefaultUserName,
-        skinType: profile?.skinType,
+        userName: userName,
+        skinType: skinType,
         totalScans: scanStats['totalScans'] ?? 0,
         currentStreak: scanStats['streak'] ?? 0,
         bestScore: scanStats['bestScore'] ?? 0,

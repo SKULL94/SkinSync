@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -78,7 +80,9 @@ class HistoryPage extends StatelessWidget {
             },
             color: AppColors.primary,
             child: ListView.builder(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20, 20, 20, 100 + MediaQuery.of(context).padding.bottom,
+              ),
               itemCount: state.histories.length,
               itemBuilder: (context, index) {
                 final history = state.histories[index];
@@ -157,35 +161,7 @@ class HistoryPage extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(16),
                     ),
-                    child: CachedNetworkImage(
-                      imageUrl: history.imageUrl,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 180,
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.backgroundSecondary,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 180,
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.backgroundSecondary,
-                        child: const Icon(
-                          Icons.broken_image_outlined,
-                          size: 48,
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                    ),
+                    child: _buildHistoryImage(history.imageUrl, isDark),
                   ),
                   // Date badge
                   Positioned(
@@ -347,6 +323,56 @@ class HistoryPage extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  /// Builds image widget that handles both local file paths and network URLs
+  Widget _buildHistoryImage(String imageUrl, bool isDark) {
+    final isLocalFile = !imageUrl.startsWith('http');
+
+    if (isLocalFile) {
+      final file = File(imageUrl);
+      return Image.file(
+        file,
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          height: 180,
+          color: isDark ? AppColors.darkSurface : AppColors.backgroundSecondary,
+          child: const Icon(
+            Icons.broken_image_outlined,
+            size: 48,
+            color: AppColors.textTertiary,
+          ),
+        ),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      height: 180,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        height: 180,
+        color: isDark ? AppColors.darkSurface : AppColors.backgroundSecondary,
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+            strokeWidth: 2,
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        height: 180,
+        color: isDark ? AppColors.darkSurface : AppColors.backgroundSecondary,
+        child: const Icon(
+          Icons.broken_image_outlined,
+          size: 48,
+          color: AppColors.textTertiary,
+        ),
+      ),
     );
   }
 

@@ -29,6 +29,7 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
     on<HistoryDeleteRequested>(_onDeleteRequested);
     on<HistoryDeleteAllRequested>(_onDeleteAllRequested);
     on<HistorySyncRequested>(_onSyncRequested);
+    on<HistoryAddOptimistic>(_onAddOptimistic);
   }
 
   String? get _userId => storageService.fetch<String>(AppConstants.userId);
@@ -115,5 +116,17 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
       (failure) {},
       (histories) => emit(state.copyWith(histories: histories)),
     );
+  }
+
+  /// Optimistically adds new history to the top of the list
+  void _onAddOptimistic(
+    HistoryAddOptimistic event,
+    Emitter<HistoryState> emit,
+  ) {
+    final updatedHistories = [event.history, ...state.histories];
+    emit(state.copyWith(
+      status: HistoryStatus.loaded,
+      histories: updatedHistories,
+    ));
   }
 }

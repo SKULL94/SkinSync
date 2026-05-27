@@ -22,7 +22,7 @@ class GenderCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.06)
@@ -37,7 +37,7 @@ class GenderCard extends StatelessWidget {
           children: [
             if (isSelected)
               Positioned(
-                top: -9,
+                top: 0,
                 right: 0,
                 child: Container(
                   width: 18,

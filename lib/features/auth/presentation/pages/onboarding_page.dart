@@ -119,7 +119,7 @@ class _OnboardingViewState extends State<_OnboardingView> {
 // ═══════════════════════════════════════════════════════════════════════════
 // NAME SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
-class _NameScreen extends StatelessWidget {
+class _NameScreen extends StatefulWidget {
   final TextEditingController nameController;
   final bool isValid;
   final ValueChanged<String> onNameChanged;
@@ -131,6 +131,24 @@ class _NameScreen extends StatelessWidget {
     required this.onNameChanged,
     required this.onContinue,
   });
+
+  @override
+  State<_NameScreen> createState() => _NameScreenState();
+}
+
+class _NameScreenState extends State<_NameScreen> {
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,22 +177,37 @@ class _NameScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: nameController.text.isNotEmpty
-                          ? AppColors.primary
-                          : AppColors.cardBorder,
-                      width: 1.5,
-                    ),
+                    // border: Border.all(
+                    //   color: _isFocused
+                    //       ? AppColors.primary
+                    //       : AppColors.cardBorder.withValues(alpha: 0.5),
+                    //   width: 1.5,
+                    // ),
                   ),
                   child: TextField(
-                    controller: nameController,
-                    onChanged: onNameChanged,
+                    controller: widget.nameController,
+                    focusNode: _focusNode,
+                    onChanged: widget.onNameChanged,
                     textCapitalization: TextCapitalization.words,
                     style: AppTextStyles.inputText,
                     decoration: InputDecoration(
                       hintText: StringConst.kYourFirstName,
                       hintStyle: AppTextStyles.inputHint,
-                      border: InputBorder.none,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 16,
@@ -185,8 +218,8 @@ class _NameScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 PrimaryButton(
                   label: '${StringConst.kContinue} →',
-                  enabled: isValid,
-                  onTap: onContinue,
+                  enabled: widget.isValid,
+                  onTap: widget.onContinue,
                 ),
               ],
             ),

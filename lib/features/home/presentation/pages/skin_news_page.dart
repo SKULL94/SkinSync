@@ -286,7 +286,9 @@ class _SkinNewsPageState extends State<SkinNewsPage> {
       color: colors.primary,
       child: ListView.builder(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        padding: EdgeInsets.fromLTRB(
+          24, 20, 24, 100 + MediaQuery.of(context).padding.bottom,
+        ),
         itemCount: _articles.length + (_isLoadingMore || _hasMoreData ? 1 : 0),
         itemBuilder: (context, index) {
           // Loading indicator at the bottom

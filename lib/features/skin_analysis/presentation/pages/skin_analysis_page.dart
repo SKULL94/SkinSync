@@ -10,6 +10,7 @@ import 'package:skin_sync/core/constants/text_styles.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
+import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
@@ -32,7 +33,27 @@ class SkinAnalysisPage extends StatelessWidget {
         }
         if (state.status == SkinAnalysisStatus.saved) {
           SnackbarHelper.showSuccess(context, StringConst.kAnalysisSavedSuccess);
-          context.read<HistoryBloc>().add(const HistoryLoadRequested());
+
+          // Optimistically add to history with local image path
+          if (state.selectedImage != null) {
+            final historyEntity = HistoryEntity(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              imageUrl: state.selectedImage!.path, // Local path for now
+              results: state.results
+                  .map((r) => {
+                        'displayLabel': r.displayLabel,
+                        'medicalLabel': r.medicalLabel,
+                        'confidence': r.confidence,
+                        'riskLevel': r.riskLevel,
+                        'riskColorValue': r.riskColor.value,
+                      })
+                  .toList(),
+              date: DateTime.now(),
+              aiAnalysis: state.aiAnalysis?.toJson(),
+            );
+            context.read<HistoryBloc>().add(HistoryAddOptimistic(historyEntity));
+          }
+
           context.read<LayoutBloc>().add(const LayoutTabChanged(1));
           context.go(AppRoutes.layoutRoute);
         }

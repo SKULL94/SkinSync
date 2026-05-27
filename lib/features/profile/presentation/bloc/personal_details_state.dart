@@ -13,6 +13,9 @@ final class PersonalDetailsState extends Equatable {
   final DateTime? dateOfBirth;
   final String? fitzpatrickScale;
   final String? phone;
+  final String? avatarUrl;
+  final String? localAvatarPath;
+  final bool isUploadingImage;
   final String? errorMessage;
 
   const PersonalDetailsState({
@@ -26,6 +29,9 @@ final class PersonalDetailsState extends Equatable {
     this.dateOfBirth,
     this.fitzpatrickScale,
     this.phone,
+    this.avatarUrl,
+    this.localAvatarPath,
+    this.isUploadingImage = false,
     this.errorMessage,
   });
 
@@ -58,6 +64,9 @@ final class PersonalDetailsState extends Equatable {
     DateTime? dateOfBirth,
     String? fitzpatrickScale,
     String? phone,
+    String? avatarUrl,
+    String? localAvatarPath,
+    bool? isUploadingImage,
     String? errorMessage,
   }) {
     return PersonalDetailsState(
@@ -71,6 +80,9 @@ final class PersonalDetailsState extends Equatable {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       fitzpatrickScale: fitzpatrickScale ?? this.fitzpatrickScale,
       phone: phone ?? this.phone,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      localAvatarPath: localAvatarPath ?? this.localAvatarPath,
+      isUploadingImage: isUploadingImage ?? this.isUploadingImage,
       errorMessage: errorMessage,
     );
   }
@@ -87,6 +99,9 @@ final class PersonalDetailsState extends Equatable {
         dateOfBirth,
         fitzpatrickScale,
         phone,
+        avatarUrl,
+        localAvatarPath,
+        isUploadingImage,
         errorMessage,
       ];
 }

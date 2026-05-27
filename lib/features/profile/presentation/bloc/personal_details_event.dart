@@ -78,3 +78,11 @@ final class PersonalDetailsFitzpatrickChanged extends PersonalDetailsEvent {
 final class PersonalDetailsSaveRequested extends PersonalDetailsEvent {
   const PersonalDetailsSaveRequested();
 }
+
+final class PersonalDetailsImagePickRequested extends PersonalDetailsEvent {
+  final bool fromCamera;
+  const PersonalDetailsImagePickRequested({this.fromCamera = false});
+
+  @override
+  List<Object?> get props => [fromCamera];
+}

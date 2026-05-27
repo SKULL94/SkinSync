@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/app.dart';
 import 'package:skin_sync/core/di/injection_container.dart' as di;
 import 'package:skin_sync/core/services/firebase_options.dart';
@@ -16,6 +17,9 @@ void main() async {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Configure GoogleFonts to cache fonts and use system fallbacks
+      GoogleFonts.config.allowRuntimeFetching = true;
 
       // Load environment variables
       await dotenv.load(fileName: '.env');

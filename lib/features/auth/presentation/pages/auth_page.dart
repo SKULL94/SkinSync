@@ -72,10 +72,12 @@ class _PhoneInputView extends StatefulWidget {
 
 class _PhoneInputViewState extends State<_PhoneInputView> {
   final _phoneController = TextEditingController();
+  final _phoneFocusNode = FocusNode();
   static const String _countryCode = '+91';
 
   @override
   void dispose() {
+    _phoneFocusNode.dispose();
     _phoneController.dispose();
     super.dispose();
   }
@@ -90,7 +92,8 @@ class _PhoneInputViewState extends State<_PhoneInputView> {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       buildWhen: (previous, current) =>
-          previous.isPhoneValid != current.isPhoneValid,
+          previous.isPhoneValid != current.isPhoneValid ||
+          previous.status != current.status,
       builder: (context, state) {
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -150,72 +153,64 @@ class _PhoneInputViewState extends State<_PhoneInputView> {
                         const SizedBox(height: 10),
 
                         // Phone input field
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.cardBorder,
-                              width: 1.5,
+                        TextField(
+                          controller: _phoneController,
+                          focusNode: _phoneFocusNode,
+                          keyboardType: TextInputType.phone,
+                          style: AppTextStyles.inputText,
+                          onChanged: (value) {
+                            final digits =
+                                value.replaceAll(RegExp(r'\D'), '');
+                            context.read<AuthBloc>().add(
+                                  AuthPhoneValidationChanged(
+                                      digits.length == 10),
+                                );
+                          },
+                          decoration: InputDecoration(
+                            hintText: StringConst.kPhoneHint,
+                            hintStyle: AppTextStyles.inputHint,
+                            filled: true,
+                            fillColor: Colors.white,
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(left: 16, right: 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('🇮🇳',
+                                      style: TextStyle(fontSize: 16)),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _countryCode,
+                                    style: AppTextStyles.labelLarge.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              // Country code prefix
-                              Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 14),
-                                height: 52,
-                                decoration: const BoxDecoration(
-                                  border: Border(
-                                    right: BorderSide(
-                                      color: AppColors.cardBorder,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text('🇮🇳',
-                                        style: TextStyle(fontSize: 16)),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      _countryCode,
-                                      style: AppTextStyles.labelLarge.copyWith(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            prefixIconConstraints: const BoxConstraints(
+                              minWidth: 0,
+                              minHeight: 0,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5,
                               ),
-
-                              // Phone number input
-                              Expanded(
-                                child: TextField(
-                                  controller: _phoneController,
-                                  keyboardType: TextInputType.phone,
-                                  style: AppTextStyles.inputText,
-                                  onChanged: (value) {
-                                    final digits =
-                                        value.replaceAll(RegExp(r'\D'), '');
-                                    context.read<AuthBloc>().add(
-                                          AuthPhoneValidationChanged(
-                                              digits.length == 10),
-                                        );
-                                  },
-                                  decoration: InputDecoration(
-                                    hintText: StringConst.kPhoneHint,
-                                    hintStyle: AppTextStyles.inputHint,
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
                           ),
                         ),
 
@@ -234,7 +229,8 @@ class _PhoneInputViewState extends State<_PhoneInputView> {
                         Center(
                           child: Text.rich(
                             TextSpan(
-                              style: AppTextStyles.caption.copyWith(height: 1.8),
+                              style:
+                                  AppTextStyles.caption.copyWith(height: 1.8),
                               children: [
                                 const TextSpan(text: StringConst.kTermsPrivacy),
                                 TextSpan(

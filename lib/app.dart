@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skin_sync/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_event.dart';
 import 'package:skin_sync/features/layout/presentation/bloc/layout_bloc.dart';
 import 'package:skin_sync/features/settings/presentation/bloc/theme_bloc.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/skin_analysis_bloc.dart';
@@ -30,6 +32,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ThemeBloc>(
           create: (_) => sl<ThemeBloc>()..add(const ThemeLoadRequested()),
+        ),
+        BlocProvider<DashboardBloc>(
+          create: (_) => sl<DashboardBloc>()..add(const LoadDashboard()),
         ),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,8 @@ import 'package:skin_sync/core/constants/string_const.dart';
 import 'package:skin_sync/core/constants/text_styles.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
+import 'package:skin_sync/features/home/presentation/bloc/dashboard_event.dart';
 import 'package:skin_sync/features/profile/presentation/bloc/personal_details_bloc.dart';
 import 'package:skin_sync/features/profile/presentation/widgets/form_group.dart';
 import 'package:skin_sync/features/profile/presentation/widgets/save_button.dart';
@@ -95,6 +99,82 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
     }
   }
 
+  void _showImagePickerOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Update Profile Photo',
+              style: AppTextStyles.heading3.copyWith(fontSize: 20),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppColors.primary,
+                ),
+              ),
+              title: Text('Take Photo', style: AppTextStyles.bodyMedium),
+              subtitle: Text(
+                'Use your camera',
+                style: AppTextStyles.caption,
+              ),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.read<PersonalDetailsBloc>().add(
+                      const PersonalDetailsImagePickRequested(fromCamera: true),
+                    );
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.sage.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.photo_library_outlined,
+                  color: AppColors.sage,
+                ),
+              ),
+              title: Text('Choose from Gallery', style: AppTextStyles.bodyMedium),
+              subtitle: Text(
+                'Select an existing photo',
+                style: AppTextStyles.caption,
+              ),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.read<PersonalDetailsBloc>().add(
+                      const PersonalDetailsImagePickRequested(fromCamera: false),
+                    );
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _selectGender(BuildContext context, String? current) {
     showModalBottomSheet(
       context: context,
@@ -145,6 +225,12 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
           _syncControllersWithState(state);
         }
         if (state.status == PersonalDetailsStatus.success) {
+          // Dismiss keyboard/unfocus
+          FocusScope.of(context).unfocus();
+
+          // Refresh dashboard to reflect changes
+          context.read<DashboardBloc>().add(const RefreshDashboard());
+
           SnackbarHelper.showSuccess(context, StringConst.kProfileSavedSuccess);
         }
         if (state.status == PersonalDetailsStatus.failure &&
@@ -156,7 +242,10 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
           previous.status != current.status ||
           previous.gender != current.gender ||
           previous.dateOfBirth != current.dateOfBirth ||
-          previous.firstName != current.firstName,
+          previous.firstName != current.firstName ||
+          previous.avatarUrl != current.avatarUrl ||
+          previous.localAvatarPath != current.localAvatarPath ||
+          previous.isUploadingImage != current.isUploadingImage,
       builder: (context, state) {
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -179,7 +268,13 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _AvatarCard(userName: state.firstName),
+                            _AvatarCard(
+                              userName: state.firstName,
+                              avatarUrl: state.avatarUrl,
+                              localAvatarPath: state.localAvatarPath,
+                              isUploading: state.isUploadingImage,
+                              onEditTap: () => _showImagePickerOptions(context),
+                            ),
                             const SizedBox(height: 14),
                             const SectionLabel(StringConst.kBasicInfo),
                             const SizedBox(height: 8),
@@ -239,25 +334,26 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
                                     .add(PersonalDetailsLocationChanged(v)),
                               ),
                             ]),
-                            const SizedBox(height: 14),
-                            const SectionLabel(StringConst.kSkinBackground),
-                            const SizedBox(height: 8),
-                            FormGroup(rows: [
-                              _TappableFormRow(
-                                label: StringConst.kFitzpatrickScale,
-                                value:
-                                    state.fitzpatrickScale ?? StringConst.kNotSet,
-                                onTap: () {},
-                              ),
-                              _EditableFormRow(
-                                label: StringConst.kKnownAllergies,
-                                controller: _allergiesController,
-                                hintText: StringConst.kAllergyHint,
-                                onChanged: (v) => context
-                                    .read<PersonalDetailsBloc>()
-                                    .add(PersonalDetailsAllergiesChanged(v)),
-                              ),
-                            ]),
+                            // TODO: Re-enable Skin Background section when ready
+                            // const SizedBox(height: 14),
+                            // const SectionLabel(StringConst.kSkinBackground),
+                            // const SizedBox(height: 8),
+                            // FormGroup(rows: [
+                            //   _TappableFormRow(
+                            //     label: StringConst.kFitzpatrickScale,
+                            //     value:
+                            //         state.fitzpatrickScale ?? StringConst.kNotSet,
+                            //     onTap: () {},
+                            //   ),
+                            //   _EditableFormRow(
+                            //     label: StringConst.kKnownAllergies,
+                            //     controller: _allergiesController,
+                            //     hintText: StringConst.kAllergyHint,
+                            //     onChanged: (v) => context
+                            //         .read<PersonalDetailsBloc>()
+                            //         .add(PersonalDetailsAllergiesChanged(v)),
+                            //   ),
+                            // ]),
                             const SizedBox(height: 24),
                             SaveButton(
                               label: state.status == PersonalDetailsStatus.saving
@@ -284,84 +380,147 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
 
 class _AvatarCard extends StatelessWidget {
   final String userName;
+  final String? avatarUrl;
+  final String? localAvatarPath;
+  final bool isUploading;
+  final VoidCallback onEditTap;
 
-  const _AvatarCard({required this.userName});
+  const _AvatarCard({
+    required this.userName,
+    required this.onEditTap,
+    this.avatarUrl,
+    this.localAvatarPath,
+    this.isUploading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final avatarInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
+    final hasImage = localAvatarPath != null || avatarUrl != null;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 62,
-            height: 62,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFF0D4C2), Color(0xFFEDD8D8)],
-              ),
-              border: Border.all(color: AppColors.cardBorder, width: 2),
+    return GestureDetector(
+      onTap: onEditTap,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.cardBorder, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: hasImage
+                        ? null
+                        : const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFFF0D4C2), Color(0xFFEDD8D8)],
+                          ),
+                    border: Border.all(color: AppColors.cardBorder, width: 2),
+                    image: _getDecorationImage(),
+                  ),
+                  child: hasImage
+                      ? null
+                      : Center(
+                          child: Text(
+                            avatarInitial,
+                            style: AppTextStyles.heading2.copyWith(
+                              fontSize: 22,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                ),
+                if (isUploading)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black.withValues(alpha: 0.5),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            child: Center(
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    StringConst.kProfilePhoto,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    isUploading
+                        ? 'Uploading...'
+                        : StringConst.kTapToUpdateAvatar,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0D4C2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                ),
+              ),
               child: Text(
-                avatarInitial,
-                style: AppTextStyles.heading2.copyWith(
-                  fontSize: 22,
+                StringConst.kEdit,
+                style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.primary,
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  StringConst.kProfilePhoto,
-                  style: AppTextStyles.labelMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  StringConst.kTapToUpdateAvatar,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0D4C2),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              StringConst.kEdit,
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  DecorationImage? _getDecorationImage() {
+    if (localAvatarPath != null) {
+      final file = File(localAvatarPath!);
+      if (file.existsSync()) {
+        return DecorationImage(
+          image: FileImage(file),
+          fit: BoxFit.cover,
+        );
+      }
+    }
+    if (avatarUrl != null && avatarUrl!.isNotEmpty) {
+      return DecorationImage(
+        image: NetworkImage(avatarUrl!),
+        fit: BoxFit.cover,
+      );
+    }
+    return null;
   }
 }
 

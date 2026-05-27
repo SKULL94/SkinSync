@@ -29,8 +29,10 @@ class _FaceCameraViewState extends State<FaceCameraView>
   FaceDetector? _faceDetector;
   bool _isDetecting = false;
   List<CameraDescription>? _cameras;
+  DateTime? _lastDetectionTime;
 
   final double _circleRadiusFactor = 0.35;
+  static const _detectionInterval = Duration(milliseconds: 300);
 
   @override
   void initState() {
@@ -63,7 +65,6 @@ class _FaceCameraViewState extends State<FaceCameraView>
 
   Future<void> _initializeCamera() async {
     final bloc = context.read<FaceCameraBloc>();
-    final isFrontCamera = bloc.state.isFrontCamera;
 
     try {
       _cameras = await availableCameras();
@@ -72,9 +73,9 @@ class _FaceCameraViewState extends State<FaceCameraView>
         return;
       }
 
+      // Always use front camera for skin analysis
       final camera = _cameras!.firstWhere(
-        (c) => c.lensDirection ==
-            (isFrontCamera ? CameraLensDirection.front : CameraLensDirection.back),
+        (c) => c.lensDirection == CameraLensDirection.front,
         orElse: () => _cameras!.first,
       );
 
@@ -119,7 +120,16 @@ class _FaceCameraViewState extends State<FaceCameraView>
 
     _cameraController!.startImageStream((image) async {
       if (_isDetecting) return;
+
+      // Throttle face detection to reduce CPU usage
+      final now = DateTime.now();
+      if (_lastDetectionTime != null &&
+          now.difference(_lastDetectionTime!) < _detectionInterval) {
+        return;
+      }
+
       _isDetecting = true;
+      _lastDetectionTime = now;
 
       try {
         final inputImage = _convertCameraImage(image);
@@ -222,12 +232,6 @@ class _FaceCameraViewState extends State<FaceCameraView>
     }
   }
 
-  void _switchCamera() async {
-    context.read<FaceCameraBloc>().add(const FaceCameraSwitchRequested());
-    await _cameraController?.dispose();
-    _initializeCamera();
-  }
-
   String _getStatusMessage(FaceDetectionStatus status) {
     switch (status) {
       case FaceDetectionStatus.initializing:
@@ -285,45 +289,24 @@ class _FaceCameraViewState extends State<FaceCameraView>
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                StringConst.kAiSkinLab,
-                style: AppTextStyles.caption.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 2,
-                  color: AppColors.textTertiary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                StringConst.kPositionYourFace,
-                style: AppTextStyles.heading2.copyWith(
-                  fontSize: 24,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          Text(
+            StringConst.kAiSkinLab,
+            style: AppTextStyles.caption.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 2,
+              color: AppColors.textTertiary,
+            ),
           ),
-          GestureDetector(
-            onTap: _switchCamera,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.flip_camera_ios_outlined,
-                size: 20,
-                color: Colors.white70,
-              ),
+          const SizedBox(height: 4),
+          Text(
+            StringConst.kPositionYourFace,
+            style: AppTextStyles.heading2.copyWith(
+              fontSize: 24,
+              color: Colors.white,
             ),
           ),
         ],

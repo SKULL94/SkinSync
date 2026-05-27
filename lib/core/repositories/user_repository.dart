@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:skin_sync/core/models/user_profile.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -90,6 +92,7 @@ class UserRepository {
     String? fitzpatrickScale,
     String? knownAllergies,
     List<String>? concerns,
+    String? avatarUrl,
   }) async {
     try {
       final authUser = _supabaseClient.auth.currentUser;
@@ -109,6 +112,7 @@ class UserRepository {
         if (fitzpatrickScale != null) 'fitzpatrick_scale': fitzpatrickScale,
         if (knownAllergies != null) 'known_allergies': knownAllergies,
         if (concerns != null) 'concerns': concerns,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
       };
 
       final response = await _supabaseClient
@@ -120,6 +124,33 @@ class UserRepository {
       return UserProfile.fromMap(response);
     } catch (e) {
       print('Error upserting user profile: $e');
+      return null;
+    }
+  }
+
+  /// Upload avatar image to Supabase storage
+  Future<String?> uploadAvatar(File imageFile) async {
+    try {
+      final authUser = _supabaseClient.auth.currentUser;
+      if (authUser == null) throw Exception('User not authenticated');
+
+      final fileExt = imageFile.path.split('.').last.toLowerCase();
+      final fileName = '${authUser.id}/avatar.$fileExt';
+
+      // Upload to 'avatars' bucket
+      await _supabaseClient.storage.from('avatars').upload(
+            fileName,
+            imageFile,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      // Get public URL
+      final publicUrl =
+          _supabaseClient.storage.from('avatars').getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (e) {
+      print('Error uploading avatar: $e');
       return null;
     }
   }
@@ -173,6 +204,93 @@ class UserRepository {
       return true;
     } catch (e) {
       print('Error deleting user profile: $e');
+      return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // USER DETAILS TABLE OPERATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Get user details from user_details table
+  Future<Map<String, dynamic>?> getUserDetails() async {
+    try {
+      final authUser = _supabaseClient.auth.currentUser;
+      if (authUser == null) return null;
+
+      final response = await _supabaseClient
+          .from('user_details')
+          .select()
+          .eq('auth_id', authUser.id)
+          .maybeSingle();
+
+      return response;
+    } catch (e) {
+      print('Error fetching user details: $e');
+      return null;
+    }
+  }
+
+  /// Save or update user details to user_details table
+  Future<Map<String, dynamic>?> upsertUserDetails({
+    required String firstName,
+    String? lastName,
+    String? gender,
+    DateTime? dateOfBirth,
+    String? email,
+    String? location,
+    String? avatarUrl,
+  }) async {
+    try {
+      final authUser = _supabaseClient.auth.currentUser;
+      if (authUser == null) throw Exception('User not authenticated');
+
+      final data = {
+        'auth_id': authUser.id,
+        'first_name': firstName,
+        'last_name': lastName,
+        'gender': gender,
+        'date_of_birth': dateOfBirth?.toIso8601String().split('T').first,
+        'email': email,
+        'location': location,
+        'avatar_url': avatarUrl,
+        'phone': authUser.phone,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      // Remove null values
+      data.removeWhere((key, value) => value == null);
+
+      final response = await _supabaseClient
+          .from('user_details')
+          .upsert(data, onConflict: 'auth_id')
+          .select()
+          .single();
+
+      return response;
+    } catch (e) {
+      print('Error upserting user details: $e');
+      return null;
+    }
+  }
+
+  /// Update avatar URL in user_details table
+  Future<bool> updateUserDetailsAvatar(String avatarUrl) async {
+    try {
+      final authUser = _supabaseClient.auth.currentUser;
+      if (authUser == null) return false;
+
+      await _supabaseClient
+          .from('user_details')
+          .update({
+            'avatar_url': avatarUrl,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('auth_id', authUser.id);
+
+      return true;
+    } catch (e) {
+      print('Error updating avatar in user_details: $e');
       return false;
     }
   }

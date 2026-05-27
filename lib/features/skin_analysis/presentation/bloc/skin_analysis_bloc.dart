@@ -7,25 +7,19 @@ import 'package:skin_sync/core/constants/app_constants.dart';
 import 'package:skin_sync/core/services/storage_service.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/analysis_result_model.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
-import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_image.dart';
-import 'package:skin_sync/features/skin_analysis/domain/usecases/analyze_with_ai.dart';
-import 'package:skin_sync/features/skin_analysis/domain/usecases/save_analysis.dart';
+import 'package:skin_sync/features/skin_analysis/domain/repositories/skin_analysis_repository.dart';
 
 part 'skin_analysis_event.dart';
 part 'skin_analysis_state.dart';
 
 class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
-  final AnalyzeImage analyzeImage;
-  final AnalyzeWithAI analyzeWithAI;
-  final SaveAnalysis saveAnalysis;
+  final SkinAnalysisRepository repository;
   final StorageService storageService;
 
   static const double _minConfidenceForAI = 0.3;
 
   SkinAnalysisBloc({
-    required this.analyzeImage,
-    required this.analyzeWithAI,
-    required this.saveAnalysis,
+    required this.repository,
     required this.storageService,
   }) : super(const SkinAnalysisState()) {
     on<SkinAnalysisImageSelected>(_onImageSelected);
@@ -49,9 +43,7 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
     ));
 
     // Step 1: Local model validates image
-    final localResult = await analyzeImage(
-      AnalyzeImageParams(imageFile: event.imageFile),
-    );
+    final localResult = await repository.analyzeImage(event.imageFile);
 
     final localAnalysis = localResult.fold(
       (failure) {
@@ -89,9 +81,7 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
         results: localAnalysis,
       ));
 
-      final aiResult = await analyzeWithAI(
-        AnalyzeWithAIParams(imageFile: event.imageFile),
-      );
+      final aiResult = await repository.analyzeWithAI(event.imageFile);
 
       aiResult.fold(
         (failure) {
@@ -140,12 +130,12 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
 
     emit(state.copyWith(status: SkinAnalysisStatus.saving));
 
-    final result = await saveAnalysis(SaveAnalysisParams(
+    final result = await repository.saveAnalysis(
       userId: _userId!,
       imageFile: state.selectedImage!,
       results: state.results,
       aiAnalysis: state.aiAnalysis,
-    ));
+    );
 
     result.fold(
       (failure) => emit(state.copyWith(
