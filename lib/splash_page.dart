@@ -228,16 +228,16 @@ class _TerraOrbPainter extends CustomPainter {
 
     // Main gradient orb
     final gradientPaint = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(-0.24, -0.36),
+      ..shader = const RadialGradient(
+        center: Alignment(-0.24, -0.36),
         radius: 0.7,
-        colors: const [
+        colors: [
           Color(0xFFF0D4C2), // Light terra
           Color(0xFFD4845A), // Terra
           Color(0xFFC06E44), // Darker terra
           Color(0xFF7A3E22), // Deep terra
         ],
-        stops: const [0.0, 0.3, 0.65, 1.0],
+        stops: [0.0, 0.3, 0.65, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
 
     canvas.drawCircle(center, radius - 1, gradientPaint);

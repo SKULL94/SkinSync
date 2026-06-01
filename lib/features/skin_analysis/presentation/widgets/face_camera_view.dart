@@ -90,6 +90,9 @@ class _FaceCameraViewState extends State<FaceCameraView>
 
       await _cameraController!.initialize();
 
+      // Apply raw capture settings to minimize beautification filters
+      await _applyRawCaptureSettings();
+
       if (mounted) {
         bloc.add(const FaceCameraInitRequested());
         _startFaceDetection();
@@ -111,6 +114,40 @@ class _FaceCameraViewState extends State<FaceCameraView>
         performanceMode: FaceDetectorMode.fast,
       ),
     );
+  }
+
+  /// Applies camera settings to capture raw, unfiltered images.
+  /// This minimizes OEM beautification filters for accurate skin analysis.
+  Future<void> _applyRawCaptureSettings() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return;
+    }
+
+    try {
+      // 1. Disable flash for consistent, natural lighting
+      await _cameraController!.setFlashMode(FlashMode.off);
+
+      // 2. Lock exposure to prevent auto-brightening/smoothing
+      await _cameraController!.setExposureMode(ExposureMode.locked);
+
+      // 3. Lock focus to prevent softening effects
+      await _cameraController!.setFocusMode(FocusMode.locked);
+
+      // 4. Set exposure offset to neutral (0.0) for true-to-life capture
+      final minExposure = await _cameraController!.getMinExposureOffset();
+      final maxExposure = await _cameraController!.getMaxExposureOffset();
+      // Use 0.0 if within range, otherwise use midpoint
+      double neutralExposure = 0.0;
+      if (neutralExposure < minExposure || neutralExposure > maxExposure) {
+        neutralExposure = (minExposure + maxExposure) / 2;
+      }
+      await _cameraController!.setExposureOffset(neutralExposure);
+
+      debugPrint('Raw capture settings applied: flash=off, exposure=locked, focus=locked, offset=$neutralExposure');
+    } catch (e) {
+      // Some settings may not be supported on all devices - continue anyway
+      debugPrint('Could not apply all raw capture settings: $e');
+    }
   }
 
   void _startFaceDetection() {

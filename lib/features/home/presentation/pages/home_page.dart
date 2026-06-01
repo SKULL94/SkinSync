@@ -521,8 +521,8 @@ class _HomePageContent extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
             child: Icon(
               Icons.shield_outlined,
               size: 14,
@@ -596,8 +596,8 @@ class _HomePageContent extends StatelessWidget {
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget:
-                    Icon(Icons.auto_awesome, size: 18, color: AppColors.rose),
+                iconWidget: const Icon(Icons.auto_awesome,
+                    size: 18, color: AppColors.rose),
                 iconBg: const Color(0xFFEDD8D8),
                 label: 'AI Tips',
                 sub: 'Personalized',
@@ -611,8 +611,8 @@ class _HomePageContent extends StatelessWidget {
           children: [
             Expanded(
               child: _QuickActionCard(
-                iconWidget:
-                    Icon(Icons.show_chart, size: 18, color: AppColors.sage),
+                iconWidget: const Icon(Icons.show_chart,
+                    size: 18, color: AppColors.sage),
                 iconBg: const Color(0xFFD4E3CC),
                 label: 'Trends',
                 sub: 'View progress',
@@ -622,7 +622,7 @@ class _HomePageContent extends StatelessWidget {
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget: Icon(Icons.checklist_outlined,
+                iconWidget: const Icon(Icons.checklist_outlined,
                     size: 18, color: AppColors.amber),
                 iconBg: const Color(0xFFF5DCA8),
                 label: 'Routine',
@@ -920,7 +920,7 @@ class _ScoreStripCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.access_time,
+                    const Icon(Icons.access_time,
                         size: 12, color: AppColors.textTertiary),
                     const SizedBox(width: 4),
                     Text(

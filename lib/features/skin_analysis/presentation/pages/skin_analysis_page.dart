@@ -41,7 +41,8 @@ class SkinAnalysisPage extends StatelessWidget {
           SnackbarHelper.showError(context, state.errorMessage!);
         }
         if (state.status == SkinAnalysisStatus.saved) {
-          SnackbarHelper.showSuccess(context, StringConst.kAnalysisSavedSuccess);
+          SnackbarHelper.showSuccess(
+              context, StringConst.kAnalysisSavedSuccess);
 
           // Optimistically add to history with local image path
           if (state.selectedImage != null && state.aiAnalysis != null) {
@@ -60,7 +61,9 @@ class SkinAnalysisPage extends StatelessWidget {
               date: DateTime.now(),
               aiAnalysis: ai.toJson(),
             );
-            context.read<HistoryBloc>().add(HistoryAddOptimistic(historyEntity));
+            context
+                .read<HistoryBloc>()
+                .add(HistoryAddOptimistic(historyEntity));
           }
 
           context.read<LayoutBloc>().add(const LayoutTabChanged(1));
@@ -212,7 +215,8 @@ class _ScanningViewState extends State<_ScanningView>
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: Text(
-                          _steps[state.scanningStep.clamp(0, _steps.length - 1)],
+                          _steps[
+                              state.scanningStep.clamp(0, _steps.length - 1)],
                           key: ValueKey(state.scanningStep),
                           style: AppTextStyles.caption.copyWith(
                             color: AppColors.textTertiary,
@@ -422,27 +426,26 @@ class _ResultsView extends StatelessWidget {
 
   const _ResultsView({required this.state});
 
-  int _getMetricFromAI(AIAnalysisModel? ai, String metric, int defaultValue) {
-    if (ai == null) return defaultValue;
-    switch (metric.toLowerCase()) {
-      case 'hydration':
-        return ai.metrics.hydration;
-      case 'texture':
-        return ai.metrics.texture;
-      case 'clarity':
-        return ai.metrics.clarity;
-      case 'oiliness':
-        return ai.metrics.oiliness;
-      case 'pores':
-      case 'pore_visibility':
-        return ai.metrics.poreVisibility;
-      case 'firmness':
-        return ai.metrics.firmness;
-      default:
-        return defaultValue;
-    }
-  }
-
+  // int _getMetricFromAI(AIAnalysisModel? ai, String metric, int defaultValue) {
+  //   if (ai == null) return defaultValue;
+  //   switch (metric.toLowerCase()) {
+  //     case 'hydration':
+  //       return ai.metrics.hydration;
+  //     case 'texture':
+  //       return ai.metrics.texture;
+  //     case 'clarity':
+  //       return ai.metrics.clarity;
+  //     case 'oiliness':
+  //       return ai.metrics.oiliness;
+  //     case 'pores':
+  //     case 'pore_visibility':
+  //       return ai.metrics.poreVisibility;
+  //     case 'firmness':
+  //       return ai.metrics.firmness;
+  //     default:
+  //       return defaultValue;
+  //   }
+  // }
 
   Color _getSeverityColor(String severity) {
     switch (severity.toLowerCase()) {
@@ -643,7 +646,8 @@ class _ResultsView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
@@ -861,11 +865,13 @@ class _ResultsView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.rose.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.rose.withValues(alpha: 0.2)),
+                border:
+                    Border.all(color: AppColors.rose.withValues(alpha: 0.2)),
               ),
               child: Text(
                 concern,
-                style: AppTextStyles.labelMedium.copyWith(color: AppColors.rose),
+                style:
+                    AppTextStyles.labelMedium.copyWith(color: AppColors.rose),
               ),
             );
           }).toList(),
@@ -968,11 +974,13 @@ class _ResultsView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.sage.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.sage.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: AppColors.sage.withValues(alpha: 0.3)),
               ),
               child: Text(
                 ingredient,
-                style: AppTextStyles.labelMedium.copyWith(color: AppColors.sage),
+                style:
+                    AppTextStyles.labelMedium.copyWith(color: AppColors.sage),
               ),
             );
           }).toList(),
@@ -1028,14 +1036,14 @@ class _ScoreRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 86,
             height: 86,
             child: CircularProgressIndicator(
               value: 1,
               strokeWidth: 6,
               backgroundColor: AppColors.cardBorder,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cardBorder),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.cardBorder),
             ),
           ),
           SizedBox(
@@ -1045,7 +1053,8 @@ class _ScoreRing extends StatelessWidget {
               value: score / 100,
               strokeWidth: 6,
               backgroundColor: Colors.transparent,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
               strokeCap: StrokeCap.round,
             ),
           ),
@@ -1147,7 +1156,8 @@ class _DetailedMetricCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),

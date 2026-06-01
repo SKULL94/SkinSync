@@ -103,7 +103,7 @@ class TrendsPage extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.show_chart,
                 size: 40,
                 color: AppColors.primary,
@@ -457,7 +457,7 @@ class _ChartPainter extends CustomPainter {
       ..color = AppColors.cardBorder
       ..strokeWidth = 1;
 
-    final textStyle = TextStyle(
+    const textStyle = TextStyle(
       color: AppColors.textTertiary,
       fontSize: 10,
     );
@@ -478,7 +478,7 @@ class _ChartPainter extends CustomPainter {
 
     // Calculate points
     final points = <Offset>[];
-    final padding = 30.0;
+    const padding = 30.0;
     final chartWidth = size.width - padding;
 
     for (int i = 0; i < dataPoints.length; i++) {
@@ -555,7 +555,8 @@ class _MetricBar extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -620,12 +621,12 @@ class _RecentScanCard extends StatelessWidget {
                   ? Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
+                      errorBuilder: (_, __, ___) => const Icon(
                         Icons.image,
                         color: AppColors.textTertiary,
                       ),
                     )
-                  : Icon(Icons.image, color: AppColors.textTertiary),
+                  : const Icon(Icons.image, color: AppColors.textTertiary),
             ),
           ),
           const SizedBox(width: 12),

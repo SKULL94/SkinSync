@@ -130,7 +130,7 @@ class _AITipsPageState extends State<AITipsPage> {
             errorMsg.contains('exceeded')) {
           _sections.insert(
             0,
-            _TipSection(
+            const _TipSection(
               title: 'AI Tips Unavailable',
               subtitle: 'API quota exceeded - resets daily',
               icon: Icons.info_outline,
@@ -188,12 +188,12 @@ class _AITipsPageState extends State<AITipsPage> {
   }
 
   _TipSection _buildFoodSection() {
-    return _TipSection(
+    return const _TipSection(
       title: 'Food & Nutrition',
       subtitle: 'Eat your way to better skin',
       icon: Icons.restaurant_outlined,
       color: AppColors.sage,
-      tips: const [
+      tips: [
         'Fatty fish (salmon, mackerel) 2x weekly - omega-3s reduce inflammation.',
         'Colorful vegetables daily - antioxidants fight free radicals.',
         'Green tea contains EGCG - protects against sun damage.',
@@ -207,12 +207,12 @@ class _AITipsPageState extends State<AITipsPage> {
   }
 
   _TipSection _buildLifestyleSection() {
-    return _TipSection(
+    return const _TipSection(
       title: 'Lifestyle Habits',
       subtitle: 'Daily practices for healthy skin',
       icon: Icons.self_improvement,
       color: AppColors.rose,
-      tips: const [
+      tips: [
         'Sleep 7-9 hours - skin produces collagen during deep sleep.',
         'Change pillowcases weekly to prevent bacteria buildup.',
         'Exercise increases blood flow, delivering nutrients to skin.',
@@ -239,7 +239,7 @@ class _AITipsPageState extends State<AITipsPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             strokeWidth: 3,
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
@@ -305,7 +305,7 @@ class _AITipsPageState extends State<AITipsPage> {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.face_retouching_natural,
               size: 32,
               color: AppColors.primary,
@@ -468,10 +468,10 @@ class _AITipsPageState extends State<AITipsPage> {
       margin: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            const Color(0xFF667eea),
-            const Color(0xFF764ba2),
+            Color(0xFF667eea),
+            Color(0xFF764ba2),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
