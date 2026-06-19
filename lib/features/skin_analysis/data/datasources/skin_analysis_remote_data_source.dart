@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:skin_sync/core/config/api_config.dart';
 import 'package:skin_sync/core/error/exceptions.dart';
 import 'package:skin_sync/core/services/gemini_service.dart';
+import 'package:skin_sync/core/services/skin_condition_classifier.dart';
 import 'package:skin_sync/features/skin_analysis/data/models/ai_analysis_model.dart';
 import 'package:skin_sync/core/models/skin_analysis_history.dart';
 import 'package:skin_sync/core/services/sqflite_database.dart';
@@ -17,14 +18,28 @@ abstract class SkinAnalysisRemoteDataSource {
   });
 
   Future<AIAnalysisModel> analyzeWithAI(File imageFile);
+
+  /// Quick offline skin condition check using TFLite model
+  Future<SkinConditionResult> checkSkinCondition(File imageFile);
 }
 
 class SkinAnalysisRemoteDataSourceImpl implements SkinAnalysisRemoteDataSource {
   GeminiService? _geminiService;
+  final SkinConditionClassifier _skinConditionClassifier = SkinConditionClassifier();
 
   GeminiService get geminiService {
     _geminiService ??= GeminiService(apiKey: ApiConfig.geminiApiKey);
     return _geminiService!;
+  }
+
+  @override
+  Future<SkinConditionResult> checkSkinCondition(File imageFile) async {
+    try {
+      return await _skinConditionClassifier.classify(imageFile);
+    } catch (e) {
+      debugPrint('Skin condition classification failed: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -35,7 +50,39 @@ class SkinAnalysisRemoteDataSourceImpl implements SkinAnalysisRemoteDataSource {
       );
     }
 
-    return await geminiService.analyzeSkinImage(imageFile);
+    // First, get quick skin condition from TFLite model
+    SkinConditionResult? conditionResult;
+    try {
+      conditionResult = await checkSkinCondition(imageFile);
+      debugPrint('TFLite Skin Condition: $conditionResult');
+    } catch (e) {
+      debugPrint('TFLite classification skipped: $e');
+    }
+
+    // Then get detailed analysis from Gemini
+    final geminiResult = await geminiService.analyzeSkinImage(imageFile);
+
+    // If TFLite detected acne but Gemini didn't include it, add it
+    if (conditionResult != null && conditionResult.hasAcne) {
+      final concerns = List<String>.from(geminiResult.detectedConcerns);
+      if (!concerns.any((c) => c.toLowerCase().contains('acne'))) {
+        concerns.insert(0, 'Acne detected (${(conditionResult.confidence * 100).toStringAsFixed(0)}% confidence)');
+      }
+      return AIAnalysisModel(
+        overallScore: geminiResult.overallScore,
+        needsProfessionalAssessment: geminiResult.needsProfessionalAssessment,
+        metrics: geminiResult.metrics,
+        detectedConcerns: concerns,
+        severity: conditionResult.confidence > 0.8 ? 'moderate' : geminiResult.severity,
+        skinType: geminiResult.skinType,
+        recommendations: geminiResult.recommendations,
+        ingredientsToLookFor: geminiResult.ingredientsToLookFor,
+        aiInsight: geminiResult.aiInsight,
+        disclaimerRequired: geminiResult.disclaimerRequired,
+      );
+    }
+
+    return geminiResult;
   }
 
   @override
