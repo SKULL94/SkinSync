@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 
 class SignOutButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -14,22 +14,32 @@ class SignOutButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        height: 50,
+        height: 52,
         decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          color: AppColors.alertTint,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.rose.withValues(alpha: 0.4),
-            width: 1.5,
+            color: AppColors.alert.withValues(alpha: 0.30),
           ),
         ),
-        child: Center(
-          child: Text(
-            StringConst.kSignOut,
-            style: AppTextStyles.buttonPrimary.copyWith(
-              color: AppColors.rose,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.logout_rounded,
+              size: 17,
+              color: AppColors.alertTintInk,
             ),
-          ),
+            const SizedBox(width: 8),
+            Text(
+              StringConst.kSignOut,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.alertTintInk,
+              ),
+            ),
+          ],
         ),
       ),
     );

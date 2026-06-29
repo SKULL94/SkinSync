@@ -32,3 +32,12 @@ class OnboardingNextPage extends OnboardingEvent {
 class OnboardingCompleteRequested extends OnboardingEvent {
   const OnboardingCompleteRequested();
 }
+
+class OnboardingDisclaimerToggled extends OnboardingEvent {
+  final bool acknowledged;
+
+  const OnboardingDisclaimerToggled(this.acknowledged);
+
+  @override
+  List<Object?> get props => [acknowledged];
+}

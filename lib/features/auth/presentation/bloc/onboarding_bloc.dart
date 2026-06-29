@@ -19,6 +19,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<OnboardingNameChanged>(_onNameChanged);
     on<OnboardingGenderSelected>(_onGenderSelected);
     on<OnboardingNextPage>(_onNextPage);
+    on<OnboardingDisclaimerToggled>(_onDisclaimerToggled);
     on<OnboardingCompleteRequested>(_onCompleteRequested);
   }
 
@@ -40,8 +41,16 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     OnboardingNextPage event,
     Emitter<OnboardingState> emit,
   ) {
-    if (!state.canProceedToGender) return;
+    if (state.currentPage == 0 && !state.canProceedToGender) return;
+    if (state.currentPage == 1 && !state.canProceedToDisclaimer) return;
     emit(state.copyWith(currentPage: state.currentPage + 1));
+  }
+
+  void _onDisclaimerToggled(
+    OnboardingDisclaimerToggled event,
+    Emitter<OnboardingState> emit,
+  ) {
+    emit(state.copyWith(disclaimerAcknowledged: event.acknowledged));
   }
 
   Future<void> _onCompleteRequested(

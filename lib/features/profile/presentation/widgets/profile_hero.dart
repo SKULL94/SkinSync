@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 
 class ProfileHero extends StatelessWidget {
   final String userName;
@@ -14,7 +14,7 @@ class ProfileHero extends StatelessWidget {
     this.memberSince,
   });
 
-  String _formatMemberSince(DateTime? date) {
+  String _memberText(DateTime? date) {
     if (date == null) return StringConst.kMember;
     return '${StringConst.kMemberSince} ${DateFormat('MMM yyyy').format(date)}';
   }
@@ -22,109 +22,83 @@ class ProfileHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayName = userName.isNotEmpty ? userName : StringConst.kUser;
-    final avatarInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
+    final initial = displayName[0].toUpperCase();
 
     return Container(
-      color: AppColors.ink,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.deepStart, AppColors.deepEnd],
+        ),
+      ),
       child: Stack(
         children: [
-          Positioned(
-            top: -60,
-            right: -60,
-            child: Container(
-              width: 260,
-              height: 260,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.2),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -40,
-            left: -40,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.rose.withValues(alpha: 0.12),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _GridPainter())),
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
               child: Row(
                 children: [
+                  // Avatar circle
                   Container(
                     width: 76,
                     height: 76,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFFF0D4C2), Color(0xFFEDD8D8)],
-                      ),
+                      color: AppColors.deepCore,
                       border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        width: 3,
+                        color: AppColors.accentBright.withValues(alpha: 0.45),
+                        width: 2.5,
                       ),
                     ),
                     child: Center(
                       child: Text(
-                        avatarInitial,
-                        style: AppTextStyles.heading1.copyWith(
-                          fontSize: 28,
-                          color: AppColors.primary,
+                        initial,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.accentBright,
+                          height: 1,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 18),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           displayName,
-                          style: AppTextStyles.heading2.copyWith(
-                            fontSize: 24,
-                            fontStyle: FontStyle.italic,
-                            color: const Color(0xFFF2EDE6),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: -0.22,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         Text(
-                          _formatMemberSince(memberSince),
-                          style: AppTextStyles.caption.copyWith(
-                            fontSize: 11,
-                            color: const Color(0xFFF2EDE6).withValues(alpha: 0.45),
+                          _memberText(memberSince),
+                          style: GoogleFonts.hankenGrotesk(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.50),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
+                        // Plan badge
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
+                              horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.accentBright.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
                             border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.25),
+                              color: AppColors.accentBright.withValues(alpha: 0.30),
                             ),
                           ),
                           child: Row(
@@ -135,15 +109,17 @@ class ProfileHero extends StatelessWidget {
                                 height: 5,
                                 decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.primary,
+                                  color: AppColors.accentBright,
                                 ),
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 StringConst.kFreePlan,
-                                style: AppTextStyles.overline.copyWith(
-                                  fontSize: 10,
-                                  color: AppColors.primary,
+                                style: GoogleFonts.hankenGrotesk(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.4,
+                                  color: AppColors.accentBright,
                                 ),
                               ),
                             ],
@@ -160,4 +136,23 @@ class ProfileHero extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.03)
+      ..strokeWidth = 1;
+    const step = 28.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/constants/image_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/features/auth/presentation/bloc/onboarding_bloc.dart';
-import 'package:skin_sync/features/auth/presentation/widgets/art_header.dart';
 import 'package:skin_sync/features/auth/presentation/widgets/gender_card.dart';
 import 'package:skin_sync/features/auth/presentation/widgets/primary_button.dart';
-import 'package:skin_sync/features/auth/presentation/widgets/progress_indicator.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
@@ -34,6 +33,8 @@ class _OnboardingView extends StatefulWidget {
 class _OnboardingViewState extends State<_OnboardingView> {
   final PageController _pageController = PageController();
   final TextEditingController _nameController = TextEditingController();
+
+  static const int _totalPages = 3;
 
   @override
   void dispose() {
@@ -67,48 +68,57 @@ class _OnboardingViewState extends State<_OnboardingView> {
       builder: (context, state) {
         return Scaffold(
           backgroundColor: AppColors.background,
-          body: Column(
-            children: [
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _NameScreen(
-                      nameController: _nameController,
-                      isValid: state.isNameValid,
-                      onNameChanged: (name) => context
-                          .read<OnboardingBloc>()
-                          .add(OnboardingNameChanged(name)),
-                      onContinue: () => context
-                          .read<OnboardingBloc>()
-                          .add(const OnboardingNextPage()),
-                    ),
-                    _GenderScreen(
-                      selectedGender: state.gender,
-                      isLoading: state.status == OnboardingStatus.loading,
-                      onGenderSelected: (gender) => context
-                          .read<OnboardingBloc>()
-                          .add(OnboardingGenderSelected(gender)),
-                      onComplete: () => context
-                          .read<OnboardingBloc>()
-                          .add(const OnboardingCompleteRequested()),
-                    ),
-                  ],
-                ),
-              ),
-              // Progress indicator (onboarding is step 2 and 3 of 3)
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: AuthProgressIndicator(
-                    currentStep: state.currentPage + 2,
-                    totalSteps: 3,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Progress dots at top
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: _OnboardingProgress(
+                    total: _totalPages,
+                    current: state.currentPage,
                   ),
                 ),
-              ),
-            ],
+
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _NameScreen(
+                        nameController: _nameController,
+                        isValid: state.isNameValid,
+                        onNameChanged: (name) => context
+                            .read<OnboardingBloc>()
+                            .add(OnboardingNameChanged(name)),
+                        onContinue: () => context
+                            .read<OnboardingBloc>()
+                            .add(const OnboardingNextPage()),
+                      ),
+                      _GenderScreen(
+                        selectedGender: state.gender,
+                        onGenderSelected: (gender) => context
+                            .read<OnboardingBloc>()
+                            .add(OnboardingGenderSelected(gender)),
+                        onContinue: () => context
+                            .read<OnboardingBloc>()
+                            .add(const OnboardingNextPage()),
+                      ),
+                      _DisclaimerScreen(
+                        acknowledged: state.disclaimerAcknowledged,
+                        isLoading: state.status == OnboardingStatus.loading,
+                        onToggle: (val) => context
+                            .read<OnboardingBloc>()
+                            .add(OnboardingDisclaimerToggled(val)),
+                        onComplete: () => context
+                            .read<OnboardingBloc>()
+                            .add(const OnboardingCompleteRequested()),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -116,9 +126,39 @@ class _OnboardingViewState extends State<_OnboardingView> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// NAME SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// Progress dots
+// ─────────────────────────────────────────────────────────────────────────────
+class _OnboardingProgress extends StatelessWidget {
+  final int total;
+  final int current;
+
+  const _OnboardingProgress({required this.total, required this.current});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(total, (i) {
+        final active = i == current;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: active ? 22 : 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: active ? AppColors.primary : AppColors.track,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page 0 — Name
+// ─────────────────────────────────────────────────────────────────────────────
 class _NameScreen extends StatefulWidget {
   final TextEditingController nameController;
   final bool isValid;
@@ -140,11 +180,6 @@ class _NameScreenState extends State<_NameScreen> {
   final _focusNode = FocusNode();
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void dispose() {
     _focusNode.dispose();
     super.dispose();
@@ -152,162 +187,327 @@ class _NameScreenState extends State<_NameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const ArtHeader(emoji: '👋'),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(28, 22, 28, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  StringConst.kWhatsYourName,
-                  style: AppTextStyles.heading2.copyWith(fontSize: 30),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  StringConst.kPersonalisedInsights,
-                  style: AppTextStyles.bodySmall,
-                ),
-                const SizedBox(height: 22),
-                // Name input
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    // border: Border.all(
-                    //   color: _isFocused
-                    //       ? AppColors.primary
-                    //       : AppColors.cardBorder.withValues(alpha: 0.5),
-                    //   width: 1.5,
-                    // ),
-                  ),
-                  child: TextField(
-                    controller: widget.nameController,
-                    focusNode: _focusNode,
-                    onChanged: widget.onNameChanged,
-                    textCapitalization: TextCapitalization.words,
-                    style: AppTextStyles.inputText,
-                    decoration: InputDecoration(
-                      hintText: StringConst.kYourFirstName,
-                      hintStyle: AppTextStyles.inputHint,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
-                          width: 1.5,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                PrimaryButton(
-                  label: '${StringConst.kContinue} →',
-                  enabled: widget.isValid,
-                  onTap: widget.onContinue,
-                ),
-              ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            StringConst.kWhatsYourName,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
+              letterSpacing: -0.28,
+              height: 1.2,
             ),
           ),
-        ),
-      ],
+
+          const SizedBox(height: 8),
+
+          Text(
+            StringConst.kPersonalisedInsights,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textTertiary,
+              height: 1.55,
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          // Name input
+          TextField(
+            controller: widget.nameController,
+            focusNode: _focusNode,
+            onChanged: widget.onNameChanged,
+            textCapitalization: TextCapitalization.words,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.ink,
+            ),
+            decoration: InputDecoration(
+              hintText: StringConst.kYourFirstName,
+              hintStyle: GoogleFonts.hankenGrotesk(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: AppColors.muted2,
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppColors.hairline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppColors.hairline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide:
+                    const BorderSide(color: AppColors.primary, width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          PrimaryButton(
+            label: '${StringConst.kContinue} →',
+            enabled: widget.isValid,
+            onTap: widget.onContinue,
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GENDER SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// Page 1 — Gender
+// ─────────────────────────────────────────────────────────────────────────────
 class _GenderScreen extends StatelessWidget {
   final String? selectedGender;
-  final bool isLoading;
   final ValueChanged<String> onGenderSelected;
-  final VoidCallback onComplete;
+  final VoidCallback onContinue;
 
   const _GenderScreen({
     required this.selectedGender,
-    required this.isLoading,
     required this.onGenderSelected,
+    required this.onContinue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            StringConst.kHowDoYouIdentify,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
+              letterSpacing: -0.28,
+              height: 1.2,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            StringConst.kHelpsPersonalise,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textTertiary,
+              height: 1.55,
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          Row(
+            children: [
+              Expanded(
+                child: GenderCard(
+                  emoji: '🧑',
+                  label: StringConst.kMale,
+                  isSelected: selectedGender == 'male',
+                  onTap: () => onGenderSelected('male'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GenderCard(
+                  emoji: '👩',
+                  label: StringConst.kFemale,
+                  isSelected: selectedGender == 'female',
+                  onTap: () => onGenderSelected('female'),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          GenderCardFull(
+            emoji: '✨',
+            label: StringConst.kNonBinary,
+            isSelected: selectedGender == 'non-binary',
+            onTap: () => onGenderSelected('non-binary'),
+          ),
+
+          const SizedBox(height: 24),
+
+          PrimaryButton(
+            label: '${StringConst.kContinue} →',
+            enabled: selectedGender != null,
+            onTap: onContinue,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page 2 — Disclaimer acknowledgement
+// ─────────────────────────────────────────────────────────────────────────────
+class _DisclaimerScreen extends StatelessWidget {
+  final bool acknowledged;
+  final bool isLoading;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onComplete;
+
+  const _DisclaimerScreen({
+    required this.acknowledged,
+    required this.isLoading,
+    required this.onToggle,
     required this.onComplete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const ArtHeader(emoji: '🌿'),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(28, 22, 28, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Logo mark on light background
+          Center(
+            child: Image.asset(
+              ImageConst.markColor,
+              width: 56,
+              height: 56,
+              errorBuilder: (_, __, ___) => Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryTint,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.face_retouching_natural,
+                  color: AppColors.primary,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          Text(
+            StringConst.kBeforeFirstScan,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
+              letterSpacing: -0.26,
+              height: 1.2,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            StringConst.kDisclaimerIntro,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textTertiary,
+              height: 1.55,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Full disclaimer card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.hairline, width: 1),
+            ),
+            child: Text(
+              StringConst.kFullDisclaimerText,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textTertiary,
+                height: 1.6,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // "I understand" checkbox row
+          GestureDetector(
+            onTap: () => onToggle(!acknowledged),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  StringConst.kHowDoYouIdentify,
-                  style: AppTextStyles.heading2.copyWith(fontSize: 30),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  StringConst.kHelpsPersonalise,
-                  style: AppTextStyles.bodySmall,
-                ),
-                const SizedBox(height: 22),
-                // 2-col gender grid
-                Row(
-                  children: [
-                    Expanded(
-                      child: GenderCard(
-                        emoji: '🧑',
-                        label: StringConst.kMale,
-                        isSelected: selectedGender == 'male',
-                        onTap: () => onGenderSelected('male'),
-                      ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: acknowledged
+                        ? AppColors.primary
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: acknowledged
+                          ? AppColors.primary
+                          : AppColors.hairline,
+                      width: 1.5,
                     ),
-                    const SizedBox(width: 11),
-                    Expanded(
-                      child: GenderCard(
-                        emoji: '👩',
-                        label: StringConst.kFemale,
-                        isSelected: selectedGender == 'female',
-                        onTap: () => onGenderSelected('female'),
-                      ),
+                  ),
+                  child: acknowledged
+                      ? const Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Colors.white,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    StringConst.kIUnderstand,
+                    style: GoogleFonts.hankenGrotesk(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 11),
-                GenderCardFull(
-                  emoji: '✨',
-                  label: StringConst.kNonBinary,
-                  isSelected: selectedGender == 'non-binary',
-                  onTap: () => onGenderSelected('non-binary'),
-                ),
-                const SizedBox(height: 20),
-                PrimaryButton(
-                  label: '${StringConst.kCompleteSetup} →',
-                  enabled: selectedGender != null && !isLoading,
-                  isLoading: isLoading,
-                  onTap: onComplete,
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
+
+          const SizedBox(height: 28),
+
+          PrimaryButton(
+            label: '${StringConst.kContinue} →',
+            enabled: acknowledged && !isLoading,
+            isLoading: isLoading,
+            onTap: onComplete,
+          ),
+        ],
+      ),
     );
   }
 }

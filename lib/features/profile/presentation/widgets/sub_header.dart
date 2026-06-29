@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 
 class SubHeader extends StatelessWidget {
   final String superText;
@@ -26,7 +26,7 @@ class SubHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.background,
         border: Border(
-          bottom: BorderSide(color: AppColors.cardBorder, width: 1),
+          bottom: BorderSide(color: AppColors.hairline),
         ),
       ),
       child: Row(
@@ -37,13 +37,13 @@ class SubHeader extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cardBorder, width: 1.5),
+                border: Border.all(color: AppColors.hairline),
               ),
               child: const Icon(
-                Icons.chevron_left,
-                size: 20,
+                Icons.arrow_back_ios_new,
+                size: 15,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -54,16 +54,22 @@ class SubHeader extends StatelessWidget {
             children: [
               Text(
                 superText.toUpperCase(),
-                style: AppTextStyles.overline.copyWith(
+                style: GoogleFonts.hankenGrotesk(
                   fontSize: 10,
-                  letterSpacing: 2,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.8,
                   color: AppColors.textTertiary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 title,
-                style: AppTextStyles.heading2.copyWith(fontSize: 22),
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  letterSpacing: -0.21,
+                ),
               ),
             ],
           ),

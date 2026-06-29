@@ -4,350 +4,364 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/constants/image_const.dart';
+import 'package:skin_sync/core/constants/string_const.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
-import 'package:skin_sync/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:skin_sync/features/auth/presentation/bloc/welcome_bloc.dart';
 
-class WelcomePage extends StatefulWidget {
+class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
   @override
-  State<WelcomePage> createState() => _WelcomePageState();
-}
-
-class _WelcomePageState extends State<WelcomePage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _floatController;
-  late Animation<double> _floatAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _floatController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..repeat(reverse: true);
-
-    _floatAnimation = Tween<double>(begin: 0, end: -10).animate(
-      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => WelcomeBloc(),
+      child: const _CarouselView(),
     );
   }
+}
+
+class _CarouselView extends StatefulWidget {
+  const _CarouselView();
+
+  @override
+  State<_CarouselView> createState() => _CarouselViewState();
+}
+
+class _CarouselViewState extends State<_CarouselView> {
+  final PageController _pageController = PageController();
+
+  static const _slides = [
+    _SlideData(
+      imagePath: ImageConst.carouselScan,
+      chip: StringConst.kSlide1Chip,
+      headline: StringConst.kSlide1Headline,
+      body: StringConst.kSlide1Body,
+    ),
+    _SlideData(
+      imagePath: ImageConst.carousel2,
+      chip: StringConst.kSlide2Chip,
+      headline: StringConst.kSlide2Headline,
+      body: StringConst.kSlide2Body,
+    ),
+    _SlideData(
+      imagePath: ImageConst.carousel3,
+      chip: StringConst.kSlide3Chip,
+      headline: StringConst.kSlide3Headline,
+      body: StringConst.kSlide3Body,
+    ),
+  ];
 
   @override
   void dispose() {
-    _floatController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  void _onBeginPressed() {
-    // New user signup flow
-    context.read<AuthBloc>().add(const AuthResetState());
-    context.read<AuthBloc>().add(const AuthToggleAuthType(false));
-    context.go(AppRoutes.authRoute);
+  void _onNext(int currentPage) {
+    if (currentPage < _slides.length - 1) {
+      _pageController.animateToPage(
+        currentPage + 1,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      context.go(AppRoutes.signInRoute);
+    }
   }
 
-  void _onSignInPressed() {
-    // Existing user sign in flow
-    context.read<AuthBloc>().add(const AuthResetState());
-    context.read<AuthBloc>().add(const AuthToggleAuthType(true));
-    context.go(AppRoutes.authRoute);
+  void _onSkip() {
+    context.go(AppRoutes.signInRoute);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Set status bar to light icons for dark background
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ));
 
     return Scaffold(
-      backgroundColor: AppColors.ink,
-      body: Stack(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: BlocBuilder<WelcomeBloc, WelcomeState>(
+          builder: (context, state) {
+            final currentPage = state.currentPage;
+            final isLast = currentPage == _slides.length - 1;
+
+            return Column(
+              children: [
+                // Top bar: page dots + skip
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _PageDots(
+                        count: _slides.length,
+                        current: currentPage,
+                      ),
+                      if (!isLast)
+                        GestureDetector(
+                          onTap: _onSkip,
+                          child: Text(
+                            StringConst.kSkip,
+                            style: GoogleFonts.hankenGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Slide content
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (page) => context
+                        .read<WelcomeBloc>()
+                        .add(WelcomePageChanged(page)),
+                    itemCount: _slides.length,
+                    itemBuilder: (context, index) =>
+                        _SlideCard(data: _slides[index]),
+                  ),
+                ),
+
+                // Bottom CTA
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  child: _CtaButton(
+                    label: isLast ? StringConst.kGetStarted : StringConst.kNext,
+                    isLast: isLast,
+                    onTap: () => _onNext(currentPage),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page dot indicator
+// ─────────────────────────────────────────────────────────────────────────────
+class _PageDots extends StatelessWidget {
+  final int count;
+  final int current;
+
+  const _PageDots({required this.count, required this.current});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(count, (i) {
+        final active = i == current;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          margin: const EdgeInsets.only(right: 6),
+          width: active ? 22 : 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color:
+                active ? AppColors.primary : AppColors.track,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Single carousel slide
+// ─────────────────────────────────────────────────────────────────────────────
+class _SlideCard extends StatelessWidget {
+  final _SlideData data;
+
+  const _SlideCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Background decorative orbs
-          const _WelcomeBackground(),
+          const SizedBox(height: 24),
 
-          // Main content
-          SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(flex: 2),
-
-                  // Animated Terra Orb
-                  AnimatedBuilder(
-                    animation: _floatAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(0, _floatAnimation.value),
-                        child: child,
-                      );
-                    },
-                    child: const _TerraOrb(),
+          // Illustration
+          Expanded(
+            flex: 5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                data.imagePath,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                errorBuilder: (_, __, ___) => Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryTint,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-
-                  const SizedBox(height: 44),
-
-                  // Brand wordmark
-                  Text(
-                    'Skin Sync',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w400,
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.background,
-                      letterSpacing: 3,
+                  child: Center(
+                    child: Image.asset(
+                      ImageConst.markColor,
+                      width: 64,
+                      height: 64,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.face_retouching_natural,
+                        size: 64,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  // Tagline
-                  Text(
-                    'YOUR SKIN AI COMPANION',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                      letterSpacing: 3,
-                    ),
-                  ),
-
-                  const Spacer(flex: 2),
-
-                  // Action buttons
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 60),
-                    child: Column(
-                      children: [
-                        // Begin button - Primary (Sign Up)
-                        _PrimaryButton(
-                          label: 'Get Started',
-                          onPressed: _onBeginPressed,
-                        ),
-
-                        const SizedBox(height: 11),
-
-                        // Sign In button - Secondary
-                        _SecondaryButton(
-                          label: 'Sign In',
-                          onPressed: _onSignInPressed,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 60),
-                ],
+                ),
               ),
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // Feature chip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.primaryTint,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              data.chip,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryTintInk,
+                letterSpacing: 0.11 * 11,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Benefit headline
+          Text(
+            data.headline,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
+              height: 1.2,
+              letterSpacing: -0.26,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Body
+          Text(
+            data.body,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textTertiary,
+              height: 1.55,
+            ),
+          ),
+
+          const Spacer(),
         ],
       ),
     );
   }
 }
 
-// Background with decorative gradient orbs
-class _WelcomeBackground extends StatelessWidget {
-  const _WelcomeBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Top-left terra gradient orb
-        Positioned(
-          top: -120,
-          left: -120,
-          child: Container(
-            width: 480,
-            height: 480,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.14),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.65],
-              ),
-            ),
-          ),
-        ),
-        // Bottom-right rose gradient orb
-        Positioned(
-          bottom: -80,
-          right: -80,
-          child: Container(
-            width: 360,
-            height: 360,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.rose.withValues(alpha: 0.1),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.65],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Terra gradient orb with rings
-class _TerraOrb extends StatelessWidget {
-  const _TerraOrb();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 148,
-      height: 148,
-      child: CustomPaint(
-        painter: _TerraOrbPainter(),
-      ),
-    );
-  }
-}
-
-class _TerraOrbPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-
-    // Main gradient orb
-    final gradientPaint = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(-0.24, -0.36),
-        radius: 0.7,
-        colors: const [
-          Color(0xFFF0D4C2), // Light terra
-          Color(0xFFD4845A), // Terra
-          Color(0xFFC06E44), // Darker terra
-          Color(0xFF7A3E22), // Deep terra
-        ],
-        stops: const [0.0, 0.3, 0.65, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: radius));
-
-    canvas.drawCircle(center, radius - 1, gradientPaint);
-
-    // Highlight ellipse
-    final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18);
-
-    canvas.save();
-    canvas.translate(size.width * 0.38, size.height * 0.35);
-    canvas.rotate(-0.44); // -25 degrees
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: 44, height: 28),
-      highlightPaint,
-    );
-    canvas.restore();
-
-    // Inner rings
-    final ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    ringPaint.color = Colors.white.withValues(alpha: 0.08);
-    canvas.drawCircle(center, radius * 0.74, ringPaint);
-
-    ringPaint.color = Colors.white.withValues(alpha: 0.05);
-    canvas.drawCircle(center, radius * 0.54, ringPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// Primary button with terra gradient
-class _PrimaryButton extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// CTA button
+// ─────────────────────────────────────────────────────────────────────────────
+class _CtaButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
+  final bool isLast;
+  final VoidCallback onTap;
 
-  const _PrimaryButton({
+  const _CtaButton({
     required this.label,
-    required this.onPressed,
+    required this.isLast,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: onTap,
       child: Container(
-        width: 272,
+        width: double.infinity,
         height: 52,
         decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.35),
-              blurRadius: 32,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          gradient: isLast
+              ? const LinearGradient(
+                  colors: [AppColors.primaryLight, AppColors.primaryDark],
+                )
+              : null,
+          color: isLast ? null : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: isLast
+              ? null
+              : Border.all(color: AppColors.hairline, width: 1.5),
+          boxShadow: isLast
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 28,
+                    offset: const Offset(0, 12),
+                  ),
+                ]
+              : null,
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-              letterSpacing: 1,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isLast ? Colors.white : AppColors.ink,
+              ),
             ),
-          ),
+            if (!isLast) ...[
+              const SizedBox(width: 6),
+              Icon(
+                Icons.arrow_forward,
+                size: 16,
+                color: AppColors.ink,
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
 }
 
-// Secondary outline button
-class _SecondaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
+// ─────────────────────────────────────────────────────────────────────────────
+// Slide data model
+// ─────────────────────────────────────────────────────────────────────────────
+class _SlideData {
+  final String imagePath;
+  final String chip;
+  final String headline;
+  final String body;
 
-  const _SecondaryButton({
-    required this.label,
-    required this.onPressed,
+  const _SlideData({
+    required this.imagePath,
+    required this.chip,
+    required this.headline,
+    required this.body,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: 272,
-        height: 46,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(23),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: GoogleFonts.dmSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: AppColors.background.withValues(alpha: 0.7),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

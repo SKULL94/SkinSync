@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 
 class SettingsCard extends StatelessWidget {
@@ -12,62 +12,42 @@ class SettingsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.hairline),
       ),
       child: Column(
         children: [
           _SettingRow(
-            icon: Icons.person_outline,
-            iconBg: const Color(0xFFF0D4C2),
+            icon: Icons.person_outline_rounded,
+            iconBg: AppColors.primaryTint,
             iconColor: AppColors.primary,
             label: StringConst.kPersonalDetails,
-            value: StringConst.kNameAgeGender,
+            subtitle: StringConst.kNameAgeGender,
             onTap: () => context.push(AppRoutes.personalDetailsRoute),
           ),
-          const _Divider(),
+          _RowDivider(),
           _SettingRow(
             icon: Icons.notifications_outlined,
-            iconBg: const Color(0xFFEDD8D8),
-            iconColor: AppColors.rose,
+            iconBg: AppColors.warnTint,
+            iconColor: AppColors.warn,
             label: StringConst.kScanReminders,
-            value: StringConst.kEveryDays,
+            subtitle: StringConst.kEveryDays,
             onTap: () => context.push(AppRoutes.scanRemindersRoute),
           ),
-          const _Divider(),
-          // _SettingRow(
-          //   icon: Icons.shield_outlined,
-          //   iconBg: const Color(0xFFD4E3CC),
-          //   iconColor: AppColors.sage,
-          //   label: StringConst.kPrivacyData,
-          //   value: StringConst.kManageYourData,
-          //   onTap: () => context.push(AppRoutes.privacyRoute),
-          // ),
-          // const _Divider(),
-          // _SettingRow(
-          //   icon: Icons.wb_sunny_outlined,
-          //   iconBg: const Color(0xFFF5DCA8),
-          //   iconColor: AppColors.amber,
-          //   label: StringConst.kAppearance,
-          //   value: StringConst.kLightMode,
-          //   onTap: () => context.push(AppRoutes.appearanceRoute),
-          // ),
         ],
       ),
     );
   }
 }
 
-class _Divider extends StatelessWidget {
-  const _Divider();
-
+class _RowDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),
       height: 1,
-      color: AppColors.cardBorder,
+      color: AppColors.hairline,
     );
   }
 }
@@ -77,7 +57,7 @@ class _SettingRow extends StatelessWidget {
   final Color iconBg;
   final Color iconColor;
   final String label;
-  final String value;
+  final String subtitle;
   final VoidCallback onTap;
 
   const _SettingRow({
@@ -85,7 +65,7 @@ class _SettingRow extends StatelessWidget {
     required this.iconBg,
     required this.iconColor,
     required this.label,
-    required this.value,
+    required this.subtitle,
     required this.onTap,
   });
 
@@ -95,17 +75,19 @@ class _SettingRow extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: iconBg,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Center(child: Icon(icon, size: 16, color: iconColor)),
+              child: Center(
+                child: Icon(icon, size: 17, color: iconColor),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -114,14 +96,17 @@ class _SettingRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
+                    style: GoogleFonts.hankenGrotesk(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    value,
-                    style: AppTextStyles.caption.copyWith(
+                    subtitle,
+                    style: GoogleFonts.hankenGrotesk(
+                      fontSize: 12,
                       color: AppColors.textTertiary,
                     ),
                   ),
@@ -129,9 +114,9 @@ class _SettingRow extends StatelessWidget {
               ),
             ),
             const Icon(
-              Icons.chevron_right,
-              size: 16,
-              color: AppColors.textTertiary,
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: AppColors.faint,
             ),
           ],
         ),

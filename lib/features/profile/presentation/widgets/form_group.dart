@@ -10,9 +10,9 @@ class FormGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.hairline),
       ),
       child: Column(
         children: [
@@ -22,7 +22,7 @@ class FormGroup extends StatelessWidget {
               Container(
                 height: 1,
                 margin: const EdgeInsets.symmetric(horizontal: 18),
-                color: const Color(0xFFEAE3D9),
+                color: AppColors.hairline,
               ),
           ],
         ],

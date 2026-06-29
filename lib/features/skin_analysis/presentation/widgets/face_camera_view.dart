@@ -4,9 +4,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/bloc/face_camera_bloc.dart';
 
 class FaceCameraView extends StatefulWidget {
@@ -293,11 +293,11 @@ class _FaceCameraViewState extends State<FaceCameraView>
   Color _getStatusColor(FaceDetectionStatus status) {
     switch (status) {
       case FaceDetectionStatus.faceReady:
-        return AppColors.sage;
+        return AppColors.primary;
       case FaceDetectionStatus.initializing:
         return AppColors.textTertiary;
       default:
-        return AppColors.amber;
+        return AppColors.warn;
     }
   }
 
@@ -333,19 +333,21 @@ class _FaceCameraViewState extends State<FaceCameraView>
         children: [
           Text(
             StringConst.kAiSkinLab,
-            style: AppTextStyles.caption.copyWith(
+            style: GoogleFonts.hankenGrotesk(
               fontSize: 11,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 2,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2.0,
               color: AppColors.textTertiary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             StringConst.kPositionYourFace,
-            style: AppTextStyles.heading2.copyWith(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 24,
+              fontWeight: FontWeight.w700,
               color: Colors.white,
+              letterSpacing: -0.24,
             ),
           ),
         ],
@@ -429,7 +431,9 @@ class _FaceCameraViewState extends State<FaceCameraView>
           const SizedBox(width: 10),
           Text(
             _getStatusMessage(status),
-            style: AppTextStyles.labelMedium.copyWith(
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
               color: Colors.white,
             ),
           ),
@@ -494,7 +498,9 @@ class _FaceCameraViewState extends State<FaceCameraView>
                     const SizedBox(width: 10),
                     Text(
                       StringConst.kCapture,
-                      style: AppTextStyles.labelMedium.copyWith(
+                      style: GoogleFonts.hankenGrotesk(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: isReady ? Colors.white : Colors.white54,
                       ),
                     ),
@@ -535,9 +541,9 @@ class _FaceCircleOverlayPainter extends CustomPainter {
     canvas.drawPath(overlayPath, overlayPaint);
 
     final borderColor = switch (status) {
-      FaceDetectionStatus.faceReady => AppColors.sage,
+      FaceDetectionStatus.faceReady => AppColors.primary,
       FaceDetectionStatus.initializing => Colors.white38,
-      _ => AppColors.amber,
+      _ => AppColors.warn,
     };
 
     final borderPaint = Paint()
@@ -549,7 +555,7 @@ class _FaceCircleOverlayPainter extends CustomPainter {
 
     if (status == FaceDetectionStatus.faceReady) {
       final glowPaint = Paint()
-        ..color = AppColors.sage.withValues(alpha: 0.3)
+        ..color = AppColors.primary.withValues(alpha: 0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 8
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);

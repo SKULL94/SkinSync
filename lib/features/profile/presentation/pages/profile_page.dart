@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/constants/string_const.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
-import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:skin_sync/features/profile/presentation/widgets/concerns_card.dart';
 import 'package:skin_sync/features/profile/presentation/widgets/profile_hero.dart';
@@ -30,35 +31,35 @@ class _ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-
     return BlocConsumer<ProfileBloc, ProfileState>(
-      listenWhen: (previous, current) =>
-          previous.status != current.status &&
-          current.status == ProfileStatus.loading &&
-          previous.status == ProfileStatus.loaded,
+      listenWhen: (p, c) =>
+          p.status != c.status &&
+          c.status == ProfileStatus.loading &&
+          p.status == ProfileStatus.loaded,
       listener: (context, state) {
-        // Handle sign out navigation
         if (state.status == ProfileStatus.loading && state.profile == null) {
           context.go(AppRoutes.splashScreen);
         }
       },
-      buildWhen: (previous, current) =>
-          previous.status != current.status ||
-          previous.profile != current.profile,
+      buildWhen: (p, c) =>
+          p.status != c.status || p.profile != c.profile,
       builder: (context, state) {
         if (state.status == ProfileStatus.initial ||
-            state.status == ProfileStatus.loading && state.profile == null) {
-          return Scaffold(
-            backgroundColor: colors.background,
+            (state.status == ProfileStatus.loading &&
+                state.profile == null)) {
+          return const Scaffold(
+            backgroundColor: AppColors.background,
             body: Center(
-              child: CircularProgressIndicator(color: colors.primary),
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 2,
+              ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: colors.background,
+          backgroundColor: AppColors.background,
           body: SingleChildScrollView(
             child: Column(
               children: [
@@ -68,30 +69,36 @@ class _ProfileView extends StatelessWidget {
                 ),
                 const StatsStrip(),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const _SectionHeader(StringConst.kSkinProfile),
+                      const SizedBox(height: 12),
                       SkinTypeCard(
                         selectedType: state.skinType,
                         onTypeChanged: (type) => context
                             .read<ProfileBloc>()
                             .add(ProfileSkinTypeChanged(type)),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       ConcernsCard(
                         selectedConcerns: state.concerns,
                         onConcernsChanged: (concerns) => context
                             .read<ProfileBloc>()
                             .add(ProfileConcernsChanged(concerns)),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
+                      const _SectionHeader(StringConst.kSettings),
+                      const SizedBox(height: 12),
                       const SettingsCard(),
                       const SizedBox(height: 24),
                       SignOutButton(
-                        onTap: () => _showSignOutConfirmation(context),
+                        onTap: () => _showSignOutDialog(context),
                       ),
-                      // Extra padding to clear floating nav bar
-                      SizedBox(height: 100 + MediaQuery.of(context).padding.bottom),
+                      SizedBox(
+                        height: 100 + MediaQuery.of(context).padding.bottom,
+                      ),
                     ],
                   ),
                 ),
@@ -103,27 +110,80 @@ class _ProfileView extends StatelessWidget {
     );
   }
 
-  void _showSignOutConfirmation(BuildContext context) {
+  void _showSignOutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          StringConst.kSignOut,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to sign out?',
+          style: GoogleFonts.hankenGrotesk(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              StringConst.kCancel,
+              style: GoogleFonts.hankenGrotesk(
+                fontWeight: FontWeight.w500,
+                color: AppColors.textTertiary,
+              ),
+            ),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () {
-              Navigator.pop(dialogContext);
-              context.read<ProfileBloc>().add(const ProfileSignOutRequested());
+              Navigator.pop(ctx);
+              context
+                  .read<ProfileBloc>()
+                  .add(const ProfileSignOutRequested());
               context.go(AppRoutes.splashScreen);
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.rose),
-            child: const Text('Sign Out'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.alert,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              StringConst.kSignOut,
+              style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String label;
+
+  const _SectionHeader(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: GoogleFonts.spaceGrotesk(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        color: AppColors.ink,
+        letterSpacing: -0.17,
       ),
     );
   }

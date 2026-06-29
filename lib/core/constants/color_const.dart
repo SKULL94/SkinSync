@@ -1,163 +1,159 @@
 import 'package:flutter/material.dart';
 
-/// AURA Design System Colors
-/// Warm, organic, luxurious skincare aesthetic
+/// Skinsight Design System Colors
 class AppColors {
   AppColors._();
 
-  // Primary Colors - Terra (Terracotta/Orange)
-  static const Color primary = Color(0xFFD4845A); // Terra - main brand color
-  static const Color primaryLight = Color(0xFFE5A07A); // Lighter terra
-  static const Color primaryDark = Color(0xFFB86E48); // Darker terra
+  // ── Neutrals ────────────────────────────────────────────────────────────
+  static const Color background = Color(0xFFF4F7F5);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color hairline = Color(0xFFEAEFEC);
+  static const Color hairlineSoft = Color(0xFFF1F5F3);
+  static const Color track = Color(0xFFE6EDE9);
 
-  // Secondary Colors - Sage (Green)
-  static const Color sage = Color(0xFF8FA882); // Sage green
-  static const Color sageLight = Color(0xFFA8BF9C); // Light sage
-  static const Color sageDark = Color(0xFF6B8060); // Dark sage
+  // Text / ink
+  static const Color ink = Color(0xFF0E1A15);
+  static const Color textPrimary = Color(0xFF0E1A15);
+  static const Color textSecondary = Color(0xFF5E6E67);
+  static const Color textTertiary = Color(0xFF6E7C75);
+  static const Color muted = Color(0xFF8A988F);
+  static const Color muted2 = Color(0xFF9AA8A1);
+  static const Color faint = Color(0xFFAEBBB4);
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
+  static const Color textOnDark = Color(0xFFF4F7F5);
 
-  // Accent Colors
-  static const Color rose = Color(0xFFC49898); // Rose pink
-  static const Color amber = Color(0xFFE8A84A); // Amber/gold
+  // ── Primary — Emerald ───────────────────────────────────────────────────
+  static const Color primary = Color(0xFF12A56C);
+  static const Color primaryLight = Color(0xFF1FBE7B);
+  static const Color primaryDark = Color(0xFF0E9E63);
+  static const Color primaryTint = Color(0xFFE2F4EC);
+  static const Color primaryTintInk = Color(0xFF0E8255);
 
-  // Background Colors - Warm Beige
-  static const Color background = Color(0xFFF2EDE6); // Main bg - warm beige
-  static const Color backgroundLight = Color(0xFFF8F5F0); // Lighter beige
-  static const Color surface = Color(0xFFFFFFFF); // White for cards
-  static const Color surfaceVariant = Color(0xFFFAF7F3); // Off-white
+  // Deep hero surfaces (score card, splash, sign-in header)
+  static const Color deepStart = Color(0xFF0F5841);
+  static const Color deepEnd = Color(0xFF0A3A2C);
+  static const Color deepCore = Color(0xFF0B3326);
+  static const Color accentBright = Color(0xFF3FE6A0);
 
-  // Text Colors - Ink (Dark Brown)
-  static const Color ink = Color(0xFF2A2118); // Primary text - dark brown
-  static const Color textPrimary = Color(0xFF2A2118); // Alias for ink
-  static const Color textSecondary = Color(0xFF5C5347); // Secondary text
-  static const Color textTertiary = Color(0xFF8A8279); // Tertiary/muted text
-  static const Color textOnPrimary = Color(0xFFFFFFFF); // White text on primary
-  static const Color textOnDark = Color(0xFFF2EDE6); // Beige text on dark
+  // ── Status ──────────────────────────────────────────────────────────────
+  static const Color good = Color(0xFF15B277);
+  static const Color goodTint = Color(0xFFE2F4EC);
+  static const Color goodTintInk = Color(0xFF0E8255);
+  static const Color warn = Color(0xFFE8A33D);
+  static const Color warnTint = Color(0xFFFBF0DB);
+  static const Color warnTintInk = Color(0xFF9A6E1F);
+  static const Color alert = Color(0xFFF2664B);
+  static const Color alertTint = Color(0xFFFCE6E1);
+  static const Color alertTintInk = Color(0xFFC24631);
 
-  // Status Colors
-  static const Color success = Color(0xFF8FA882); // Sage green for success
-  static const Color warning = Color(0xFFE8A84A); // Amber for warning
-  static const Color error = Color(0xFFD4645A); // Warm red
-  static const Color info = Color(0xFF5A8FD4); // Blue for info
+  // ── Metric → score color rule ────────────────────────────────────────────
+  // ≥60 → good, 45–59 → warn, <45 → alert
+  static const Color metricGood = good;
+  static const Color metricMedium = warn;
+  static const Color metricLow = alert;
+  static const Color metricHydration = Color(0xFF5A8FD4);
+  static const Color metricOiliness = warn;
+  static const Color metricTexture = alert;
+  static const Color metricClarity = good;
 
-  // Metric Status Colors (Good/Medium/Low)
-  static const Color metricGood = Color(0xFF8FA882); // Sage - Good
-  static const Color metricMedium = Color(0xFFE8A84A); // Amber - Medium
-  static const Color metricLow = Color(0xFFC49898); // Rose - Low/Needs attention
+  // ── Dark theme ───────────────────────────────────────────────────────────
+  static const Color darkBackground = Color(0xFF0B1510);
+  static const Color darkSurface = Color(0xFF162018);
+  static const Color darkCardBorder = Color(0xFF1E3028);
 
-  // Metric Category Colors
-  static const Color metricHydration = Color(0xFF5AA8D4); // Blue for hydration
-  static const Color metricOiliness = Color(0xFFE8A84A); // Amber for oiliness
-  static const Color metricTexture = Color(0xFFC49898); // Rose for texture
-  static const Color metricClarity = Color(0xFF8FA882); // Sage for clarity
+  // ── Navigation ──────────────────────────────────────────────────────────
+  static const Color navInactive = faint;
+  static const Color navActive = primary;
 
-  // Card & Border Colors
-  static const Color cardBorder = Color(0xFFE5DED4); // Warm border
-  static const Color divider = Color(0xFFE5DED4); // Divider
-  static const Color chipBackground = Color(0xFFE5DED4); // Chip bg
+  // ── Glass / overlay ─────────────────────────────────────────────────────
+  static const Color glassWhite = Color(0xE6FFFFFF);
+  static const Color glassBorder = Color(0x33FFFFFF);
+  static const Color glassBackground = Color(0xE6FFFFFF);
+  static const Color shadow = Color(0x0D0E1A15);
+  static const Color overlay = Color(0x660E1A15);
+  static const Color scrim = Color(0xCC0E1A15);
 
-  // Shadow & Overlay
-  static const Color shadow = Color(0x1A2A2118); // 10% ink
-  static const Color overlay = Color(0x662A2118); // 40% ink for overlays
-  static const Color scrim = Color(0xCC2A2118); // 80% ink for scanning overlay
-
-  // Dark Theme Colors
-  static const Color darkBackground = Color(0xFF1E1B16); // Dark warm
-  static const Color darkSurface = Color(0xFF2A2620); // Dark surface
-  static const Color darkCardBorder = Color(0xFF3D3830); // Dark border
-
-  // Gradient Colors
-  static const Color gradientTerraStart = Color(0xFFD4845A); // Terra
-  static const Color gradientTerraEnd = Color(0xFFE8A84A); // Amber
-  static const Color gradientSageStart = Color(0xFF8FA882); // Sage
-  static const Color gradientSageEnd = Color(0xFFA8BF9C); // Light sage
-
-  // Score Ring Gradient
-  static const Color scoreGradientStart = Color(0xFFD4845A); // Terra
-  static const Color scoreGradientMiddle = Color(0xFFE8A84A); // Amber
-  static const Color scoreGradientEnd = Color(0xFF8FA882); // Sage
-
-  // Navigation
-  static const Color navInactive = Color(0xFF8A8279); // Muted
-  static const Color navActive = Color(0xFFD4845A); // Terra
-
-  // Glassmorphism
-  static const Color glassWhite = Color(0xE6FFFFFF); // 90% white
-  static const Color glassBorder = Color(0x33FFFFFF); // 20% white
-  static const Color glassBackground = Color(0xE6FFFFFF); // 90% white (alias)
-
-  // Legacy color aliases for backward compatibility
-  static const Color secondaryLight = Color(0xFFA8BF9C); // Alias for sageLight
-  static const Color backgroundSecondary = Color(0xFFF8F5F0); // Alias for backgroundLight
-  static const Color backgroundPink = Color(0xFFFAF5F0); // Warm tint
-  static const Color backgroundLavender = Color(0xFFF5F0F0); // Warm tint
-  static const Color riskLow = Color(0xFF8FA882); // Sage - low risk
-  static const Color riskMedium = Color(0xFFE8A84A); // Amber - medium risk
-  static const Color riskHigh = Color(0xFFD4645A); // Warm red - high risk
-  static const Color buttonOverlay = Color(0xCCD4845A); // 80% terra
+  // ── Legacy aliases (kept so existing screens compile unchanged) ──────────
+  static const Color sage = primary;
+  static const Color sageLight = primaryLight;
+  static const Color sageDark = deepStart;
+  static const Color amber = warn;
+  static const Color rose = alert;
+  static const Color cardBorder = hairline;
+  static const Color divider = hairline;
+  static const Color chipBackground = primaryTint;
+  static const Color backgroundLight = background;
+  static const Color backgroundSecondary = background;
+  static const Color backgroundPink = primaryTint;
+  static const Color backgroundLavender = track;
+  static const Color surfaceVariant = hairlineSoft;
+  static const Color success = good;
+  static const Color warning = warn;
+  static const Color error = alert;
+  static const Color info = Color(0xFF5A8FD4);
+  static const Color riskLow = good;
+  static const Color riskMedium = warn;
+  static const Color riskHigh = alert;
+  static const Color buttonOverlay = Color(0xCC12A56C);
+  static const Color primaryContainer = primaryTint;
+  static const Color scoreGradientStart = good;
+  static const Color scoreGradientMiddle = primaryLight;
+  static const Color scoreGradientEnd = accentBright;
+  static const Color gradientTerraStart = primaryLight;
+  static const Color gradientTerraEnd = primaryDark;
+  static const Color gradientSageStart = primary;
+  static const Color gradientSageEnd = primaryLight;
 }
 
-/// Gradient definitions for the app
+/// Gradient definitions
 class AppGradients {
   AppGradients._();
 
-  // Score ring gradient (terra to amber to sage)
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.primaryLight, AppColors.primaryDark],
+  );
+
+  static const LinearGradient deepGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.deepStart, AppColors.deepEnd],
+  );
+
   static const LinearGradient scoreGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      AppColors.scoreGradientStart,
-      AppColors.scoreGradientMiddle,
-      AppColors.scoreGradientEnd,
-    ],
+    colors: [AppColors.good, AppColors.accentBright],
   );
 
-  // Terra gradient for buttons/accents
   static const LinearGradient terraGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      AppColors.primary,
-      AppColors.amber,
-    ],
+    colors: [AppColors.primaryLight, AppColors.primaryDark],
   );
 
-  // Sage gradient
   static const LinearGradient sageGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      AppColors.sage,
-      AppColors.sageLight,
-    ],
+    colors: [AppColors.primary, AppColors.primaryLight],
   );
 
-  // Hero card gradient (dark overlay for text readability)
   static const LinearGradient heroOverlayGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0x00000000),
-      Color(0x80000000),
-    ],
+    colors: [Color(0x00000000), Color(0x80000000)],
   );
 
-  // Scan button gradient
   static const LinearGradient scanButtonGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      AppColors.primary,
-      AppColors.primaryLight,
-    ],
+    colors: [AppColors.primaryLight, AppColors.primaryDark],
   );
 
-  // Card subtle gradient
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFFFFFFF),
-      Color(0xFFFAF7F3),
-    ],
+    colors: [Color(0xFFFFFFFF), Color(0xFFF1F5F3)],
   );
 }

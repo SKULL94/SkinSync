@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 
 class SaveButton extends StatelessWidget {
   final String label;
@@ -22,12 +22,14 @@ class SaveButton extends StatelessWidget {
         width: double.infinity,
         height: 52,
         decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            colors: [AppColors.primaryLight, AppColors.primaryDark],
+          ),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.28),
-              blurRadius: 24,
+              blurRadius: 20,
               offset: const Offset(0, 6),
             ),
           ],
@@ -44,7 +46,11 @@ class SaveButton extends StatelessWidget {
                 )
               : Text(
                   label,
-                  style: AppTextStyles.buttonPrimary,
+                  style: GoogleFonts.hankenGrotesk(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
         ),
       ),

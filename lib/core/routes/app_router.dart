@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lifecycle/lifecycle.dart';
 import 'package:skin_sync/features/history/presentation/pages/history_page.dart';
+import 'package:skin_sync/features/history/presentation/pages/result_detail_page.dart';
+import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/layout/presentation/pages/layout_page.dart';
 import 'package:skin_sync/features/auth/presentation/pages/onboarding_page.dart';
+import 'package:skin_sync/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:skin_sync/features/skin_analysis/presentation/pages/skin_analysis_page.dart';
 import 'package:skin_sync/splash_page.dart';
 import 'package:skin_sync/features/auth/presentation/pages/welcome_page.dart';
@@ -32,6 +35,11 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const WelcomePage(),
     ),
     GoRoute(
+      path: AppRoutes.signInRoute,
+      name: 'signIn',
+      builder: (context, state) => const SignInPage(),
+    ),
+    GoRoute(
       path: AppRoutes.authRoute,
       name: 'auth',
       builder: (context, state) => const AuthPage(),
@@ -55,6 +63,14 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.historyRoute,
       name: 'history',
       builder: (context, state) => const HistoryPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.resultDetailRoute,
+      name: 'resultDetail',
+      builder: (context, state) {
+        final history = state.extra as HistoryEntity;
+        return ResultDetailPage(history: history);
+      },
     ),
     GoRoute(
       path: AppRoutes.personalDetailsRoute,

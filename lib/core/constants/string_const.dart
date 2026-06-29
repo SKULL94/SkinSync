@@ -94,9 +94,13 @@ class StringConst {
 
   // History Page
   static const String kAnalysisHistory = 'Analysis History';
+  static const String kScanHistory = 'Scan history';
   static const String kNoAnalysisHistory = 'No analysis history';
+  static const String kNoScansYet = 'No scans yet';
   static const String kPastAnalysesAppear =
       'Your past skin analyses will appear here';
+  static const String kStartFirstScanCta =
+      'Take your first scan to start tracking your skin health.';
   static const String kDeleteAnalysis = 'Delete Analysis';
   static const String kDeleteAnalysisConfirm =
       'Are you sure you want to delete this analysis?';
@@ -105,6 +109,9 @@ class StringConst {
       'Are you sure you want to delete all analysis history? This cannot be undone.';
   static const String kAnalysisDeleted = 'Analysis deleted';
   static const String kAllHistoryCleared = 'All history cleared';
+  static const String kScanResults = 'Scan results';
+  static const String kDeleteScan = 'Delete scan';
+  static const String kAnalysisNotAvailable = 'Analysis data not available for this scan.';
 
   // General
   static const String kUnknown = 'Unknown';
@@ -212,6 +219,9 @@ class StringConst {
   static const String kCompleteSetup = 'Complete Setup';
 
   // Profile Page
+  static const String kMyProfile = 'My Profile';
+  static const String kSkinProfile = 'Skin Profile';
+  static const String kSettings = 'Settings';
   static const String kMember = 'Member';
   static const String kMemberSince = 'Member since';
   static const String kFreePlan = 'Free Plan';
@@ -284,6 +294,50 @@ class StringConst {
   static const String kSelectYourSkinType = 'Select Your Skin Type';
   static const String kSkinTone = 'Skin Tone';
   static const String kSaveSkinProfile = 'Save Skin Profile';
+
+  // ── Skinsight brand ────────────────────────────────────────────────────
+  static const String kAppName = 'Skinsight';
+  static const String kTagline = 'A clearer look at your skin';
+
+  // Splash
+  static const String kLoadingApp = 'Loading…';
+
+  // Intro carousel
+  static const String kSlide1Chip = 'AI ANALYSIS';
+  static const String kSlide1Headline = 'See your skin clearly';
+  static const String kSlide1Body =
+      'An honest read of what\'s visible — no jargon, no guesswork.';
+  static const String kSlide2Chip = 'INSIGHTS';
+  static const String kSlide2Headline = 'Track what changes';
+  static const String kSlide2Body =
+      'A simple daily score and metrics that show real progress over time.';
+  static const String kSlide3Chip = 'HABITS';
+  static const String kSlide3Headline = 'Build gentle routines';
+  static const String kSlide3Body =
+      'Small consistent care beats one-time fixes. Your routine, your pace.';
+  static const String kGetStarted = 'Get started';
+  static const String kNext = 'Next';
+  static const String kSkip = 'Skip';
+
+  // Sign-in
+  static const String kSignInHeadline = 'Welcome to Skinsight';
+  static const String kSignInSubtitle = 'Sign in to start your skin journey';
+  static const String kContinueWithApple = 'Continue with Apple';
+  static const String kContinueWithGoogle = 'Continue with Google';
+  static const String kContinueWithPhone = 'Continue with phone';
+  static const String kOrDivider = 'or';
+  static const String kAuthComingSoon =
+      'Coming soon — use phone sign-in for now';
+
+  // Onboarding disclaimer
+  static const String kBeforeFirstScan = 'Before your first scan';
+  static const String kDisclaimerIntro =
+      'Skinsight reads what\'s visible on your skin and suggests gentle habits that may help. A mirror with more to say.';
+  static const String kFullDisclaimerText =
+      'Skinsight is not a medical device. It does not diagnose, treat, or prevent any skin condition or disease. Results are based on visible analysis of photos and are for general informational purposes only. For any serious, persistent, or worsening skin concerns, always consult a licensed dermatologist.';
+  static const String kIUnderstand = 'I understand';
+  static const String kNotMedicalDiagnosis =
+      'This is not a medical diagnosis. For serious or persistent concerns, see a dermatologist.';
 
   // Scan Reminders Page
   static const String kReminders = 'Reminders';

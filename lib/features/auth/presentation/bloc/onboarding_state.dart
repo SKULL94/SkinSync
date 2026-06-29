@@ -11,6 +11,7 @@ class OnboardingState extends Equatable {
   final String name;
   final String? gender;
   final int currentPage;
+  final bool disclaimerAcknowledged;
   final OnboardingStatus status;
   final String? errorMessage;
 
@@ -18,6 +19,7 @@ class OnboardingState extends Equatable {
     this.name = '',
     this.gender,
     this.currentPage = 0,
+    this.disclaimerAcknowledged = false,
     this.status = OnboardingStatus.initial,
     this.errorMessage,
   });
@@ -25,12 +27,14 @@ class OnboardingState extends Equatable {
   bool get isNameValid => name.trim().isNotEmpty;
   bool get isGenderValid => gender != null;
   bool get canProceedToGender => isNameValid;
-  bool get canComplete => isNameValid && isGenderValid;
+  bool get canProceedToDisclaimer => isNameValid && isGenderValid;
+  bool get canComplete => isNameValid && isGenderValid && disclaimerAcknowledged;
 
   OnboardingState copyWith({
     String? name,
     String? gender,
     int? currentPage,
+    bool? disclaimerAcknowledged,
     OnboardingStatus? status,
     String? errorMessage,
     bool clearError = false,
@@ -39,11 +43,14 @@ class OnboardingState extends Equatable {
       name: name ?? this.name,
       gender: gender ?? this.gender,
       currentPage: currentPage ?? this.currentPage,
+      disclaimerAcknowledged:
+          disclaimerAcknowledged ?? this.disclaimerAcknowledged,
       status: status ?? this.status,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
   @override
-  List<Object?> get props => [name, gender, currentPage, status, errorMessage];
+  List<Object?> get props =>
+      [name, gender, currentPage, disclaimerAcknowledged, status, errorMessage];
 }

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
+import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 
 class StatsStrip extends StatelessWidget {
   const StatsStrip({super.key});
 
-  int _calculateScore(dynamic results) {
+  int _overallScore(HistoryEntity h) {
     try {
-      if (results != null && results is List && results.isNotEmpty) {
-        final topConfidence = (results.first['confidence'] as num?)?.toDouble() ?? 0.5;
-        return (50 + (topConfidence * 50)).toInt().clamp(0, 100);
-      }
+      final v = h.aiAnalysis?['overall_score'];
+      if (v != null) return (v as num).toInt().clamp(0, 100);
     } catch (_) {}
     return 0;
   }
@@ -31,30 +31,40 @@ class StatsStrip extends StatelessWidget {
 
         if (histories.isNotEmpty) {
           for (final h in histories) {
-            final score = _calculateScore(h.results);
-            if (score > bestScore) bestScore = score;
+            final s = _overallScore(h);
+            if (s > bestScore) bestScore = s;
           }
-          firstScore = _calculateScore(histories.last.results);
-          latestScore = _calculateScore(histories.first.results);
+          firstScore = _overallScore(histories.last);
+          latestScore = _overallScore(histories.first);
         }
 
         final improvement = totalScans > 1 ? latestScore - firstScore : 0;
-        final improvementText = improvement >= 0 ? '+$improvement' : '$improvement';
+        final improvementText =
+            improvement >= 0 ? '+$improvement' : '$improvement';
+        final improvementColor = improvement >= 0
+            ? AppColors.accentBright
+            : AppColors.alert.withValues(alpha: 0.85);
 
         return Container(
-          color: const Color(0xFF3D2E22),
+          color: AppColors.deepCore,
           child: Row(
             children: [
-              _StatCell(value: '$totalScans', label: StringConst.kScans),
-              const _StatDivider(),
               _StatCell(
-                value: bestScore > 0 ? '$bestScore' : '-',
-                label: StringConst.kBestScore,
+                value: '$totalScans',
+                label: StringConst.kScans,
+                valueColor: Colors.white,
               ),
-              const _StatDivider(),
+              _StatDivider(),
               _StatCell(
-                value: totalScans > 1 ? improvementText : '-',
+                value: bestScore > 0 ? '$bestScore' : '—',
+                label: StringConst.kBestScore,
+                valueColor: AppColors.accentBright,
+              ),
+              _StatDivider(),
+              _StatCell(
+                value: totalScans > 1 ? improvementText : '—',
                 label: StringConst.kImprovement,
+                valueColor: totalScans > 1 ? improvementColor : Colors.white,
               ),
             ],
           ),
@@ -67,30 +77,38 @@ class StatsStrip extends StatelessWidget {
 class _StatCell extends StatelessWidget {
   final String value;
   final String label;
+  final Color valueColor;
 
-  const _StatCell({required this.value, required this.label});
+  const _StatCell({
+    required this.value,
+    required this.label,
+    required this.valueColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           children: [
             Text(
               value,
-              style: AppTextStyles.heading2.copyWith(
+              style: GoogleFonts.spaceGrotesk(
                 fontSize: 22,
-                color: const Color(0xFFF2EDE6),
+                fontWeight: FontWeight.w700,
+                color: valueColor,
+                height: 1,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: AppTextStyles.overline.copyWith(
+              style: GoogleFonts.hankenGrotesk(
                 fontSize: 9,
-                letterSpacing: 1,
-                color: const Color(0xFFF2EDE6).withValues(alpha: 0.35),
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1.1,
+                color: Colors.white.withValues(alpha: 0.35),
               ),
             ),
           ],
@@ -101,14 +119,12 @@ class _StatCell extends StatelessWidget {
 }
 
 class _StatDivider extends StatelessWidget {
-  const _StatDivider();
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 1,
-      height: 40,
-      color: Colors.white.withValues(alpha: 0.05),
+      height: 36,
+      color: Colors.white.withValues(alpha: 0.07),
     );
   }
 }

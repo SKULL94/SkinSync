@@ -151,7 +151,7 @@ class _PersonalDetailsViewState extends State<_PersonalDetailsView> {
                   color: AppColors.sage.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.photo_library_outlined,
                   color: AppColors.sage,
                 ),

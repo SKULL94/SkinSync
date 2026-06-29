@@ -1,14 +1,16 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
+import 'package:skin_sync/core/constants/string_const.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
-import 'package:skin_sync/core/theme/theme_extension.dart';
 import 'package:skin_sync/features/history/domain/entities/history_entity.dart';
 import 'package:skin_sync/features/history/presentation/bloc/history_bloc.dart';
 import 'package:skin_sync/features/home/presentation/bloc/dashboard_bloc.dart';
@@ -22,20 +24,17 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // DashboardBloc is provided by LayoutPage
-    return const _HomePageContent();
+    return const _HomeContent();
   }
 }
 
-class _HomePageContent extends StatelessWidget {
-  const _HomePageContent();
+class _HomeContent extends StatelessWidget {
+  const _HomeContent();
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -48,55 +47,61 @@ class _HomePageContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top bar: greeting + avatar
+                // Greeting header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  child: _buildHeader(context),
+                  child: _HomeHeader(),
                 ),
+
                 const SizedBox(height: 20),
 
-                // Hero card
+                // Deep-emerald hero score card
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildHeroCard(context),
+                  child: _HeroScoreCard(),
                 ),
+
                 const SizedBox(height: 14),
 
-                // Score strip
+                // "Start a new scan" CTA
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildScoreStrip(context),
+                  child: _StartScanButton(),
                 ),
-                const SizedBox(height: 13),
 
-                // Disclaimer
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildDisclaimer(),
+                const SizedBox(height: 12),
+
+                // Quiet disclaimer
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: _QuietDisclaimer(),
                 ),
+
                 const SizedBox(height: 22),
 
                 // Quick Actions
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildSectionHeader('Quick Actions'),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: _SectionHeader(title: StringConst.kQuickActions),
                 ),
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildQuickActions(context),
+                  child: _QuickActionsGrid(),
                 ),
+
                 const SizedBox(height: 22),
 
-                // Upcoming Reminder
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildSectionHeader('Upcoming'),
+                // Upcoming reminder
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: _SectionHeader(title: 'Upcoming'),
                 ),
                 const SizedBox(height: 12),
-                _buildUpcomingReminder(context),
-                // Extra padding to clear floating nav bar
-                SizedBox(height: 100 + MediaQuery.of(context).padding.bottom),
+                _UpcomingReminder(),
+
+                SizedBox(
+                    height: 100 + MediaQuery.of(context).padding.bottom),
               ],
             ),
           ),
@@ -104,19 +109,32 @@ class _HomePageContent extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildHeader(BuildContext context) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Greeting header
+// ─────────────────────────────────────────────────────────────────────────────
+class _HomeHeader extends StatelessWidget {
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return StringConst.kGoodMorning;
+    if (h < 17) return StringConst.kGoodAfternoon;
+    return StringConst.kGoodEvening;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return BlocBuilder<DashboardBloc, DashboardState>(
-      buildWhen: (prev, curr) =>
-          prev.dashboard?.userName != curr.dashboard?.userName ||
-          prev.dashboard?.avatarUrl != curr.dashboard?.avatarUrl ||
-          prev.status != curr.status,
+      buildWhen: (p, c) =>
+          p.dashboard?.userName != c.dashboard?.userName ||
+          p.dashboard?.avatarUrl != c.dashboard?.avatarUrl ||
+          p.status != c.status,
       builder: (context, state) {
-        final isLoading = state.status == DashboardStatus.initial ||
+        final loading = state.status == DashboardStatus.initial ||
             state.status == DashboardStatus.loading;
-        final userName = state.dashboard?.userName ?? 'there';
+        final userName = state.dashboard?.userName ?? StringConst.kDefaultUserName;
         final avatarUrl = state.dashboard?.avatarUrl;
-        final avatarInitial = userName.isNotEmpty && userName != 'there'
+        final initial = userName.isNotEmpty && userName != StringConst.kDefaultUserName
             ? userName[0].toUpperCase()
             : '?';
 
@@ -127,297 +145,223 @@ class _HomePageContent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _getGreeting(),
-                  style: GoogleFonts.dmSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w300,
+                  _greeting(),
+                  style: GoogleFonts.hankenGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textTertiary,
-                    letterSpacing: 0.3,
                   ),
                 ),
-                const SizedBox(height: 3),
-                if (isLoading)
-                  Shimmer.fromColors(
-                    baseColor: AppColors.cardBorder,
-                    highlightColor: AppColors.background,
-                    child: Container(
-                      width: 100,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBorder,
-                        borderRadius: BorderRadius.circular(6),
+                const SizedBox(height: 2),
+                loading
+                    ? Shimmer.fromColors(
+                        baseColor: AppColors.hairline,
+                        highlightColor: AppColors.background,
+                        child: Container(
+                          width: 100,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: AppColors.hairline,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        userName,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                          letterSpacing: -0.24,
+                          height: 1,
+                        ),
                       ),
-                    ),
-                  )
-                else
-                  Text(
-                    userName,
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w400,
-                      fontStyle: FontStyle.normal,
-                      color: AppColors.textPrimary,
-                      height: 1,
-                    ),
-                  ),
               ],
             ),
             GestureDetector(
               onTap: () => context.push(AppRoutes.personalDetailsRoute),
-              child: isLoading
+              child: loading
                   ? Shimmer.fromColors(
-                      baseColor: AppColors.cardBorder,
+                      baseColor: AppColors.hairline,
                       highlightColor: AppColors.background,
                       child: Container(
                         width: 44,
                         height: 44,
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.cardBorder,
+                          color: AppColors.hairline,
                         ),
                       ),
                     )
-                  : _buildAvatar(avatarUrl, avatarInitial),
+                  : _Avatar(url: avatarUrl, initial: initial),
             ),
           ],
         );
       },
     );
   }
+}
 
-  Widget _buildAvatar(String? avatarUrl, String initial) {
-    if (avatarUrl != null && avatarUrl.isNotEmpty) {
-      final isLocalFile = !avatarUrl.startsWith('http');
+class _Avatar extends StatelessWidget {
+  final String? url;
+  final String initial;
 
+  const _Avatar({this.url, required this.initial});
+
+  @override
+  Widget build(BuildContext context) {
+    if (url != null && url!.isNotEmpty) {
+      final local = !url!.startsWith('http');
       return Container(
         width: 44,
         height: 44,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.cardBorder, width: 2),
+          border: Border.all(color: AppColors.hairline, width: 2),
         ),
         child: ClipOval(
-          child: isLocalFile
-              ? Image.file(
-                  File(avatarUrl),
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildInitialAvatar(initial),
-                )
+          child: local
+              ? Image.file(File(url!), fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _InitialAvatar(initial: initial))
               : CachedNetworkImage(
-                  imageUrl: avatarUrl,
-                  width: 44,
-                  height: 44,
+                  imageUrl: url!,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => _buildInitialAvatar(initial),
-                  errorWidget: (_, __, ___) => _buildInitialAvatar(initial),
+                  placeholder: (_, __) => _InitialAvatar(initial: initial),
+                  errorWidget: (_, __, ___) => _InitialAvatar(initial: initial),
                 ),
         ),
       );
     }
-
-    return _buildInitialAvatar(initial);
+    return _InitialAvatar(initial: initial);
   }
+}
 
-  Widget _buildInitialAvatar(String initial) {
+class _InitialAvatar extends StatelessWidget {
+  final String initial;
+
+  const _InitialAvatar({required this.initial});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF0D4C2),
-            Color(0xFFEDD8D8),
-          ],
-        ),
-        border: Border.all(color: AppColors.cardBorder, width: 2),
+        color: AppColors.primaryTint,
+        border: Border.all(color: AppColors.hairline, width: 2),
       ),
       child: Center(
         child: Text(
           initial,
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontSize: 16,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w700,
             color: AppColors.primary,
           ),
         ),
       ),
     );
   }
+}
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+// ─────────────────────────────────────────────────────────────────────────────
+// Deep-emerald hero score card
+// ─────────────────────────────────────────────────────────────────────────────
+class _HeroScoreCard extends StatelessWidget {
+  int _score(HistoryEntity h) {
+    try {
+      final s = h.aiAnalysis?['overall_score'];
+      if (s != null) return (s as num).toInt().clamp(0, 100);
+    } catch (_) {}
+    return 0;
   }
 
-  Widget _buildHeroCard(BuildContext context) {
-    return BlocBuilder<DashboardBloc, DashboardState>(
-      buildWhen: (prev, curr) =>
-          prev.dashboard?.heroTitle != curr.dashboard?.heroTitle ||
-          prev.dashboard?.heroSubtitle != curr.dashboard?.heroSubtitle,
-      builder: (context, state) {
-        final heroTitle =
-            state.dashboard?.heroTitle ?? 'How does your\nskin feel today?';
-        final heroSubtitle = state.dashboard?.heroSubtitle ??
-            'Instant AI-powered analysis with\npersonalised recommendations';
+  String _condition(int score) {
+    if (score >= 75) return 'Clear';
+    if (score >= 60) return 'Mild concerns';
+    if (score >= 45) return 'Moderate concerns';
+    return 'Significant concerns';
+  }
 
-        return GestureDetector(
-          onTap: () {
-            // Reset bloc to start fresh scan
-            context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
-            context.push(AppRoutes.skinAnalysisRoute);
-          },
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.ink,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.15),
-              ),
+  Color _conditionColor(int score) {
+    if (score >= 60) return AppColors.good;
+    if (score >= 45) return AppColors.warn;
+    return AppColors.alert;
+  }
+
+  Map<String, int> _metrics(HistoryEntity h) {
+    final m = h.aiAnalysis?['metrics'] as Map<String, dynamic>?;
+    if (m == null) return {};
+    int _v(dynamic v) {
+      if (v is int) return v.clamp(0, 100);
+      if (v is double) return v.round().clamp(0, 100);
+      if (v is String) return (int.tryParse(v) ?? 0).clamp(0, 100);
+      return 0;
+    }
+
+    return {
+      StringConst.kHydrationMetric: _v(m['hydration']),
+      StringConst.kTextureMetric: _v(m['texture']),
+      StringConst.kClarityMetric: _v(m['clarity']),
+    };
+  }
+
+  String _scoreDate(DateTime d) {
+    try {
+      return DateFormat('MMM d').format(d);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<HistoryBloc, HistoryState>(
+      buildWhen: (p, c) => p.histories != c.histories || p.status != c.status,
+      builder: (context, state) {
+        final loading = state.status == HistoryStatus.loading ||
+            state.status == HistoryStatus.initial;
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.deepStart, AppColors.deepEnd],
             ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.deepEnd.withValues(alpha: 0.45),
+                blurRadius: 32,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
             child: Stack(
               children: [
-                Positioned(
-                  top: -40,
-                  right: -40,
-                  child: Container(
-                    width: 220,
-                    height: 220,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.primary.withValues(alpha: 0.18),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -60,
-                  left: -20,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.rose.withValues(alpha: 0.12),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                // Subtle dot grid
                 Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: CustomPaint(
-                      painter: _DotGridPainter(),
-                    ),
-                  ),
+                  child: CustomPaint(painter: _DeepDotGrid()),
                 ),
+
                 Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const _PulsingDot(),
-                            const SizedBox(width: 7),
-                            Text(
-                              'AI ANALYSIS',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primary,
-                                letterSpacing: 1.5,
-                              ),
+                  child: loading
+                      ? _HeroLoadingState()
+                      : state.histories.isEmpty
+                          ? _HeroEmptyState()
+                          : _HeroLoadedState(
+                              score: _score(state.histories.first),
+                              condition: _condition(_score(state.histories.first)),
+                              conditionColor: _conditionColor(_score(state.histories.first)),
+                              scoreDate: _scoreDate(state.histories.first.date),
+                              metrics: _metrics(state.histories.first),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        heroTitle,
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 27,
-                          fontWeight: FontWeight.w400,
-                          fontStyle: FontStyle.italic,
-                          color: const Color(0xFFF2EDE6),
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        heroSubtitle,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w300,
-                          color:
-                              const Color(0xFFF2EDE6).withValues(alpha: 0.55),
-                          height: 1.65,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(22),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.flare_rounded,
-                              size: 13,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Analyse Skin',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -426,131 +370,353 @@ class _HomePageContent extends StatelessWidget {
       },
     );
   }
+}
 
-  Widget _buildScoreStrip(BuildContext context) {
-    return BlocBuilder<HistoryBloc, HistoryState>(
-      buildWhen: (prev, curr) => prev.histories != curr.histories,
-      builder: (context, state) {
-        if (state.histories.isEmpty) return _buildEmptyScoreStrip();
-        final latest = state.histories.first;
-        final score = _calculateOverallScore(latest);
-        return _ScoreStripCard(score: score, lastDate: latest.date);
-      },
+class _HeroLoadingState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.white.withValues(alpha: 0.1),
+      highlightColor: Colors.white.withValues(alpha: 0.2),
+      child: Column(
+        children: [
+          Container(
+            width: 120,
+            height: 12,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: 188,
+            height: 188,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: 100,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildEmptyScoreStrip() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 68,
-            height: 68,
-            child: CustomPaint(
-              painter: const _ScoreRingPainter(
-                  progress: 0, color: AppColors.cardBorder),
-              child: Center(
-                child: Text(
-                  '?',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textTertiary,
+class _HeroEmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        Text(
+          'Today\'s skin score',
+          style: GoogleFonts.hankenGrotesk(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.55),
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 32),
+        // Empty ring
+        SizedBox(
+          width: 188,
+          height: 188,
+          child: CustomPaint(
+            painter: const _ScoreRingPainter(progress: 0, isEmpty: true),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '—',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withValues(alpha: 0.4),
+                    ),
                   ),
-                ),
+                  Text(
+                    'OUT OF 100',
+                    style: GoogleFonts.hankenGrotesk(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.3),
+                      letterSpacing: 0.10 * 10,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'LAST SKIN SCORE',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textTertiary,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'No scan yet',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Scan your skin to get your score',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w300,
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Take your first scan',
+          style: GoogleFonts.hankenGrotesk(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.7),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'See your skin score and metrics',
+          style: GoogleFonts.hankenGrotesk(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: Colors.white.withValues(alpha: 0.4),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
+}
 
-  Widget _buildDisclaimer() {
+class _HeroLoadedState extends StatelessWidget {
+  final int score;
+  final String condition;
+  final Color conditionColor;
+  final String scoreDate;
+  final Map<String, int> metrics;
+
+  const _HeroLoadedState({
+    required this.score,
+    required this.condition,
+    required this.conditionColor,
+    required this.scoreDate,
+    required this.metrics,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Label row
+        Text(
+          scoreDate.isEmpty
+              ? 'Today\'s skin score'
+              : 'Today\'s skin score · $scoreDate',
+          style: GoogleFonts.hankenGrotesk(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.55),
+            letterSpacing: 0.2,
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Score ring
+        SizedBox(
+          width: 188,
+          height: 188,
+          child: CustomPaint(
+            painter: _ScoreRingPainter(progress: score / 100.0),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '$score',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 56,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1,
+                      letterSpacing: -0.56,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'OUT OF 100',
+                    style: GoogleFonts.hankenGrotesk(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.55),
+                      letterSpacing: 0.10 * 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Condition chip
+        _ConditionChip(label: condition, color: conditionColor),
+
+        // Metric tiles (if data available)
+        if (metrics.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _MetricTilesRow(metrics: metrics),
+        ],
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Condition chip
+// ─────────────────────────────────────────────────────────────────────────────
+class _ConditionChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _ConditionChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.sage.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: AppColors.sage.withValues(alpha: 0.22),
-          width: 1.5,
+          color: Colors.white.withValues(alpha: 0.18),
+          width: 1,
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(
-              Icons.shield_outlined,
-              size: 14,
-              color: AppColors.sage,
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Metric tiles row (inside hero card)
+// ─────────────────────────────────────────────────────────────────────────────
+class _MetricTilesRow extends StatelessWidget {
+  final Map<String, int> metrics;
+
+  const _MetricTilesRow({required this.metrics});
+
+  Color _metricColor(int v) {
+    if (v >= 60) return AppColors.accentBright;
+    if (v >= 45) return AppColors.warn;
+    return AppColors.alert;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = metrics.entries.take(3).toList();
+    return Row(
+      children: entries.asMap().entries.map((e) {
+        final idx = e.key;
+        final entry = e.value;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: idx == 0 ? 0 : 8),
+            child: _MetricTile(
+              label: entry.key,
+              value: entry.value,
+              color: _metricColor(entry.value),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final String label;
+  final int value;
+  final Color color;
+
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.12),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.55),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$value',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Track bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: Stack(
               children: [
-                Text(
-                  'ADVISORY ONLY',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.sage,
-                    letterSpacing: 1.5,
+                Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.deepCore,
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  'Skin Sync provides AI-powered insights, not medical advice. We are not medical professionals. Please consult a certified dermatologist for skin concerns.',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w300,
-                    color: AppColors.textTertiary,
-                    height: 1.65,
+                FractionallySizedBox(
+                  widthFactor: value / 100.0,
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
                 ),
               ],
@@ -560,35 +726,118 @@ class _HomePageContent extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.playfairDisplay(
-        fontSize: 19,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
+// ─────────────────────────────────────────────────────────────────────────────
+// Start a new scan button
+// ─────────────────────────────────────────────────────────────────────────────
+class _StartScanButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
+        context.push(AppRoutes.skinAnalysisRoute);
+      },
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.primaryLight, AppColors.primaryDark],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.30),
+              blurRadius: 28,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.center_focus_weak_rounded,
+                color: Colors.white, size: 18),
+            const SizedBox(width: 9),
+            Text(
+              StringConst.kAnalyseSkin,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildQuickActions(BuildContext context) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Quiet disclaimer one-liner
+// ─────────────────────────────────────────────────────────────────────────────
+class _QuietDisclaimer extends StatelessWidget {
+  const _QuietDisclaimer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      StringConst.kNotMedicalDiagnosis,
+      style: GoogleFonts.hankenGrotesk(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        color: AppColors.muted,
+        height: 1.5,
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section header
+// ─────────────────────────────────────────────────────────────────────────────
+class _SectionHeader extends StatelessWidget {
+  final String title;
+
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: GoogleFonts.spaceGrotesk(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        color: AppColors.ink,
+        letterSpacing: -0.17,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick Actions 2×2 grid
+// ─────────────────────────────────────────────────────────────────────────────
+class _QuickActionsGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: _QuickActionCard(
-                iconWidget: const Icon(Icons.flare_rounded,
-                    size: 18, color: AppColors.primary),
-                iconBg: const Color(0xFFF0D4C2),
-                label: 'New Scan',
-                sub: 'Analyse now',
+                icon: Icons.center_focus_weak_rounded,
+                iconColor: AppColors.primary,
+                iconBg: AppColors.primaryTint,
+                label: StringConst.kNewScan,
+                sub: StringConst.kAnalyseNow,
                 onTap: () {
-                  // Reset bloc to start fresh scan
-                  context
-                      .read<SkinAnalysisBloc>()
-                      .add(const SkinAnalysisReset());
+                  context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
                   context.push(AppRoutes.skinAnalysisRoute);
                 },
               ),
@@ -596,11 +845,11 @@ class _HomePageContent extends StatelessWidget {
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget: const Icon(Icons.auto_awesome,
-                    size: 18, color: AppColors.rose),
-                iconBg: const Color(0xFFEDD8D8),
+                icon: Icons.auto_awesome_outlined,
+                iconColor: AppColors.warn,
+                iconBg: AppColors.warnTint,
                 label: 'AI Tips',
-                sub: 'Personalized',
+                sub: 'Personalised',
                 onTap: () => context.push(AppRoutes.aiTipsRoute),
               ),
             ),
@@ -611,20 +860,20 @@ class _HomePageContent extends StatelessWidget {
           children: [
             Expanded(
               child: _QuickActionCard(
-                iconWidget: const Icon(Icons.show_chart,
-                    size: 18, color: AppColors.sage),
-                iconBg: const Color(0xFFD4E3CC),
+                icon: Icons.show_chart_rounded,
+                iconColor: AppColors.primary,
+                iconBg: AppColors.primaryTint,
                 label: 'Trends',
-                sub: 'View progress',
+                sub: StringConst.kViewProgress,
                 onTap: () => context.push(AppRoutes.trendsRoute),
               ),
             ),
             const SizedBox(width: 11),
             Expanded(
               child: _QuickActionCard(
-                iconWidget: const Icon(Icons.checklist_outlined,
-                    size: 18, color: AppColors.amber),
-                iconBg: const Color(0xFFF5DCA8),
+                icon: Icons.checklist_rounded,
+                iconColor: AppColors.warn,
+                iconBg: AppColors.warnTint,
                 label: 'Routine',
                 sub: 'Daily care',
                 onTap: () => context.push(AppRoutes.routineRoute),
@@ -635,68 +884,123 @@ class _HomePageContent extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _buildUpcomingReminder(BuildContext context) {
+class _QuickActionCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final String label;
+  final String sub;
+  final VoidCallback onTap;
+
+  const _QuickActionCard({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.label,
+    required this.sub,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.hairline, width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x050E1A15),
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              sub,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Upcoming reminder
+// ─────────────────────────────────────────────────────────────────────────────
+class _UpcomingReminder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return BlocBuilder<HistoryBloc, HistoryState>(
       builder: (context, state) {
-        // Calculate days since last scan
-        int daysSinceLastScan = 7;
-        if (state.histories.isNotEmpty) {
-          final lastScan = state.histories.first.date;
-          daysSinceLastScan = DateTime.now().difference(lastScan).inDays;
-        }
+        final days = state.histories.isEmpty
+            ? 7
+            : DateTime.now().difference(state.histories.first.date).inDays;
 
-        // Determine reminder message based on last scan
-        String reminderTitle;
-        String reminderSubtitle;
-        IconData reminderIcon;
-        Color reminderColor;
-
-        if (daysSinceLastScan == 0) {
-          reminderTitle = 'Great job!';
-          reminderSubtitle = 'You scanned today. Next scan tomorrow.';
-          reminderIcon = Icons.check_circle_outline;
-          reminderColor = AppColors.sage;
-        } else if (daysSinceLastScan == 1) {
-          reminderTitle = 'Scan reminder';
-          reminderSubtitle = 'Time for your daily skin check';
-          reminderIcon = Icons.access_time;
-          reminderColor = AppColors.amber;
-        } else if (daysSinceLastScan <= 3) {
-          reminderTitle = 'Don\'t forget!';
-          reminderSubtitle = '$daysSinceLastScan days since your last scan';
-          reminderIcon = Icons.notification_important_outlined;
-          reminderColor = AppColors.amber;
-        } else {
-          reminderTitle = 'We miss you!';
-          reminderSubtitle = '$daysSinceLastScan days since your last scan';
-          reminderIcon = Icons.warning_amber_outlined;
-          reminderColor = AppColors.rose;
-        }
+        final (String title, String sub, IconData icon, Color color) = days == 0
+            ? ('Great job!', 'You scanned today — next scan tomorrow.',
+                Icons.check_circle_outline_rounded, AppColors.good)
+            : days <= 1
+                ? ('Scan reminder', 'Time for your daily skin check',
+                    Icons.access_time_rounded, AppColors.warn)
+                : days <= 3
+                    ? ('Don\'t forget!', '$days days since your last scan',
+                        Icons.notifications_outlined, AppColors.warn)
+                    : ('We miss you!', '$days days since your last scan',
+                        Icons.warning_amber_rounded, AppColors.alert);
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: AppColors.hairline, width: 1),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: reminderColor.withValues(alpha: 0.12),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    reminderIcon,
-                    size: 24,
-                    color: reminderColor,
-                  ),
+                  child: Icon(icon, size: 22, color: color),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -704,25 +1008,26 @@ class _HomePageContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        reminderTitle,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 15,
+                        title,
+                        style: GoogleFonts.hankenGrotesk(
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: AppColors.ink,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        reminderSubtitle,
-                        style: GoogleFonts.dmSans(
+                        sub,
+                        style: GoogleFonts.hankenGrotesk(
                           fontSize: 12,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textTertiary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (daysSinceLastScan > 0)
+                if (days > 0)
                   GestureDetector(
                     onTap: () => context
                         .read<LayoutBloc>()
@@ -736,7 +1041,7 @@ class _HomePageContent extends StatelessWidget {
                       ),
                       child: Text(
                         'Scan',
-                        style: GoogleFonts.dmSans(
+                        style: GoogleFonts.hankenGrotesk(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -751,391 +1056,55 @@ class _HomePageContent extends StatelessWidget {
       },
     );
   }
-
-  int _calculateOverallScore(HistoryEntity analysis) {
-    try {
-      // Only use AI analysis score - no fallback
-      if (analysis.aiAnalysis != null) {
-        final aiScore = analysis.aiAnalysis!['overall_score'];
-        if (aiScore != null) {
-          return (aiScore as num).toInt().clamp(0, 100);
-        }
-        debugPrint('ERROR: aiAnalysis exists but overall_score is null');
-      } else {
-        debugPrint('ERROR: aiAnalysis is NULL - cannot calculate score');
-      }
-    } catch (e) {
-      debugPrint('Error calculating score: $e');
-    }
-    // Return 0 to indicate missing data
-    return 0;
-  }
 }
 
-// Score Strip Card
-class _ScoreStripCard extends StatelessWidget {
-  final int score;
-  final DateTime lastDate;
-
-  const _ScoreStripCard({required this.score, required this.lastDate});
-
-  String _formatDateIST(DateTime date) {
-    // Convert to IST (UTC+5:30)
-    final ist = date.toUtc().add(const Duration(hours: 5, minutes: 30));
-    final now =
-        DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
-    final diff = now.difference(ist);
-
-    if (diff.inMinutes < 1) {
-      return 'Just now';
-    } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}m ago';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours}h ago';
-    } else if (diff.inDays == 1) {
-      return 'Yesterday';
-    } else if (diff.inDays < 7) {
-      return '${diff.inDays}d ago';
-    } else {
-      // Format as "12 May, 3:45 PM"
-      final day = ist.day;
-      final month = _monthName(ist.month);
-      final hour =
-          ist.hour > 12 ? ist.hour - 12 : (ist.hour == 0 ? 12 : ist.hour);
-      final minute = ist.minute.toString().padLeft(2, '0');
-      final ampm = ist.hour >= 12 ? 'PM' : 'AM';
-      return '$day $month, $hour:$minute $ampm';
-    }
-  }
-
-  String _monthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return months[month - 1];
-  }
-
-  // Get badge info based on score
-  ({String label, Color color, Color bgColor, IconData icon}) _getBadgeInfo() {
-    if (score == 0) {
-      // Missing AI analysis data
-      return (
-        label: 'No Data',
-        color: AppColors.textTertiary,
-        bgColor: AppColors.cardBorder.withValues(alpha: 0.3),
-        icon: Icons.help_outline_rounded,
-      );
-    } else if (score >= 80) {
-      return (
-        label: 'Excellent',
-        color: const Color(0xFF2E7D32),
-        bgColor: const Color(0xFFE8F5E9),
-        icon: Icons.sentiment_very_satisfied_rounded,
-      );
-    } else if (score >= 60) {
-      return (
-        label: 'Good',
-        color: AppColors.sage,
-        bgColor: AppColors.sage.withValues(alpha: 0.12),
-        icon: Icons.sentiment_satisfied_rounded,
-      );
-    } else if (score >= 40) {
-      return (
-        label: 'Fair',
-        color: AppColors.amber,
-        bgColor: AppColors.amber.withValues(alpha: 0.12),
-        icon: Icons.sentiment_neutral_rounded,
-      );
-    } else {
-      return (
-        label: 'Needs Care',
-        color: AppColors.rose,
-        bgColor: AppColors.rose.withValues(alpha: 0.12),
-        icon: Icons.sentiment_dissatisfied_rounded,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final badge = _getBadgeInfo();
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'LAST SKIN SCORE',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textTertiary,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '$score',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textPrimary,
-                        height: 1,
-                      ),
-                    ),
-                    Text(
-                      '/100',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time,
-                        size: 12, color: AppColors.textTertiary),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatDateIST(lastDate),
-                      style: GoogleFonts.dmSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Skin Health Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: badge.bgColor,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: badge.color.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  badge.icon,
-                  size: 28,
-                  color: badge.color,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  badge.label,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: badge.color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Quick Action Card
-class _QuickActionCard extends StatelessWidget {
-  final Widget iconWidget;
-  final Color iconBg;
-  final String label;
-  final String sub;
-  final VoidCallback onTap;
-
-  const _QuickActionCard({
-    required this.iconWidget,
-    required this.iconBg,
-    required this.label,
-    required this.sub,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(17),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.cardBorder, width: 1.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: Center(child: iconWidget),
-            ),
-            const SizedBox(height: 11),
-            Text(
-              label,
-              style: GoogleFonts.dmSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              sub,
-              style: GoogleFonts.dmSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w300,
-                color: AppColors.textTertiary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Pulsing Dot
-class _PulsingDot extends StatefulWidget {
-  const _PulsingDot();
-
-  @override
-  State<_PulsingDot> createState() => _PulsingDotState();
-}
-
-class _PulsingDotState extends State<_PulsingDot>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 1.0, end: 0.35).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _anim,
-      child: Container(
-        width: 5,
-        height: 5,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.primary,
-        ),
-      ),
-    );
-  }
-}
-
-// Score Ring Painter
+// ─────────────────────────────────────────────────────────────────────────────
+// Score Ring CustomPainter (188px, accentBright fill on deepCore track)
+// ─────────────────────────────────────────────────────────────────────────────
 class _ScoreRingPainter extends CustomPainter {
   final double progress;
-  final Color color;
-  final Color trackColor;
+  final bool isEmpty;
 
-  const _ScoreRingPainter({
-    required this.progress,
-    required this.color,
-    this.trackColor = const Color(0xFFE5DED4),
-  });
+  const _ScoreRingPainter({required this.progress, this.isEmpty = false});
 
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final radius = (size.width - 6) / 2;
-    const strokeWidth = 5.0;
-    const startAngle = -1.5708;
+    final radius = (size.width - 14) / 2;
+    const strokeWidth = 12.0;
+    const startAngle = -math.pi / 2;
 
+    // Track
     canvas.drawArc(
       Rect.fromCircle(center: Offset(cx, cy), radius: radius),
       0,
-      6.2832,
+      math.pi * 2,
       false,
       Paint()
-        ..color = trackColor
+        ..color = AppColors.deepCore
         ..strokeWidth = strokeWidth
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
 
-    if (progress <= 0) return;
+    if (isEmpty || progress <= 0) return;
 
-    final sweepAngle = 6.2832 * progress;
+    final sweepAngle = math.pi * 2 * progress;
     final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
-    final gradient = SweepGradient(
-      startAngle: startAngle,
-      endAngle: startAngle + sweepAngle,
-      colors: const [
-        Color(0xFFE8A84A),
-        Color(0xFFD4845A),
-      ],
-    ).createShader(rect);
 
+    // Accent-bright fill with a subtle gradient
     canvas.drawArc(
       rect,
       startAngle,
       sweepAngle,
       false,
       Paint()
-        ..shader = gradient
+        ..shader = SweepGradient(
+          startAngle: startAngle,
+          endAngle: startAngle + sweepAngle,
+          colors: const [AppColors.primaryLight, AppColors.accentBright],
+        ).createShader(rect)
         ..strokeWidth = strokeWidth
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
@@ -1144,11 +1113,13 @@ class _ScoreRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ScoreRingPainter old) =>
-      old.progress != progress || old.color != color;
+      old.progress != progress || old.isEmpty != isEmpty;
 }
 
-// Dot Grid Painter
-class _DotGridPainter extends CustomPainter {
+// ─────────────────────────────────────────────────────────────────────────────
+// Subtle dot grid for hero card background
+// ─────────────────────────────────────────────────────────────────────────────
+class _DeepDotGrid extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -1157,7 +1128,6 @@ class _DotGridPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     const step = 28.0;
-
     for (double y = 0; y <= size.height; y += step) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
@@ -1167,5 +1137,5 @@ class _DotGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DotGridPainter _) => false;
+  bool shouldRepaint(_DeepDotGrid _) => false;
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 
 class ConcernsCard extends StatelessWidget {
   final List<String> selectedConcerns;
@@ -22,7 +22,7 @@ class ConcernsCard extends StatelessWidget {
     StringConst.kRedness,
   ];
 
-  void _toggleConcern(String concern) {
+  void _toggle(String concern) {
     final updated = List<String>.from(selectedConcerns);
     if (updated.contains(concern)) {
       updated.remove(concern);
@@ -37,9 +37,9 @@ class ConcernsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,49 +49,55 @@ class ConcernsCard extends StatelessWidget {
             children: [
               Text(
                 StringConst.kMyConcerns,
-                style: AppTextStyles.heading3.copyWith(fontSize: 17),
-              ),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0D4C2),
-                  borderRadius: BorderRadius.circular(8),
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  letterSpacing: -0.16,
                 ),
-                child: const Center(
-                  child: Icon(Icons.add, size: 14, color: AppColors.primary),
+              ),
+              Text(
+                '${selectedConcerns.length} selected',
+                style: GoogleFonts.hankenGrotesk(
+                  fontSize: 12,
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: _allConcerns.map((concern) {
               final sel = selectedConcerns.contains(concern);
               return GestureDetector(
-                onTap: () => _toggleConcern(concern),
+                onTap: () => _toggle(concern),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 7,
+                    horizontal: 14,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: sel ? const Color(0xFFF0D4C2) : AppColors.background,
-                    borderRadius: BorderRadius.circular(20),
+                    color: sel ? AppColors.primaryTint : AppColors.background,
+                    borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: sel
-                          ? AppColors.primary.withValues(alpha: 0.3)
-                          : AppColors.cardBorder,
+                          ? AppColors.primary.withValues(alpha: 0.4)
+                          : AppColors.hairline,
+                      width: sel ? 1.5 : 1,
                     ),
                   ),
                   child: Text(
                     concern,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      fontSize: 12,
-                      color: sel ? AppColors.primary : AppColors.textTertiary,
+                    style: GoogleFonts.hankenGrotesk(
+                      fontSize: 13,
+                      fontWeight:
+                          sel ? FontWeight.w600 : FontWeight.w400,
+                      color: sel
+                          ? AppColors.primaryTintInk
+                          : AppColors.textTertiary,
                     ),
                   ),
                 ),

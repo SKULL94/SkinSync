@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 import 'package:skin_sync/core/di/injection_container.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 import 'package:skin_sync/core/utils/snackbar_helper.dart';
@@ -23,11 +24,11 @@ class SkinAnalysisPage extends StatelessWidget {
 
   int _getSeverityColorValue(String severity) {
     return switch (severity.toLowerCase()) {
-      'mild' => 0xFF4CAF50,
-      'moderate' => 0xFFFF9800,
-      'severe' => 0xFFF44336,
-      'needs_dermatologist' => 0xFF9C27B0,
-      _ => 0xFF9E9E9E,
+      'mild' => 0xFF15B277,
+      'moderate' => 0xFFE8A33D,
+      'severe' => 0xFFF2664B,
+      'needs_dermatologist' => 0xFFF2664B,
+      _ => 0xFF6E7C75,
     };
   }
 
@@ -41,10 +42,8 @@ class SkinAnalysisPage extends StatelessWidget {
           SnackbarHelper.showError(context, state.errorMessage!);
         }
         if (state.status == SkinAnalysisStatus.saved) {
-          SnackbarHelper.showSuccess(
-              context, StringConst.kAnalysisSavedSuccess);
+          SnackbarHelper.showSuccess(context, StringConst.kAnalysisSavedSuccess);
 
-          // Optimistically add to history with local image path
           if (state.selectedImage != null && state.aiAnalysis != null) {
             final ai = state.aiAnalysis!;
             final historyEntity = HistoryEntity(
@@ -61,9 +60,7 @@ class SkinAnalysisPage extends StatelessWidget {
               date: DateTime.now(),
               aiAnalysis: ai.toJson(),
             );
-            context
-                .read<HistoryBloc>()
-                .add(HistoryAddOptimistic(historyEntity));
+            context.read<HistoryBloc>().add(HistoryAddOptimistic(historyEntity));
           }
 
           context.read<LayoutBloc>().add(const LayoutTabChanged(1));
@@ -73,7 +70,7 @@ class SkinAnalysisPage extends StatelessWidget {
       builder: (context, state) {
         if (state.status == SkinAnalysisStatus.validating ||
             state.status == SkinAnalysisStatus.analyzingWithAI) {
-          return _ScanningView(
+          return _ProcessingView(
             image: state.selectedImage,
             isAIAnalyzing: state.status == SkinAnalysisStatus.analyzingWithAI,
           );
@@ -87,9 +84,9 @@ class SkinAnalysisPage extends StatelessWidget {
           create: (_) => sl<FaceCameraBloc>(),
           child: FaceCameraView(
             onImageCaptured: (imageFile) {
-              context.read<SkinAnalysisBloc>().add(
-                    SkinAnalysisImageSelected(imageFile),
-                  );
+              context
+                  .read<SkinAnalysisBloc>()
+                  .add(SkinAnalysisImageSelected(imageFile));
             },
             onBack: () => context.pop(),
           ),
@@ -99,21 +96,21 @@ class SkinAnalysisPage extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCANNING VIEW
-// ═══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// PROCESSING VIEW
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _ScanningView extends StatefulWidget {
+class _ProcessingView extends StatefulWidget {
   final File? image;
   final bool isAIAnalyzing;
 
-  const _ScanningView({this.image, this.isAIAnalyzing = false});
+  const _ProcessingView({this.image, this.isAIAnalyzing = false});
 
   @override
-  State<_ScanningView> createState() => _ScanningViewState();
+  State<_ProcessingView> createState() => _ProcessingViewState();
 }
 
-class _ScanningViewState extends State<_ScanningView>
+class _ProcessingViewState extends State<_ProcessingView>
     with TickerProviderStateMixin {
   late AnimationController _spinController;
   late AnimationController _progressController;
@@ -170,64 +167,84 @@ class _ScanningViewState extends State<_ScanningView>
           previous.scanningStep != current.scanningStep,
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppColors.ink,
+          backgroundColor: AppColors.deepEnd,
           body: Stack(
             fit: StackFit.expand,
             children: [
+              // Deep emerald gradient
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.deepStart, AppColors.deepEnd],
+                  ),
+                ),
+              ),
+
+              // Subtle grid lines
+              CustomPaint(painter: _GridPainter()),
+
+              // Photo tint in background
               if (widget.image != null)
                 Opacity(
-                  opacity: 0.3,
+                  opacity: 0.15,
                   child: Image.file(widget.image!, fit: BoxFit.cover),
                 ),
+
+              // Radial glow
               Center(
                 child: Container(
-                  width: 300,
-                  height: 300,
+                  width: 320,
+                  height: 320,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppColors.primary.withValues(alpha: 0.15),
+                        AppColors.accentBright.withValues(alpha: 0.08),
                         Colors.transparent,
                       ],
                     ),
                   ),
                 ),
               ),
+
               SafeArea(
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildSpinner(),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 36),
                       Text(
                         widget.isAIAnalyzing
                             ? StringConst.kAiAnalysing
                             : StringConst.kValidating,
-                        style: AppTextStyles.heading2.copyWith(
-                          fontSize: 24,
-                          fontStyle: FontStyle.italic,
-                          color: AppColors.background,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -0.22,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: Text(
                           _steps[
                               state.scanningStep.clamp(0, _steps.length - 1)],
                           key: ValueKey(state.scanningStep),
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textTertiary,
-                            fontWeight: FontWeight.w300,
+                          style: GoogleFonts.hankenGrotesk(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withValues(alpha: 0.55),
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
                       _buildProgressBar(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
                       _buildStepDots(state.scanningStep),
                     ],
                   ),
@@ -247,95 +264,72 @@ class _ScanningViewState extends State<_ScanningView>
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Outer ring
           AnimatedBuilder(
             animation: _spinController,
-            builder: (context, child) {
-              return Transform.rotate(
-                angle: _spinController.value * 2 * math.pi,
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: CustomPaint(
-                    painter: _RingPainter(
-                      color: AppColors.primary,
-                      strokeWidth: 1.5,
-                      sweepAngle: math.pi / 2,
-                    ),
+            builder: (_, __) => Transform.rotate(
+              angle: _spinController.value * 2 * math.pi,
+              child: const SizedBox(
+                width: 160,
+                height: 160,
+                child: CustomPaint(
+                  painter: _ArcPainter(
+                    color: AppColors.accentBright,
+                    strokeWidth: 1.5,
+                    sweepAngle: math.pi * 0.6,
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
+          // Middle ring (counter-spin)
           AnimatedBuilder(
             animation: _spinController,
-            builder: (context, child) {
-              return Transform.rotate(
-                angle: -_spinController.value * 2 * math.pi * 0.7,
-                child: Container(
-                  width: 128,
-                  height: 128,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.rose.withValues(alpha: 0.08),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: CustomPaint(
-                    painter: _RingPainter(
-                      color: AppColors.rose,
-                      strokeWidth: 1.5,
-                      sweepAngle: math.pi / 3,
-                    ),
+            builder: (_, __) => Transform.rotate(
+              angle: -_spinController.value * 2 * math.pi * 0.7,
+              child: const SizedBox(
+                width: 124,
+                height: 124,
+                child: CustomPaint(
+                  painter: _ArcPainter(
+                    color: AppColors.primaryLight,
+                    strokeWidth: 1.5,
+                    sweepAngle: math.pi * 0.4,
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
+          // Inner ring
           AnimatedBuilder(
             animation: _spinController,
-            builder: (context, child) {
-              return Transform.rotate(
-                angle: _spinController.value * 2 * math.pi * 0.5,
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.sage.withValues(alpha: 0.08),
-                      width: 1,
-                    ),
-                  ),
-                  child: CustomPaint(
-                    painter: _RingPainter(
-                      color: AppColors.sage,
-                      strokeWidth: 1,
-                      sweepAngle: math.pi / 4,
-                    ),
+            builder: (_, __) => Transform.rotate(
+              angle: _spinController.value * 2 * math.pi * 0.5,
+              child: const SizedBox(
+                width: 90,
+                height: 90,
+                child: CustomPaint(
+                  painter: _ArcPainter(
+                    color: AppColors.accentBright,
+                    strokeWidth: 1,
+                    sweepAngle: math.pi * 0.3,
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
+          // Center dot
           Container(
-            width: 64,
-            height: 64,
+            width: 56,
+            height: 56,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF3D3025),
+              color: AppColors.deepCore,
             ),
             child: Icon(
               Icons.face_outlined,
-              size: 26,
-              color: AppColors.primary.withValues(alpha: 0.8),
+              size: 24,
+              color: AppColors.accentBright.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -346,7 +340,7 @@ class _ScanningViewState extends State<_ScanningView>
   Widget _buildProgressBar() {
     return AnimatedBuilder(
       animation: _progressController,
-      builder: (context, child) {
+      builder: (_, __) {
         return Container(
           width: 180,
           height: 3,
@@ -359,7 +353,7 @@ class _ScanningViewState extends State<_ScanningView>
             widthFactor: _progressController.value,
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: AppColors.accentBright,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -374,15 +368,15 @@ class _ScanningViewState extends State<_ScanningView>
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         _steps.length,
-        (index) => Container(
+        (i) => Container(
           width: 6,
           height: 6,
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: index <= currentStep
-                ? AppColors.primary
-                : Colors.white.withValues(alpha: 0.1),
+            color: i <= currentStep
+                ? AppColors.accentBright
+                : Colors.white.withValues(alpha: 0.12),
           ),
         ),
       ),
@@ -390,240 +384,263 @@ class _ScanningViewState extends State<_ScanningView>
   }
 }
 
-class _RingPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double sweepAngle;
-
-  _RingPainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.sweepAngle,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 // RESULTS VIEW
-// ═══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ResultsView extends StatelessWidget {
   final SkinAnalysisState state;
 
   const _ResultsView({required this.state});
 
-  // int _getMetricFromAI(AIAnalysisModel? ai, String metric, int defaultValue) {
-  //   if (ai == null) return defaultValue;
-  //   switch (metric.toLowerCase()) {
-  //     case 'hydration':
-  //       return ai.metrics.hydration;
-  //     case 'texture':
-  //       return ai.metrics.texture;
-  //     case 'clarity':
-  //       return ai.metrics.clarity;
-  //     case 'oiliness':
-  //       return ai.metrics.oiliness;
-  //     case 'pores':
-  //     case 'pore_visibility':
-  //       return ai.metrics.poreVisibility;
-  //     case 'firmness':
-  //       return ai.metrics.firmness;
-  //     default:
-  //       return defaultValue;
-  //   }
-  // }
-
-  Color _getSeverityColor(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'mild':
-        return AppColors.sage;
-      case 'moderate':
-        return AppColors.amber;
-      case 'severe':
-      case 'needs_dermatologist':
-        return AppColors.rose;
-      default:
-        return AppColors.sage;
-    }
+  Color _metricColor(int value) {
+    if (value >= 60) return AppColors.good;
+    if (value >= 45) return AppColors.warn;
+    return AppColors.alert;
   }
 
-  String _getHydrationDescription(int value) {
-    if (value >= 70) {
-      return StringConst.kHydrationExcellent;
-    } else if (value >= 50) {
-      return StringConst.kHydrationModerate;
-    } else {
-      return StringConst.kHydrationLow;
-    }
+  Color _severityColor(String severity) {
+    return switch (severity.toLowerCase()) {
+      'clear' => AppColors.good,
+      'mild' => AppColors.good,
+      'moderate' => AppColors.warn,
+      'severe' || 'needs_dermatologist' => AppColors.alert,
+      _ => AppColors.warn,
+    };
   }
 
-  String _getTextureDescription(int value) {
-    if (value >= 70) {
-      return StringConst.kTextureExcellent;
-    } else if (value >= 50) {
-      return StringConst.kTextureModerate;
-    } else {
-      return StringConst.kTextureLow;
-    }
+  String _condition(int score) {
+    if (score >= 75) return 'Clear';
+    if (score >= 60) return 'Mild concerns';
+    if (score >= 45) return 'Moderate concerns';
+    return 'Significant concerns';
   }
 
-  String _getClarityDescription(int value) {
-    if (value >= 70) {
-      return StringConst.kClarityExcellent;
-    } else if (value >= 50) {
-      return StringConst.kClarityModerate;
-    } else {
-      return StringConst.kClarityLow;
-    }
+  String _hydrationDesc(int v) {
+    if (v >= 70) return StringConst.kHydrationExcellent;
+    if (v >= 50) return StringConst.kHydrationModerate;
+    return StringConst.kHydrationLow;
   }
 
-  String _getPoreDescription(int value) {
-    if (value <= 30) {
-      return StringConst.kPoreMinimal;
-    } else if (value <= 60) {
-      return StringConst.kPoreNormal;
-    } else {
-      return StringConst.kPoreEnlarged;
-    }
+  String _textureDesc(int v) {
+    if (v >= 70) return StringConst.kTextureExcellent;
+    if (v >= 50) return StringConst.kTextureModerate;
+    return StringConst.kTextureLow;
+  }
+
+  String _clarityDesc(int v) {
+    if (v >= 70) return StringConst.kClarityExcellent;
+    if (v >= 50) return StringConst.kClarityModerate;
+    return StringConst.kClarityLow;
+  }
+
+  String _poreDesc(int v) {
+    if (v <= 30) return StringConst.kPoreMinimal;
+    if (v <= 60) return StringConst.kPoreNormal;
+    return StringConst.kPoreEnlarged;
   }
 
   @override
   Widget build(BuildContext context) {
     final ai = state.aiAnalysis!;
-    final overallScore = ai.overallScore;
 
     return Scaffold(
-      backgroundColor: AppColors.ink,
+      backgroundColor: AppColors.deepEnd,
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // Photo background
           if (state.selectedImage != null)
             Opacity(
-              opacity: 0.4,
+              opacity: 0.35,
               child: Image.file(state.selectedImage!, fit: BoxFit.cover),
             ),
+
+          // Gradient overlay (transparent top → deepEnd bottom)
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  AppColors.ink.withValues(alpha: 0.7),
-                  AppColors.ink,
-                ],
-                stops: const [0.0, 0.4, 0.7],
+                colors: [Colors.transparent, AppColors.deepEnd],
+                stops: [0.0, 0.55],
               ),
             ),
           ),
+
+          // Back button
           Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.2),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 24,
+            top: MediaQuery.of(context).padding.top + 12,
+            left: 20,
             child: GestureDetector(
-              onTap: () {
-                context.read<SkinAnalysisBloc>().add(const SkinAnalysisReset());
-              },
+              onTap: () => context
+                  .read<SkinAnalysisBloc>()
+                  .add(const SkinAnalysisReset()),
               child: Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    width: 1,
+                  ),
                 ),
                 child: Icon(
                   Icons.arrow_back_ios_new,
                   size: 16,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
             ),
           ),
+
+          // Draggable results sheet
           DraggableScrollableSheet(
-            initialChildSize: 0.55,
-            minChildSize: 0.4,
-            maxChildSize: 0.9,
+            initialChildSize: 0.58,
+            minChildSize: 0.45,
+            maxChildSize: 0.95,
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(
                   color: AppColors.background,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(28)),
                 ),
                 child: SingleChildScrollView(
                   controller: scrollController,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Drag handle
+                        const SizedBox(height: 12),
                         Center(
                           child: Container(
                             width: 40,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: AppColors.cardBorder,
+                              color: AppColors.hairline,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        _buildScoreHeader(overallScore),
-                        const SizedBox(height: 20),
-                        _buildBadges(ai),
-                        const SizedBox(height: 16),
-                        _buildMetricTags(ai),
-                        const SizedBox(height: 20),
-                        if (ai.aiInsight != null) ...[
-                          _buildAIInsight(ai),
-                          const SizedBox(height: 16),
-                        ],
-                        _buildDisclaimer(ai),
                         const SizedBox(height: 24),
-                        if (ai.detectedConcerns.isNotEmpty) ...[
-                          _buildDetectedConcerns(ai),
-                          const SizedBox(height: 24),
+
+                        // Score + condition header
+                        _ScoreHeader(
+                          score: ai.overallScore,
+                          condition: _condition(ai.overallScore),
+                          conditionColor: _metricColor(ai.overallScore),
+                          skinType: ai.skinType,
+                          severity: ai.severity,
+                          severityColor: _severityColor(ai.severity),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Quick metrics row
+                        _QuickMetricsRow(ai: ai, metricColor: _metricColor),
+
+                        // AI Insight
+                        if (ai.aiInsight != null) ...[
+                          const SizedBox(height: 16),
+                          _AIInsightCard(insight: ai.aiInsight!),
                         ],
-                        _buildDetailedAnalysis(ai),
+
+                        const SizedBox(height: 16),
+
+                        // Disclaimer
+                        _DisclaimerCard(
+                          needsWarning: ai.disclaimerRequired,
+                          severity: ai.severity,
+                        ),
+
+                        // Detected concerns
+                        if (ai.detectedConcerns.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          const _SectionLabel(label: StringConst.kDetectedConcerns),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: ai.detectedConcerns
+                                .map((c) => _ConcernChip(label: c))
+                                .toList(),
+                          ),
+                        ],
+
+                        // Detailed analysis
+                        const SizedBox(height: 24),
+                        const _SectionLabel(label: StringConst.kDetailedAnalysis),
+                        const SizedBox(height: 12),
+                        _MetricCard(
+                          title: StringConst.kHydrationMetric,
+                          value: ai.metrics.hydration,
+                          description: _hydrationDesc(ai.metrics.hydration),
+                          color: _metricColor(ai.metrics.hydration),
+                        ),
+                        const SizedBox(height: 10),
+                        _MetricCard(
+                          title: StringConst.kTextureMetric,
+                          value: ai.metrics.texture,
+                          description: _textureDesc(ai.metrics.texture),
+                          color: _metricColor(ai.metrics.texture),
+                        ),
+                        const SizedBox(height: 10),
+                        _MetricCard(
+                          title: StringConst.kClarityMetric,
+                          value: ai.metrics.clarity,
+                          description: _clarityDesc(ai.metrics.clarity),
+                          color: _metricColor(ai.metrics.clarity),
+                        ),
+                        const SizedBox(height: 10),
+                        _MetricCard(
+                          title: StringConst.kPoreVisibility,
+                          value: ai.metrics.poreVisibility,
+                          description: _poreDesc(ai.metrics.poreVisibility),
+                          color: _metricColor(ai.metrics.poreVisibility),
+                        ),
+
+                        // Recommendations
                         if (ai.recommendations.isNotEmpty) ...[
                           const SizedBox(height: 24),
-                          _buildRecommendations(ai),
+                          const _SectionLabel(label: StringConst.kRecommendations),
+                          const SizedBox(height: 12),
+                          ...ai.recommendations.asMap().entries.map(
+                                (e) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: _RecommendationCard(
+                                    index: e.key + 1,
+                                    text: e.value,
+                                  ),
+                                ),
+                              ),
                         ],
+
+                        // Ingredients
                         if (ai.ingredientsToLookFor.isNotEmpty) ...[
                           const SizedBox(height: 24),
-                          _buildIngredients(ai),
+                          const _SectionLabel(
+                              label: StringConst.kIngredientsToLookFor),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: ai.ingredientsToLookFor
+                                .map((i) => _IngredientChip(label: i))
+                                .toList(),
+                          ),
                         ],
-                        const SizedBox(height: 24),
-                        _buildSaveButton(context),
+
+                        const SizedBox(height: 28),
+
+                        // Save button
+                        _SaveButton(
+                          isSaving: state.status == SkinAnalysisStatus.saving,
+                        ),
                       ],
                     ),
                   ),
@@ -635,66 +652,101 @@ class _ResultsView extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildScoreHeader(int overallScore) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Results sub-widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ScoreHeader extends StatelessWidget {
+  final int score;
+  final String condition;
+  final Color conditionColor;
+  final String skinType;
+  final String severity;
+  final Color severityColor;
+
+  const _ScoreHeader({
+    required this.score,
+    required this.condition,
+    required this.conditionColor,
+    required this.skinType,
+    required this.severity,
+    required this.severityColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _ScoreRing(score: overallScore),
-        const SizedBox(width: 18),
+        // Score ring
+        _ScoreRing(score: score, color: conditionColor),
+
+        const SizedBox(width: 20),
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // "ANALYSIS COMPLETE" chip
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                  color: AppColors.primaryTint,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  StringConst.kAnalysisComplete,
+                  style: GoogleFonts.hankenGrotesk(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                    color: AppColors.primary,
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      StringConst.kAnalysisComplete,
-                      style: AppTextStyles.caption.copyWith(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1.5,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
               ),
+
               const SizedBox(height: 8),
+
               Text(
                 StringConst.kYourSkinHealth,
-                style: AppTextStyles.heading2.copyWith(
-                  fontSize: 22,
-                  fontStyle: FontStyle.italic,
-                  color: AppColors.textPrimary,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  letterSpacing: -0.2,
+                  height: 1.1,
                 ),
               ),
+
               const SizedBox(height: 4),
+
               Text(
                 DateFormat('MMMM d, yyyy').format(DateTime.now()),
-                style: AppTextStyles.caption.copyWith(
+                style: GoogleFonts.hankenGrotesk(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.textTertiary,
-                  fontWeight: FontWeight.w300,
                 ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Condition chip + skin type chip
+              Wrap(
+                spacing: 6,
+                children: [
+                  _TagChip(
+                    label: condition,
+                    color: conditionColor,
+                  ),
+                  _TagChip(
+                    label: skinType,
+                    color: AppColors.primary,
+                  ),
+                ],
               ),
             ],
           ),
@@ -702,75 +754,197 @@ class _ResultsView extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _buildBadges(AIAnalysisModel ai) {
-    return Row(
-      children: [
-        _BadgeChip(label: ai.skinType.toUpperCase(), color: AppColors.primary),
-        const SizedBox(width: 8),
-        _BadgeChip(
-          label: ai.severity.toUpperCase(),
-          color: _getSeverityColor(ai.severity),
-        ),
-      ],
-    );
-  }
+class _ScoreRing extends StatelessWidget {
+  final int score;
+  final Color color;
 
-  Widget _buildMetricTags(AIAnalysisModel ai) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
+  const _ScoreRing({required this.score, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      height: 96,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          _MetricTag(
-            label: StringConst.kHydrationMetric,
-            value: '${ai.metrics.hydration}%',
+          const SizedBox(
+            width: 96,
+            height: 96,
+            child: CircularProgressIndicator(
+              value: 1,
+              strokeWidth: 8,
+              backgroundColor: AppColors.hairline,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.hairline),
+            ),
           ),
-          const SizedBox(width: 8),
-          _MetricTag(
-            label: StringConst.kTextureMetric,
-            value: '${ai.metrics.texture}%',
+          SizedBox(
+            width: 96,
+            height: 96,
+            child: CircularProgressIndicator(
+              value: score / 100.0,
+              strokeWidth: 8,
+              backgroundColor: Colors.transparent,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              strokeCap: StrokeCap.round,
+            ),
           ),
-          const SizedBox(width: 8),
-          _MetricTag(
-            label: StringConst.kClarityMetric,
-            value: '${ai.metrics.clarity}%',
-          ),
-          const SizedBox(width: 8),
-          _MetricTag(
-            label: StringConst.kOilinessMetric,
-            value: '${ai.metrics.oiliness}%',
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$score',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  height: 1,
+                ),
+              ),
+              Text(
+                '/100',
+                style: GoogleFonts.hankenGrotesk(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildAIInsight(AIAnalysisModel ai) {
+class _TagChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _TagChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.hankenGrotesk(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickMetricsRow extends StatelessWidget {
+  final AIAnalysisModel ai;
+  final Color Function(int) metricColor;
+
+  const _QuickMetricsRow({required this.ai, required this.metricColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (StringConst.kHydrationMetric, ai.metrics.hydration),
+      (StringConst.kTextureMetric, ai.metrics.texture),
+      (StringConst.kClarityMetric, ai.metrics.clarity),
+    ];
+
+    return Row(
+      children: items.asMap().entries.map((e) {
+        final idx = e.key;
+        final (label, value) = e.value;
+        final color = metricColor(value);
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: idx == 0 ? 0 : 8),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.hairline, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.hankenGrotesk(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$value',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: value / 100.0,
+                      minHeight: 4,
+                      backgroundColor: AppColors.hairline,
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _AIInsightCard extends StatelessWidget {
+  final String insight;
+
+  const _AIInsightCard({required this.insight});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.08),
-            AppColors.rose.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.auto_awesome,
+              Icons.auto_awesome_rounded,
               size: 18,
               color: AppColors.primary,
             ),
@@ -782,17 +956,21 @@ class _ResultsView extends StatelessWidget {
               children: [
                 Text(
                   StringConst.kAiInsight,
-                  style: AppTextStyles.labelMedium.copyWith(
+                  style: GoogleFonts.hankenGrotesk(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
                     color: AppColors.primary,
-                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  ai.aiInsight!,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    height: 1.5,
+                  insight,
+                  style: GoogleFonts.hankenGrotesk(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.ink,
+                    height: 1.55,
                   ),
                 ),
               ],
@@ -802,29 +980,33 @@ class _ResultsView extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildDisclaimer(AIAnalysisModel ai) {
-    final needsWarning = ai.disclaimerRequired;
+class _DisclaimerCard extends StatelessWidget {
+  final bool needsWarning;
+  final String severity;
+
+  const _DisclaimerCard(
+      {required this.needsWarning, required this.severity});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = needsWarning ? AppColors.alert : AppColors.primary;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: needsWarning
-            ? AppColors.rose.withValues(alpha: 0.08)
-            : AppColors.sage.withValues(alpha: 0.08),
+        color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: needsWarning
-              ? AppColors.rose.withValues(alpha: 0.2)
-              : AppColors.sage.withValues(alpha: 0.2),
-        ),
+        border:
+            Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            needsWarning ? Icons.warning_amber_outlined : Icons.info_outline,
+            needsWarning ? Icons.warning_amber_rounded : Icons.info_outline,
             size: 16,
-            color: needsWarning ? AppColors.rose : AppColors.sage,
+            color: color,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -832,7 +1014,9 @@ class _ResultsView extends StatelessWidget {
               needsWarning
                   ? StringConst.kConsultDermatologist
                   : StringConst.kAiDisclaimer,
-              style: AppTextStyles.caption.copyWith(
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -842,292 +1026,61 @@ class _ResultsView extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildDetectedConcerns(AIAnalysisModel ai) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          StringConst.kDetectedConcerns,
-          style: AppTextStyles.heading3.copyWith(
-            fontSize: 18,
-            fontStyle: FontStyle.italic,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ai.detectedConcerns.map((concern) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.rose.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(20),
-                border:
-                    Border.all(color: AppColors.rose.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                concern,
-                style:
-                    AppTextStyles.labelMedium.copyWith(color: AppColors.rose),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailedAnalysis(AIAnalysisModel ai) {
-    final hydrationValue = ai.metrics.hydration;
-    final textureValue = ai.metrics.texture;
-    final clarityValue = ai.metrics.clarity;
-    final poreValue = ai.metrics.poreVisibility;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          StringConst.kDetailedAnalysis,
-          style: AppTextStyles.heading3.copyWith(
-            fontSize: 18,
-            fontStyle: FontStyle.italic,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _DetailedMetricCard(
-          title: StringConst.kHydrationMetric,
-          value: hydrationValue,
-          description: _getHydrationDescription(hydrationValue),
-          color: AppColors.sage,
-        ),
-        const SizedBox(height: 12),
-        _DetailedMetricCard(
-          title: StringConst.kTextureMetric,
-          value: textureValue,
-          description: _getTextureDescription(textureValue),
-          color: AppColors.primary,
-        ),
-        const SizedBox(height: 12),
-        _DetailedMetricCard(
-          title: StringConst.kClarityMetric,
-          value: clarityValue,
-          description: _getClarityDescription(clarityValue),
-          color: AppColors.rose,
-        ),
-        const SizedBox(height: 12),
-        _DetailedMetricCard(
-          title: StringConst.kPoreVisibility,
-          value: poreValue,
-          description: _getPoreDescription(poreValue),
-          color: AppColors.amber,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecommendations(AIAnalysisModel ai) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          StringConst.kRecommendations,
-          style: AppTextStyles.heading3.copyWith(
-            fontSize: 18,
-            fontStyle: FontStyle.italic,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...ai.recommendations.asMap().entries.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _RecommendationCard(index: entry.key + 1, text: entry.value),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildIngredients(AIAnalysisModel ai) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          StringConst.kIngredientsToLookFor,
-          style: AppTextStyles.heading3.copyWith(
-            fontSize: 18,
-            fontStyle: FontStyle.italic,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ai.ingredientsToLookFor.map((ingredient) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.sage.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border:
-                    Border.all(color: AppColors.sage.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                ingredient,
-                style:
-                    AppTextStyles.labelMedium.copyWith(color: AppColors.sage),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSaveButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        context.read<SkinAnalysisBloc>().add(const SkinAnalysisSaveRequested());
-      },
-      child: Container(
-        width: double.infinity,
-        height: 56,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            StringConst.kSaveAnalysis,
-            style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// HELPER WIDGETS
-// ═══════════════════════════════════════════════════════════════════════════
+class _SectionLabel extends StatelessWidget {
+  final String label;
 
-class _ScoreRing extends StatelessWidget {
-  final int score;
-
-  const _ScoreRing({required this.score});
+  const _SectionLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 86,
-      height: 86,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const SizedBox(
-            width: 86,
-            height: 86,
-            child: CircularProgressIndicator(
-              value: 1,
-              strokeWidth: 6,
-              backgroundColor: AppColors.cardBorder,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.cardBorder),
-            ),
-          ),
-          SizedBox(
-            width: 86,
-            height: 86,
-            child: CircularProgressIndicator(
-              value: score / 100,
-              strokeWidth: 6,
-              backgroundColor: Colors.transparent,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
-              strokeCap: StrokeCap.round,
-            ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$score',
-                style: AppTextStyles.heading2.copyWith(
-                  fontSize: 28,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              Text(
-                '/100',
-                style: AppTextStyles.caption.copyWith(
-                  fontSize: 10,
-                  color: AppColors.primary.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
-        ],
+    return Text(
+      label,
+      style: GoogleFonts.spaceGrotesk(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        color: AppColors.ink,
+        letterSpacing: -0.17,
       ),
     );
   }
 }
 
-class _MetricTag extends StatelessWidget {
+class _ConcernChip extends StatelessWidget {
   final String label;
-  final String value;
 
-  const _MetricTag({required this.label, required this.value});
+  const _ConcernChip({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        color: AppColors.alertTint,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+            color: AppColors.alert.withValues(alpha: 0.25), width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              fontSize: 11,
-              color: AppColors.textTertiary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: AppTextStyles.labelMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: GoogleFonts.hankenGrotesk(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.alertTintInk,
+        ),
       ),
     );
   }
 }
 
-class _DetailedMetricCard extends StatelessWidget {
+class _MetricCard extends StatelessWidget {
   final String title;
   final int value;
   final String description;
   final Color color;
 
-  const _DetailedMetricCard({
+  const _MetricCard({
     required this.title,
     required this.value,
     required this.description,
@@ -1141,7 +1094,7 @@ class _DetailedMetricCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: AppColors.hairline, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1151,42 +1104,47 @@ class _DetailedMetricCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.textPrimary,
+                style: GoogleFonts.hankenGrotesk(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
                 ),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '$value%',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    fontWeight: FontWeight.w600,
+                  '$value',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     color: color,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: value / 100,
+              value: value / 100.0,
               minHeight: 5,
-              backgroundColor: AppColors.cardBorder,
+              backgroundColor: AppColors.hairline,
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
           const SizedBox(height: 10),
           Text(
             description,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+            style: GoogleFonts.hankenGrotesk(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textTertiary,
               height: 1.5,
             ),
           ),
@@ -1196,28 +1154,27 @@ class _DetailedMetricCard extends StatelessWidget {
   }
 }
 
-class _BadgeChip extends StatelessWidget {
+class _IngredientChip extends StatelessWidget {
   final String label;
-  final Color color;
 
-  const _BadgeChip({required this.label, required this.color});
+  const _IngredientChip({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: AppColors.primaryTint,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.25), width: 1),
       ),
       child: Text(
         label,
-        style: AppTextStyles.caption.copyWith(
-          fontSize: 11,
+        style: GoogleFonts.hankenGrotesk(
+          fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: color,
-          letterSpacing: 0.5,
+          color: AppColors.primaryTintInk,
         ),
       ),
     );
@@ -1237,23 +1194,24 @@ class _RecommendationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: AppColors.hairline, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
+            width: 26,
+            height: 26,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryTint,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 '$index',
-                style: AppTextStyles.labelSmall.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.primary,
                 ),
               ),
@@ -1263,9 +1221,11 @@ class _RecommendationCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textPrimary,
-                height: 1.5,
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: AppColors.ink,
+                height: 1.55,
               ),
             ),
           ),
@@ -1273,4 +1233,117 @@ class _RecommendationCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SaveButton extends StatelessWidget {
+  final bool isSaving;
+
+  const _SaveButton({required this.isSaving});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isSaving
+          ? null
+          : () => context
+              .read<SkinAnalysisBloc>()
+              .add(const SkinAnalysisSaveRequested()),
+      child: Container(
+        width: double.infinity,
+        height: 54,
+        decoration: BoxDecoration(
+          gradient: isSaving
+              ? null
+              : const LinearGradient(
+                  colors: [AppColors.primaryLight, AppColors.primaryDark],
+                ),
+          color: isSaving ? AppColors.hairline : null,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isSaving
+              ? null
+              : [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.30),
+                    blurRadius: 28,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+        ),
+        child: Center(
+          child: isSaving
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                )
+              : Text(
+                  StringConst.kSaveAnalysis,
+                  style: GoogleFonts.hankenGrotesk(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Painters
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ArcPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double sweepAngle;
+
+  const _ArcPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.sweepAngle,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      -math.pi / 2,
+      sweepAngle,
+      false,
+      Paint()
+        ..color = color
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ArcPainter old) =>
+      old.color != color || old.sweepAngle != sweepAngle;
+}
+
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.03)
+      ..strokeWidth = 0.5;
+
+    const step = 30.0;
+    for (double y = 0; y <= size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    for (double x = 0; x <= size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPainter _) => false;
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:skin_sync/core/constants/color_const.dart';
 import 'package:skin_sync/core/constants/string_const.dart';
-import 'package:skin_sync/core/constants/text_styles.dart';
 import 'package:skin_sync/core/routes/app_routes.dart';
 
 class SkinTypeCard extends StatelessWidget {
@@ -16,10 +16,10 @@ class SkinTypeCard extends StatelessWidget {
   });
 
   static const _types = [
-    {'key': 'oily', 'emoji': '💧', 'label': StringConst.kOily},
-    {'key': 'combo', 'emoji': '⚖️', 'label': StringConst.kCombo},
-    {'key': 'dry', 'emoji': '🌵', 'label': StringConst.kDry},
-    {'key': 'normal', 'emoji': '🌸', 'label': StringConst.kNormal},
+    ('oily', StringConst.kOily),
+    ('combo', StringConst.kCombo),
+    ('dry', StringConst.kDry),
+    ('normal', StringConst.kNormal),
   ];
 
   @override
@@ -27,9 +27,9 @@ class SkinTypeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder, width: 1.5),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,13 +39,20 @@ class SkinTypeCard extends StatelessWidget {
             children: [
               Text(
                 StringConst.kMySkinType,
-                style: AppTextStyles.heading3.copyWith(fontSize: 17),
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  letterSpacing: -0.16,
+                ),
               ),
               GestureDetector(
                 onTap: () => context.push(AppRoutes.skinTypeRoute),
                 child: Text(
                   StringConst.kEdit,
-                  style: AppTextStyles.labelSmall.copyWith(
+                  style: GoogleFonts.hankenGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
                 ),
@@ -54,45 +61,44 @@ class SkinTypeCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Row(
-            children: List.generate(_types.length, (i) {
-              final type = _types[i];
-              final sel = selectedType == type['key'];
+            children: _types.asMap().entries.map((e) {
+              final idx = e.key;
+              final (key, label) = e.value;
+              final sel = selectedType == key;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => onTypeChanged(type['key'] as String),
+                  onTap: () => onTypeChanged(key),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: EdgeInsets.only(left: i == 0 ? 0 : 8),
+                    duration: const Duration(milliseconds: 180),
+                    margin: EdgeInsets.only(left: idx == 0 ? 0 : 8),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
-                      color: sel ? const Color(0xFFF0D4C2) : AppColors.background,
+                      color: sel ? AppColors.primaryTint : AppColors.background,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: sel ? AppColors.primary : AppColors.cardBorder,
+                        color: sel
+                            ? AppColors.primary.withValues(alpha: 0.5)
+                            : AppColors.hairline,
                         width: sel ? 1.5 : 1,
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Text(
-                          type['emoji'] as String,
-                          style: const TextStyle(fontSize: 22),
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: GoogleFonts.hankenGrotesk(
+                          fontSize: 12,
+                          fontWeight:
+                              sel ? FontWeight.w700 : FontWeight.w500,
+                          color: sel
+                              ? AppColors.primary
+                              : AppColors.textTertiary,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          type['label'] as String,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: sel
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               );
-            }),
+            }).toList(),
           ),
         ],
       ),
